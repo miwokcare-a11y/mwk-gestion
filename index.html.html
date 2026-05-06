@@ -965,7 +965,7 @@ select.fi{appearance:none;
 </div>
 
 <!-- CONFIGURACIÓN SUPABASE -->
-<div id="s-config" class="scr on">
+<div id="s-config" class="scr" style="display:none;">
   <div class="cfg-wrap">
     <div class="cfg-logo">MWK</div>
     <div class="cfg-title">Configuración inicial</div>
@@ -1387,11 +1387,8 @@ function actualizarNro(){var e=document.getElementById('nro-badge');if(e)e.textC
 // INICIALIZACIÓN — carga datos desde Supabase
 // ════════════════════════════════════════════════════════════════
 function inicializar() {
-  var configurado = SUPABASE_URL !== 'PEGAR_URL_AQUI' && SUPABASE_KEY !== 'PEGAR_ANON_KEY_AQUI';
-  if (!configurado) {
-    mostrarPantallaConfig();
-    return;
-  }
+  // Credenciales siempre presentes (hardcodeadas)
+  SB.headers = buildHeaders(SUPABASE_KEY);
   mostrarCargando(true);
   // Cargar todo en paralelo
   Promise.all([
