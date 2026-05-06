@@ -2431,9 +2431,38 @@ function renderCronograma() {
   var conFecha = modelos.filter(function(m){ return !m.todoEnStock && m.fechaHabilitacion; }).length;
   var sinFecha = modelos.filter(function(m){ return !m.todoEnStock && !m.fechaHabilitacion; }).length;
 
+  // Unidades por semana y mes
+  var undListasHoy = modelos.filter(function(m){ return m.todoEnStock; })
+    .reduce(function(s,m){ return s+(m.totalUnidades||0); },0);
+
+  var inicioSemana = new Date(hoy); var dow=hoy.getDay(); inicioSemana.setDate(hoy.getDate()-(dow===0?6:dow-1));
+  var finSemana = new Date(inicioSemana); finSemana.setDate(inicioSemana.getDate()+6);
+  var undEstaSemana = modelos.filter(function(m){
+    return !m.todoEnStock && m.fechaHabilitacion &&
+      m.fechaHabilitacion >= inicioSemana && m.fechaHabilitacion <= finSemana;
+  }).reduce(function(s,m){ return s+(m.totalUnidades||0); },0) + undListasHoy;
+
+  var inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  var finMes = new Date(hoy.getFullYear(), hoy.getMonth()+1, 0);
+  var undEsteMes = modelos.filter(function(m){
+    return !m.todoEnStock && m.fechaHabilitacion &&
+      m.fechaHabilitacion >= inicioMes && m.fechaHabilitacion <= finMes;
+  }).reduce(function(s,m){ return s+(m.totalUnidades||0); },0) + undListasHoy;
+
+  var undTotal = modelos.reduce(function(s,m){ return s+(m.totalUnidades||0); },0);
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">';
+  html += kpiSmall(undListasHoy, 'u. listas ahora', '#2a6a3a');
+  html += kpiSmall(undEstaSemana, 'u. esta semana', '#3a5a8a');
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">';
+  html += kpiSmall(undEsteMes, 'u. este mes', '#5a3a8a');
+  html += kpiSmall(undTotal, 'u. totales temporada', '#1a2433');
+  html += '</div>';
+
   html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">';
-  html += kpiSmall(listos, '✅ Listos para cortar', '#2a6a3a');
-  html += kpiSmall(conFecha, '📅 Con fecha pautada', '#5a3a8a');
+  html += kpiSmall(listos, '✅ Modelos listos', '#2a6a3a');
+  html += kpiSmall(conFecha, '📅 Con fecha', '#5a3a8a');
   html += kpiSmall(sinFecha, '⚠ Sin fecha', '#8b3a14');
   html += '</div>';
 
