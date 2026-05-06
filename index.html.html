@@ -4634,8 +4634,9 @@ var TALLES_TODOS  = TALLES_NINOS.concat(TALLES_ADULTOS).concat(['Único']);
 var nfTalles = {}; // {talle: cantidad}
 
 function renderTallesGrid(containerId, tallesData, onchange) {
-  var el = document.getElementById(containerId);
+  var el = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
   if (!el) return;
+  if (!tallesData || typeof tallesData !== 'object') tallesData = {};
   el.innerHTML = '';
 
   // Grupo Niños
@@ -4766,8 +4767,8 @@ function renderNfColores() {
     div.appendChild(sepDiv);
     var aw=document.createElement('div'); aw.id='nfcol-avios-'+i; div.appendChild(aw);
     el.appendChild(div);
-    // Render talles AFTER div is in DOM
-    renderTallesGrid('nfcol-talles-'+i, col.talles, function(){
+    // Render talles AFTER div is in DOM — pass element directly
+    renderTallesGrid(tw, col.talles, function(){
       var tot=totalTalles(col.talles);
       totDiv.textContent=tot>0?'Total: '+tot+' unidades':'Sin unidades cargadas';
       totDiv.style.color=tot>0?'var(--t2)':'var(--t3)';
