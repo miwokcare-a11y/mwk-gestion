@@ -4277,26 +4277,43 @@ function renderPlanFichas() {
     return;
   }
   el.innerHTML = '';
+  // Inicializar selección — por defecto todos incluidos
+  lista.forEach(function(f){ if(planUnidades[f.id]===undefined) planUnidades[f.id]=1; });
+
   lista.forEach(function(f) {
-    var totalUnidades = (f.colores||[]).reduce(function(s,col){ return s+totalTalles(col.talles||{}); },0);
-    if (!totalUnidades && f.talles) totalUnidades = totalTalles(f.talles);
+    var totalUndFicha = (f.colores||[]).reduce(function(s,col){ return s+totalTalles(col.talles||{}); },0);
+    if (!totalUndFicha && f.talles) totalUndFicha = totalTalles(f.talles);
     var coloresInfo = (f.colores||[]).filter(function(col){ return totalTalles(col.talles||{})>0; })
       .map(function(col){ return esc(col.color)+': '+totalTalles(col.talles||{})+' u'; }).join(' · ');
+    var nmat = (f.telas||[]).length + (f.materiales||[]).length;
+    var incluido = planUnidades[f.id] !== 0;
 
     var div = document.createElement('div');
-    div.style.cssText = 'padding:10px 0;border-bottom:1px solid rgba(26,36,51,.07);';
-    div.innerHTML =
-      '<div style="display:flex;justify-content:space-between;align-items:center;">'+
-        '<div>'+
-          '<div style="font-size:13px;font-weight:600;">'+esc(f.nombre)+'</div>'+
-          '<div style="font-size:11px;color:var(--t2);">'+(f.materiales||[]).length+' materiales</div>'+
-          (coloresInfo?'<div style="font-size:11px;color:var(--t3);margin-top:2px;">'+coloresInfo+'</div>':'')+
-        '</div>'+
-        '<div style="text-align:right;">'+
-          '<div style="font-size:18px;font-weight:700;color:var(--bk);">'+totalUnidades+'</div>'+
-          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;">unidades</div>'+
-        '</div>'+
-      '</div>';
+    div.id = 'plan-fila-'+f.id;
+    div.style.cssText = 'padding:12px 0;border-bottom:1px solid rgba(26,36,51,.07);display:flex;align-items:center;gap:12px;'+
+      (incluido?'':'opacity:.45;');
+
+    // Toggle incluir/excluir
+    var chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.checked = incluido;
+    chk.style.cssText = 'width:18px;height:18px;flex-shrink:0;cursor:pointer;accent-color:var(--bk);';
+    chk.onchange = (function(fid, d){ return function(){
+      planUnidades[fid] = this.checked ? 1 : 0;
+      d.style.opacity = this.checked ? '1' : '.45';
+    }; })(f.id, div);
+
+    var info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0;';
+    info.innerHTML =
+      '<div style="font-size:13px;font-weight:600;">'+esc(f.nombre)+'</div>'+
+      '<div style="font-size:11px;color:var(--t2);">'+nmat+' insumo'+(nmat!==1?'s':'')+
+        (totalUndFicha?' · <b>'+totalUndFicha+' u</b>':' · sin curva de talles')+
+      '</div>'+
+      (coloresInfo?'<div style="font-size:11px;color:var(--t3);margin-top:2px;">'+coloresInfo+'</div>':'');
+
+    div.appendChild(chk);
+    div.appendChild(info);
     el.appendChild(div);
   });
 }
@@ -4322,10 +4339,10 @@ function explotarConsumos() {
   // Filtrar por temporada si está seleccionada
   var temp = (document.getElementById('plan-temp')||{}).value||'';
   var fichasFiltradas = temp ? fichas.filter(function(f){return f.temporada===temp;}) : fichas;
-  // Filtrar por unidades ingresadas
-  fichasFiltradas = fichasFiltradas.filter(function(f){ return planUnidades[f.id]||0; });
+  // Filtrar solo las fichas marcadas (incluidas)
+  fichasFiltradas = fichasFiltradas.filter(function(f){ return planUnidades[f.id]!==0; });
 
-  if (!fichasFiltradas.length) { toast('Ingresá al menos 1 unidad a producir'); return; }
+  if (!fichasFiltradas.length) { toast('No hay modelos incluidos en la explosión'); return; }
 
   // ── Acumular consumos por material (telas + avíos generales + avíos por variante) ──
   var consumos = {}; // key → {nombre, unidad, precio, proveedor, necesario, stock, modelos[]}
@@ -4333,14 +4350,10 @@ function explotarConsumos() {
   var costoTotal = 0;
 
   fichasFiltradas.forEach(function(f) {
-    var mult = parseFloat(planUnidades[f.id])||0;
-    if (!mult) return;
-    // Calcular unidades reales desde la curva
-    var und = (f.colores||[]).reduce(function(s,col){ return s+totalTalles(col.talles||{}); },0);
-    if (!und && f.talles) und = totalTalles(f.talles);
-    if (!und) und = 1;
-    // mult es el multiplicador (% o factor), usarlo como factor directo
-    var totalUnd = und * mult;
+    // Unidades reales desde la curva de talles
+    var totalUnd = (f.colores||[]).reduce(function(s,col){ return s+totalTalles(col.talles||{}); },0);
+    if (!totalUnd && f.talles) totalUnd = totalTalles(f.talles);
+    if (!totalUnd) { toast('El modelo "'+f.nombre+'" no tiene curva de talles cargada'); return; }
     unidadesTotal += totalUnd;
     costoTotal += costoFicha(f) * totalUnd;
 
@@ -4667,7 +4680,7 @@ function talleInput(t, tallesData, onchange) {
   inp.type = 'number';
   inp.min = '0';
   inp.step = '1';
-  inp.value = tallesData[t]||'';
+  inp.value = (tallesData&&tallesData[t])||'';
   inp.placeholder = '0';
   inp.style.cssText = 'width:100%;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:6px;padding:4px 6px;font-size:13px;font-weight:600;text-align:center;';
   inp.oninput = function() {
@@ -4746,6 +4759,7 @@ function renderNfColores() {
     var cdel=document.createElement('button'); cdel.className='delbtn'; cdel.textContent='×'; cdel.id='nfcol-del-'+i;
     hdr.appendChild(cinp); hdr.appendChild(cdel); div.appendChild(hdr);
     var tw=document.createElement('div'); tw.id='nfcol-talles-'+i; div.appendChild(tw);
+    if (!col.talles || typeof col.talles !== 'object') col.talles = {};
     renderTallesGrid('nfcol-talles-'+i, col.talles, null);
     var total=totalTalles(col.talles);
     var totDiv=document.createElement('div'); totDiv.style.cssText='font-size:11px;color:var(--t2);margin-top:4px;margin-bottom:6px;'; totDiv.textContent=total>0?'Total: '+total+' unidades':'Sin unidades cargadas'; totDiv.style.color=total>0?'var(--t2)':'var(--t3)'; div.appendChild(totDiv);
