@@ -650,28 +650,57 @@ select.fi{appearance:none;
 <div id="s-stock" class="scr">
   <div class="tb">
     <button class="bk" onclick="ir('s-home')">Inicio</button>
-    <h1>Stock de Telas</h1>
+    <h1>Stock</h1>
     <span class="nbadge" id="stock-alerta-cnt" style="display:none;background:#c0622a;color:#fff;"></span>
   </div>
   <div style="margin-top:12px;">
 
-    <!-- Filtro por Hoja/Grupo -->
+    <!-- AGREGAR NUEVO — arriba y visible -->
     <div class="sp" style="margin-bottom:4px;">
-      <!-- Buscador unificado con selects tipeables -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div style="position:relative;">
-          <input class="fi" type="text" id="stock-fil-hoja" placeholder="🗂 Hoja..." oninput="renderStockLista()" style="width:100%;" list="stock-hojas-list">
-          <datalist id="stock-hojas-list"></datalist>
+      <button class="btn bmail" style="width:100%;" onclick="toggleFormStock()">+ Agregar tela o avío</button>
+      <div id="stock-form-wrap" style="display:none;margin-top:10px;background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
+        <div class="frow">
+          <input class="fi" type="text" id="snp-nom" placeholder="Artículo (ej: Jersey 3346)">
+          <input class="fi" type="text" id="snp-color" placeholder="Color Factura">
         </div>
-        <div style="position:relative;">
-          <input class="fi" type="text" id="stock-fil-prov" placeholder="🏭 Proveedor..." oninput="renderStockLista()" style="width:100%;" list="stock-prov-list">
-          <datalist id="stock-prov-list"></datalist>
+        <div class="frow">
+          <input class="fi" type="text" id="snp-color-dis" placeholder="Color Diseño">
+          <input class="fi" type="text" id="snp-prov" placeholder="Proveedor">
         </div>
+        <div class="frow">
+          <input class="fi" type="text" id="snp-hoja" placeholder="Hoja / Grupo (ej: 3)">
+          <input class="fi" type="text" inputmode="decimal" id="snp-mts" placeholder="Stock MTS">
+        </div>
+        <div class="frow">
+          <input class="fi" type="text" inputmode="decimal" id="snp-kg" placeholder="KG">
+          <input class="fi" type="text" inputmode="decimal" id="snp-ancho" placeholder="Ancho (m)">
+        </div>
+        <div class="frow">
+          <input class="fi" type="text" inputmode="decimal" id="snp-rinde" placeholder="Rinde">
+          <input class="fi" type="text" inputmode="decimal" id="snp-min" placeholder="Stock mínimo (alerta)">
+        </div>
+        <select class="fi" id="snp-cat" style="width:100%;margin-bottom:8px;">
+          <option value="Tela">Tela</option>
+          <option value="Avío">Avío</option>
+          <option value="Otro">Otro</option>
+        </select>
+        <textarea class="fi" id="snp-obs" placeholder="Observaciones" style="width:100%;height:55px;margin-bottom:8px;"></textarea>
+        <button class="btn bmail" onclick="agregarStock()">Guardar</button>
       </div>
-      <input class="fi" type="text" id="stock-buscar" placeholder="🔍 Artículo, color factura, color diseño..." oninput="renderStockLista()" style="width:100%;">
     </div>
 
-    <!-- Lista de stock -->
+    <!-- BUSCADOR -->
+    <div class="sp" style="margin-bottom:4px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <input class="fi" type="text" id="stock-fil-hoja" placeholder="🗂 Hoja..." oninput="renderStockLista()" style="width:100%;" list="stock-hojas-list">
+        <datalist id="stock-hojas-list"></datalist>
+        <input class="fi" type="text" id="stock-fil-prov" placeholder="🏭 Proveedor..." oninput="renderStockLista()" style="width:100%;" list="stock-prov-list">
+        <datalist id="stock-prov-list"></datalist>
+      </div>
+      <input class="fi" type="text" id="stock-buscar" placeholder="🔍 Artículo, color, diseño..." oninput="renderStockLista()" style="width:100%;">
+    </div>
+
+    <!-- LISTA — solo cuando hay filtro -->
     <div class="sp">
       <div id="stock-lista"></div>
     </div>
@@ -716,39 +745,7 @@ select.fi{appearance:none;
       </div>
     </div>
 
-    <!-- Agregar manualmente -->
-    <div class="sp" style="margin-top:14px;">
-      <div class="sl" style="margin-bottom:9px;">Agregar tela manualmente</div>
-      <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-        <div class="frow">
-          <input class="fi" type="text" id="snp-nom" placeholder="Artículo (ej: Jersey 3346)">
-          <input class="fi" type="text" id="snp-color" placeholder="Color Factura (proveedor)">
-        </div>
-        <div class="frow">
-          <input class="fi" type="text" id="snp-color-dis" placeholder="Color Diseño (interno)">
-          <input class="fi" type="text" id="snp-prov" placeholder="Proveedor">
-        </div>
-        <div class="frow">
-          <input class="fi" type="number" id="snp-hoja" placeholder="Hoja / Grupo (ej: 3)" min="1">
-          <input class="fi" type="number" id="snp-mts" placeholder="Stock MTS" min="0" step="any">
-        </div>
-        <div class="frow">
-          <input class="fi" type="number" id="snp-kg" placeholder="KG" min="0" step="any">
-          <input class="fi" type="number" id="snp-ancho" placeholder="Ancho (m)" min="0" step="any">
-        </div>
-        <div class="frow">
-          <input class="fi" type="number" id="snp-rinde" placeholder="Rinde" min="0" step="any">
-          <input class="fi" type="number" id="snp-min" placeholder="Stock mínimo MTS (alerta)" min="0" step="any">
-        </div>
-        <select class="fi" id="snp-cat" style="width:100%;margin-bottom:8px;">
-          <option value="Tela">Tela</option>
-          <option value="Avío">Avío</option>
-          <option value="Otro">Otro</option>
-        </select>
-        <textarea class="fi" id="snp-obs" placeholder="Observaciones" style="width:100%;height:55px;margin-bottom:8px;"></textarea>
-        <button class="btn bmail" onclick="agregarStock()">Agregar al stock</button>
-      </div>
-    </div>
+
 
   </div>
 </div>
@@ -3110,6 +3107,11 @@ function stockSetProv(prov, el) {
   renderStockLista();
 }
 
+function toggleFormStock() {
+  var w = document.getElementById('stock-form-wrap');
+  if (w) w.style.display = w.style.display === 'none' ? 'block' : 'none';
+}
+
 function renderStock() {
   if (!st.stock) st.stock = [];
   renderStockFiltrosHoja();
@@ -3328,6 +3330,14 @@ function verAlertasStock() {
 function renderStockLista() {
   var el = document.getElementById('stock-lista');
   if (!el) return;
+  // Sin filtro → no mostrar todo el listado
+  var q = (document.getElementById('stock-buscar')||{}).value||'';
+  var fHoja = (document.getElementById('stock-fil-hoja')||{}).value||'';
+  var fProv = (document.getElementById('stock-fil-prov')||{}).value||'';
+  if (!q.trim() && !fHoja.trim() && !fProv.trim()) {
+    el.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--t3);font-size:13px;">Buscá por artículo, hoja o proveedor para ver el stock</div>';
+    return;
+  }
   var lista = getStockFiltrado();
   if (!lista.length) {
     el.innerHTML = '<div class="empty"><div class="ei">📦</div>Sin resultados.<br>Importá tu planilla CSV o agregá manualmente.</div>';
