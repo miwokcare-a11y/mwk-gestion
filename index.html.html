@@ -862,14 +862,34 @@ select.fi{appearance:none;
       <button class="btn bmail" onclick="explotarConsumos()">📐 Calcular consumos y stock faltante</button>
     </div>
     <div class="sp" id="plan-resultado" style="display:none;">
-      <div class="sl" style="margin-bottom:8px;">Explosión de consumos</div>
-      <div id="plan-tabla"></div>
-      <div class="sl" style="margin:14px 0 8px;">Tabla de cortes por talle</div>
-      <div id="plan-cortes" style="overflow-x:auto;"></div>
-      <div class="sl" style="margin:14px 0 8px;">KG a comprar por material y color</div>
-      <div id="plan-kg-color"></div>
-      <button class="btn bpdf" style="margin-top:10px;" onclick="exportarPlanificacion()">⬇ Exportar planificación CSV</button>
-      <button class="btn bcpy" style="margin-top:8px;" onclick="generarPedidoDesdePlan()">✦ Generar nota de pedido con faltantes</button>
+      <!-- Tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="plan-tab active" onclick="planTab('total')" id="ptab-total">📋 Por material</button>
+        <button class="plan-tab" onclick="planTab('prov')" id="ptab-prov">🏭 Por proveedor</button>
+        <button class="plan-tab" onclick="planTab('modelo')" id="ptab-modelo">👕 Por modelo</button>
+        <button class="plan-tab" onclick="planTab('cortes')" id="ptab-cortes">✂ Cortes por talle</button>
+      </div>
+
+      <div id="plan-view-total">
+        <div id="plan-tabla"></div>
+      </div>
+      <div id="plan-view-prov" style="display:none;">
+        <div id="plan-tabla-prov"></div>
+      </div>
+      <div id="plan-view-modelo" style="display:none;">
+        <div id="plan-tabla-modelo"></div>
+      </div>
+      <div id="plan-view-cortes" style="display:none;">
+        <div class="sl" style="margin-bottom:8px;">Tabla de cortes por talle</div>
+        <div id="plan-cortes" style="overflow-x:auto;"></div>
+        <div class="sl" style="margin:14px 0 8px;">Metros/KG a comprar por color</div>
+        <div id="plan-kg-color"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn bpdf" onclick="exportarPlanificacion()">⬇ CSV</button>
+        <button class="btn bcpy" onclick="generarPedidoDesdePlan()">✦ Nota de pedido</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1179,6 +1199,10 @@ create policy "allow all" on mwk_stock for all using (true) with check (true);</
 </div>
 <style>
 @keyframes load{from{transform:translateX(-60%)}to{transform:translateX(200%)}}
+/* ── TABS PLANIFICACIÓN ────────────────────────────────────── */
+.plan-tab{background:var(--sa);border:1px solid rgba(26,36,51,.12);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit;}
+.plan-tab.active{background:var(--bk);color:#fff;border-color:var(--bk);}
+
 /* ── CONTADOR DE CORTE ──────────────────────────────────────── */
 .corte-wrap{margin:0 18px 18px;border-radius:var(--rl);overflow:hidden;border:1px solid rgba(26,36,51,.12);}
 .corte-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:var(--bk);}
@@ -4284,158 +4308,233 @@ function changePlanUnd(fid, delta) {
   if (el) el.textContent = planUnidades[fid];
 }
 
+function planTab(tab) {
+  ['total','prov','modelo','cortes'].forEach(function(t){
+    var v=document.getElementById('plan-view-'+t);
+    var b=document.getElementById('ptab-'+t);
+    if(v) v.style.display = t===tab?'block':'none';
+    if(b){ b.classList.toggle('active', t===tab); }
+  });
+}
+
 function explotarConsumos() {
   var fichas = st.fichas||[];
-  var stockMap = {};
-  (st.stock||[]).forEach(function(s){ stockMap[s.id] = s; });
+  // Filtrar por temporada si está seleccionada
+  var temp = (document.getElementById('plan-temp')||{}).value||'';
+  var fichasFiltradas = temp ? fichas.filter(function(f){return f.temporada===temp;}) : fichas;
+  // Filtrar por unidades ingresadas
+  fichasFiltradas = fichasFiltradas.filter(function(f){ return planUnidades[f.id]||0; });
 
-  // Agrupar consumos por material
-  var consumos = {}; // key: nombre material
-  var costoTotal = 0;
+  if (!fichasFiltradas.length) { toast('Ingresá al menos 1 unidad a producir'); return; }
+
+  // ── Acumular consumos por material (telas + avíos generales + avíos por variante) ──
+  var consumos = {}; // key → {nombre, unidad, precio, proveedor, necesario, stock, modelos[]}
   var unidadesTotal = 0;
+  var costoTotal = 0;
 
-  fichas.forEach(function(f) {
-    // Calcular total de unidades desde curva de talles
+  fichasFiltradas.forEach(function(f) {
+    var mult = parseFloat(planUnidades[f.id])||0;
+    if (!mult) return;
+    // Calcular unidades reales desde la curva
     var und = (f.colores||[]).reduce(function(s,col){ return s+totalTalles(col.talles||{}); },0);
     if (!und && f.talles) und = totalTalles(f.talles);
-    if (!und) return;
-    unidadesTotal += und;
-    costoTotal += costoFicha(f) * und;
-    (f.materiales||[]).forEach(function(m) {
+    if (!und) und = 1;
+    // mult es el multiplicador (% o factor), usarlo como factor directo
+    var totalUnd = und * mult;
+    unidadesTotal += totalUnd;
+    costoTotal += costoFicha(f) * totalUnd;
+
+    function acumular(m, extra) {
+      if (!(m.nombre||'').trim()) return;
       var key = m.nombre.trim().toLowerCase();
-      // Buscar rinde en stock
-      var stockItem = (st.stock||[]).find(function(s){
-        return (s.nombre||'').trim().toLowerCase() === key ||
-               (s.nombre||'').trim().toLowerCase().indexOf(key) !== -1;
-      });
-      var rinde = stockItem ? (parseFloat(stockItem.rinde)||0) : 0;
+      var stockItem = (st.catalogo||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(key)!==-1; }) ||
+                      (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(key)!==-1; });
+      var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
       if (!consumos[key]) consumos[key] = {
-        nombre: m.nombre, unidad: m.unidad, precio: m.precio,
-        necesario: 0, rinde: rinde, modelos: []
+        nombre:m.nombre.trim(), unidad:m.unidad||'u', precio:parseFloat(m.precio)||0,
+        proveedor: prov, necesario:0, modelos:[]
       };
-      consumos[key].necesario += (m.cantidad||0) * und;
-      if (!consumos[key].rinde && rinde) consumos[key].rinde = rinde;
-      consumos[key].modelos.push(f.nombre+' ('+und+'u × '+m.cantidad+m.unidad+')');
+      var cant = (parseFloat(m.cantidad)||0) * totalUnd * (extra||1);
+      consumos[key].necesario += cant;
+      if (!consumos[key].precio && m.precio) consumos[key].precio = parseFloat(m.precio)||0;
+      if (consumos[key].proveedor==='—' && prov!=='—') consumos[key].proveedor = prov;
+      consumos[key].modelos.push(f.nombre+' ('+Math.round(cant*100)/100+' '+m.unidad+')');
+    }
+
+    // Telas
+    (f.telas||[]).forEach(function(m){ acumular(m); });
+    // Avíos generales
+    (f.materiales||[]).forEach(function(m){ acumular(m); });
+    // Avíos por variante — proporcional al peso de cada color
+    var totalFichaUnd = (f.colores||[]).reduce(function(s,c){ return s+(c.total||0); },0)||1;
+    (f.colores||[]).forEach(function(col){
+      var peso = (col.total||0)/totalFichaUnd;
+      (col.avios||[]).forEach(function(a){ acumular(a, peso); });
     });
   });
 
-  if (!Object.keys(consumos).length) {
-    toast('Ingresá al menos 1 unidad a producir');
-    return;
-  }
-
-  // Cruzar con stock
-  var rows = Object.keys(consumos).map(function(key) {
+  // ── Cruzar con stock ──
+  var rows = Object.keys(consumos).map(function(key){
     var mat = consumos[key];
-    var unidad = mat.unidad || 'u';
-    // Buscar en stock solo si la unidad coincide (m o kg)
-    var stockItem = null;
-    if (unidad === 'm' || unidad === 'kg') {
-      stockItem = (st.stock||[]).find(function(s){
-        return s.nombre.trim().toLowerCase().indexOf(key) !== -1 || key.indexOf(s.nombre.trim().toLowerCase()) !== -1;
-      });
-    }
-    // Stock actual en la unidad correcta
+    var unidad = mat.unidad||'u';
+    var stockItem = (st.stock||[]).find(function(s){
+      return (s.nombre||'').toLowerCase().indexOf(key)!==-1 || key.indexOf((s.nombre||'').toLowerCase())!==-1;
+    });
     var stockAct = 0;
-    if (stockItem) {
-      stockAct = unidad === 'kg' ? (parseFloat(stockItem.kg)||0) : (parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0);
-    }
-    var necesario = Math.round(mat.necesario * 100) / 100;
-    var faltante  = Math.max(0, Math.round((necesario - stockAct) * 100) / 100);
-    var rinde = mat.rinde || (stockItem ? parseFloat(stockItem.rinde)||0 : 0);
+    if (stockItem) stockAct = unidad==='kg'?(parseFloat(stockItem.kg)||0):(parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0);
+    var necesario = Math.round(mat.necesario*100)/100;
+    var faltante  = Math.max(0, Math.round((necesario-stockAct)*100)/100);
     return {
-      nombre: mat.nombre, unidad: unidad, precio: mat.precio,
-      necesario: necesario, stock: stockAct, faltante: faltante,
-      ok: faltante === 0, modelos: mat.modelos, rinde: rinde
+      nombre:mat.nombre, unidad:unidad, precio:mat.precio, proveedor:mat.proveedor,
+      necesario:necesario, stock:stockAct, faltante:faltante, ok:faltante===0, modelos:mat.modelos
     };
-  });
+  }).sort(function(a,b){ return a.nombre.localeCompare(b.nombre); });
 
-  // Render tabla resultado
-  var el = document.getElementById('plan-tabla');
+  window._planRows = rows;
+  window._planMeta = {unidades:unidadesTotal, costo:costoTotal};
+
   var res = document.getElementById('plan-resultado');
-  if (res) res.style.display = 'block';
+  if (res) res.style.display='block';
 
+  // ── VISTA 1: Por material ──
+  var el = document.getElementById('plan-tabla');
   if (el) {
     el.innerHTML =
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'+
-        kpiSmall(unidadesTotal, 'Unidades totales') +
-        kpiSmall(rows.filter(function(r){return !r.ok;}).length, 'Materiales faltantes', rows.some(function(r){return !r.ok;})?'#c0622a':'#3a6a2a') +
+        kpiSmall(Math.round(unidadesTotal),'Unidades totales')+
+        kpiSmall(rows.filter(function(r){return !r.ok;}).length,'Materiales faltantes',rows.some(function(r){return !r.ok;})?'#c0622a':'#3a6a2a')+
       '</div>'+
       '<div style="overflow-x:auto;"><table class="dash-table">'+
-        '<thead><tr><th>Material</th><th>Necesario (m)</th><th>KG necesarios</th><th>En stock</th><th>Faltante (m)</th></tr></thead>'+
-        '<tbody>'+
-        rows.map(function(r){
-          var compra = r.faltante > 0 ? '$'+fmt(r.faltante * r.precio) : '—';
+      '<thead><tr><th>Material</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
+      rows.map(function(r){
+        var compra = r.faltante>0 ? '$'+fmt(r.faltante*r.precio) : '—';
+        return '<tr style="'+(r.ok?'':'background:rgba(192,98,42,.05);')+'">'+
+          '<td style="font-weight:600;">'+esc(r.nombre)+'</td>'+
+          '<td style="font-size:11px;color:var(--t2);">'+esc(r.proveedor)+'</td>'+
+          '<td>'+r.necesario+' '+esc(r.unidad)+'</td>'+
+          '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
+          '<td style="font-weight:700;color:'+(r.faltante>0?'#8b2e22':'#3a6a2a')+'">'+(r.faltante>0?r.faltante+' '+esc(r.unidad):'✓ OK')+'</td>'+
+          '<td style="font-weight:600;">'+compra+'</td>'+
+        '</tr>';
+      }).join('')+
+      '</tbody></table></div>';
+  }
+
+  // ── VISTA 2: Por proveedor ──
+  var elProv = document.getElementById('plan-tabla-prov');
+  if (elProv) {
+    var porProv = {};
+    rows.forEach(function(r){
+      var p = r.proveedor||'—';
+      if (!porProv[p]) porProv[p] = {rows:[], totalCompra:0};
+      porProv[p].rows.push(r);
+      porProv[p].totalCompra += r.faltante*r.precio;
+    });
+    var html = '';
+    Object.keys(porProv).sort().forEach(function(prov){
+      var gr = porProv[prov];
+      var faltantes = gr.rows.filter(function(r){return !r.ok;}).length;
+      html += '<div style="margin-bottom:16px;border:1px solid rgba(26,36,51,.1);border-radius:var(--r);overflow:hidden;">'+
+        '<div style="background:var(--bk);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">'+
+          '<span style="font-weight:700;color:#fff;font-size:14px;">🏭 '+esc(prov)+'</span>'+
+          '<span style="color:rgba(255,255,255,.7);font-size:12px;">'+
+            (gr.totalCompra>0?'<b style="color:#fff;">$'+fmt(gr.totalCompra)+'</b> a comprar · ':'')+
+            faltantes+' faltante'+(faltantes!==1?'s':'')+'</span>'+
+        '</div>'+
+        '<div style="overflow-x:auto;"><table class="dash-table">'+
+        '<thead><tr><th>Material</th><th>Necesario</th><th>Stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
+        gr.rows.map(function(r){
           return '<tr style="'+(r.ok?'':'background:rgba(192,98,42,.05);')+'">'+
             '<td style="font-weight:600;">'+esc(r.nombre)+'</td>'+
             '<td>'+r.necesario+' '+esc(r.unidad)+'</td>'+
-            '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';font-weight:600;">'+r.stock+' '+esc(r.unidad)+'</td>'+
+            '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
             '<td style="font-weight:700;color:'+(r.faltante>0?'#8b2e22':'#3a6a2a')+'">'+(r.faltante>0?r.faltante+' '+esc(r.unidad):'✓ OK')+'</td>'+
-            '<td>'+compra+'</td>'+
+            '<td>'+(r.faltante>0?'$'+fmt(r.faltante*r.precio):'—')+'</td>'+
           '</tr>';
         }).join('')+
-        '</tbody></table></div>';
+        '</tbody></table></div></div>';
+    });
+    elProv.innerHTML = html || '<div class="empty">Sin proveedores asignados a los materiales.</div>';
+  }
 
-    // Guardar para exportar
-    window._planRows = rows;
-    window._planMeta = {unidades: unidadesTotal, costo: costoTotal};
+  // ── VISTA 3: Por modelo ──
+  var elMod = document.getElementById('plan-tabla-modelo');
+  if (elMod) {
+    var html3 = '';
+    fichasFiltradas.forEach(function(f){
+      var mult = parseFloat(planUnidades[f.id])||0;
+      if (!mult) return;
+      var und = (f.colores||[]).reduce(function(s,col){ return s+totalTalles(col.talles||{}); },0)||1;
+      var totalUnd = und*mult;
+      var allMats = (f.telas||[]).concat(f.materiales||[]);
+      var costo = costoFicha(f);
+      html3 += '<div style="margin-bottom:14px;border:1px solid rgba(26,36,51,.1);border-radius:var(--r);overflow:hidden;">'+
+        '<div style="background:var(--sa);padding:10px 14px;display:flex;justify-content:space-between;">'+
+          '<span style="font-weight:700;font-size:14px;">👕 '+esc(f.nombre)+'</span>'+
+          '<span style="font-size:12px;color:var(--t2);">'+Math.round(totalUnd)+' u · $'+fmt(costo*totalUnd)+'</span>'+
+        '</div>'+
+        '<div style="overflow-x:auto;"><table class="dash-table">'+
+        '<thead><tr><th>Material</th><th>Tipo</th><th>Cant/u</th><th>Total</th><th>Proveedor</th></tr></thead><tbody>'+
+        (f.telas||[]).map(function(m){
+          return '<tr style="background:rgba(42,90,160,.03);">'+
+            '<td style="font-weight:600;">'+esc(m.nombre)+'</td>'+
+            '<td><span style="font-size:10px;background:rgba(42,90,160,.1);color:#2a4a8a;border-radius:4px;padding:1px 6px;">🧵 Tela</span></td>'+
+            '<td>'+m.cantidad+' '+esc(m.unidad||'m')+'</td>'+
+            '<td style="font-weight:700;">'+(Math.round(m.cantidad*totalUnd*100)/100)+' '+esc(m.unidad||'m')+'</td>'+
+            '<td style="font-size:11px;color:var(--t2);">'+esc(m.proveedor||'—')+'</td>'+
+          '</tr>';
+        }).join('')+
+        (f.materiales||[]).map(function(m){
+          return '<tr>'+
+            '<td style="font-weight:600;">'+esc(m.nombre)+'</td>'+
+            '<td><span style="font-size:10px;background:rgba(90,42,160,.1);color:#5a2a8a;border-radius:4px;padding:1px 6px;">🔩 Avío</span></td>'+
+            '<td>'+m.cantidad+' '+esc(m.unidad||'u')+'</td>'+
+            '<td style="font-weight:700;">'+(Math.round(m.cantidad*totalUnd*100)/100)+' '+esc(m.unidad||'u')+'</td>'+
+            '<td style="font-size:11px;color:var(--t2);">'+esc(m.proveedor||'—')+'</td>'+
+          '</tr>';
+        }).join('')+
+        '</tbody></table></div></div>';
+    });
+    elMod.innerHTML = html3 || '<div class="empty">Sin modelos.</div>';
+  }
 
-    // ── Tabla de cortes por talle ─────────────────────────────
-    var cortesEl = document.getElementById('plan-cortes');
-    if (cortesEl) {
-      // Recopilar todos los talles usados
-      var tallesUsados = [];
-      fichas.forEach(function(f){
-        if (!(planUnidades[f.id]||0)) return;
-        TALLES_TODOS.forEach(function(t){
-          if ((f.talles||{})[t] > 0 && tallesUsados.indexOf(t) === -1) tallesUsados.push(t);
-        });
+  // ── VISTA 4: Cortes por talle ──
+  var cortesEl = document.getElementById('plan-cortes');
+  if (cortesEl) {
+    var tallesUsados = [];
+    fichasFiltradas.forEach(function(f){
+      TALLES_TODOS.forEach(function(t){
+        if ((f.talles||{})[t]>0 && tallesUsados.indexOf(t)===-1) tallesUsados.push(t);
       });
-      // Ordenar talles en el orden definido
-      tallesUsados.sort(function(a,b){ return TALLES_TODOS.indexOf(a)-TALLES_TODOS.indexOf(b); });
-
-      if (tallesUsados.length) {
-        var fichasCon = fichas.filter(function(f){ return planUnidades[f.id]||0; });
-        var html = '<table class="dash-table"><thead><tr><th>Modelo</th>';
-        tallesUsados.forEach(function(t){ html += '<th>'+t+'</th>'; });
-        html += '<th>Total</th></tr></thead><tbody>';
-        fichasCon.forEach(function(f){
-          var und = planUnidades[f.id]||0;
-          if (!und) return;
-          html += '<tr><td style="font-weight:600;">'+esc(f.nombre)+'</td>';
-          var tot = 0;
-          tallesUsados.forEach(function(t){
-            var cant = (f.talles||{})[t]||0;
-            tot += cant;
-            html += '<td style="text-align:center;">'+(cant||'—')+'</td>';
-          });
-          html += '<td style="font-weight:700;text-align:center;">'+tot+'</td></tr>';
-        });
-        // Fila de totales
-        html += '<tr style="background:var(--sa);font-weight:700;"><td>TOTAL</td>';
-        var grandTotal = 0;
-        tallesUsados.forEach(function(t){
-          var sumT = fichasCon.reduce(function(s,f){ return s+((f.talles||{})[t]||0); },0);
-          grandTotal += sumT;
-          html += '<td style="text-align:center;">'+sumT+'</td>';
-        });
-        html += '<td style="text-align:center;">'+grandTotal+'</td></tr>';
-        html += '</tbody></table>';
-        cortesEl.innerHTML = html;
-        window._planTallesUsados = tallesUsados;
-        window._planFichasCon = fichasCon;
-
-        // ── KG por color ─────────────────────────────────────
-        renderKgPorColor(fichasCon, rows);
-
-      } else {
-        cortesEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px 0;">Las fichas no tienen curva de talles cargada. Editá las fichas para agregar la curva.</div>';
-        // No hay colores, limpiar kg section
-        var kgEl2 = document.getElementById('plan-kg-color');
-        if (kgEl2) kgEl2.innerHTML = '';
-      }
+    });
+    tallesUsados.sort(function(a,b){ return TALLES_TODOS.indexOf(a)-TALLES_TODOS.indexOf(b); });
+    if (tallesUsados.length) {
+      var html4 = '<table class="dash-table"><thead><tr><th>Modelo</th>';
+      tallesUsados.forEach(function(t){ html4+='<th>'+t+'</th>'; });
+      html4+='<th>Total</th></tr></thead><tbody>';
+      fichasFiltradas.forEach(function(f){
+        var mult=parseFloat(planUnidades[f.id])||0; if(!mult)return;
+        html4+='<tr><td style="font-weight:600;">'+esc(f.nombre)+'</td>';
+        var tot=0;
+        tallesUsados.forEach(function(t){ var c=(f.talles||{})[t]||0; tot+=c; html4+='<td style="text-align:center;">'+(c||'—')+'</td>'; });
+        html4+='<td style="font-weight:700;text-align:center;">'+tot+'</td></tr>';
+      });
+      html4+='<tr style="background:var(--sa);font-weight:700;"><td>TOTAL</td>';
+      var gt=0;
+      tallesUsados.forEach(function(t){ var s=fichasFiltradas.reduce(function(acc,f){ return acc+((f.talles||{})[t]||0); },0); gt+=s; html4+='<td style="text-align:center;">'+s+'</td>'; });
+      html4+='<td style="text-align:center;">'+gt+'</td></tr></tbody></table>';
+      cortesEl.innerHTML = html4;
+      window._planTallesUsados = tallesUsados;
+      window._planFichasCon = fichasFiltradas;
+      renderKgPorColor(fichasFiltradas, rows);
+    } else {
+      cortesEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px 0;">Las fichas no tienen curva de talles cargada.</div>';
     }
   }
+
+  // Activar tab por material
+  planTab('total');
+  toast('✅ Explosión calculada');
 }
 
 function exportarPlanificacion() {
