@@ -4758,15 +4758,23 @@ function renderNfColores() {
     var cinp=document.createElement('input'); cinp.className='fi'; cinp.type='text'; cinp.placeholder='Color (ej: Negro)'; cinp.value=col.color||''; cinp.style.flex='1'; cinp.id='nfcol-inp-'+i;
     var cdel=document.createElement('button'); cdel.className='delbtn'; cdel.textContent='×'; cdel.id='nfcol-del-'+i;
     hdr.appendChild(cinp); hdr.appendChild(cdel); div.appendChild(hdr);
-    var tw=document.createElement('div'); tw.id='nfcol-talles-'+i; div.appendChild(tw);
     if (!col.talles || typeof col.talles !== 'object') col.talles = {};
-    renderTallesGrid('nfcol-talles-'+i, col.talles, null);
-    var total=totalTalles(col.talles);
-    var totDiv=document.createElement('div'); totDiv.style.cssText='font-size:11px;color:var(--t2);margin-top:4px;margin-bottom:6px;'; totDiv.textContent=total>0?'Total: '+total+' unidades':'Sin unidades cargadas'; totDiv.style.color=total>0?'var(--t2)':'var(--t3)'; div.appendChild(totDiv);
+    var tw=document.createElement('div'); tw.id='nfcol-talles-'+i; div.appendChild(tw);
+    var totDiv=document.createElement('div'); totDiv.style.cssText='font-size:11px;color:var(--t2);margin-top:4px;margin-bottom:6px;'; div.appendChild(totDiv);
     var sepDiv=document.createElement('div'); sepDiv.style.cssText='font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 5px;display:flex;align-items:center;gap:8px;';
     sepDiv.innerHTML='<span>🔩 Avíos de esta variante</span><button class="addlink" style="font-size:11px;padding:0;" id="nfcol-addavio-'+i+'">+ Agregar</button>';
     div.appendChild(sepDiv);
-    var aw=document.createElement('div'); aw.id='nfcol-avios-'+i; div.appendChild(aw); el.appendChild(div);
+    var aw=document.createElement('div'); aw.id='nfcol-avios-'+i; div.appendChild(aw);
+    el.appendChild(div);
+    // Render talles AFTER div is in DOM
+    renderTallesGrid('nfcol-talles-'+i, col.talles, function(){
+      var tot=totalTalles(col.talles);
+      totDiv.textContent=tot>0?'Total: '+tot+' unidades':'Sin unidades cargadas';
+      totDiv.style.color=tot>0?'var(--t2)':'var(--t3)';
+    });
+    var tot0=totalTalles(col.talles);
+    totDiv.textContent=tot0>0?'Total: '+tot0+' unidades':'Sin unidades cargadas';
+    totDiv.style.color=tot0>0?'var(--t2)':'var(--t3)';
     function renderAviosVar(ci,colObj){ var awEl=document.getElementById('nfcol-avios-'+ci); if(!awEl)return; awEl.innerHTML=''; if(!colObj.avios.length){awEl.innerHTML='<div style="font-size:11px;color:var(--t3);margin-bottom:4px;">Sin avíos específicos</div>';return;} colObj.avios.forEach(function(av,ai){ var ar=document.createElement('div'); ar.style.cssText='display:grid;grid-template-columns:1fr 52px 52px 28px;gap:5px;margin-bottom:5px;align-items:center;'; var an=document.createElement('input'); an.className='fi'; an.type='text'; an.placeholder='Avío'; an.value=av.nombre||''; an.style.cssText='height:28px;font-size:11px;'; var ac=document.createElement('input'); ac.className='fi'; ac.type='text'; ac.inputMode='decimal'; ac.placeholder='Cant.'; ac.value=av.cantidad||''; ac.style.cssText='height:28px;font-size:11px;text-align:center;'; var ap=document.createElement('input'); ap.className='fi'; ap.type='text'; ap.inputMode='decimal'; ap.placeholder='$'; ap.value=av.precio||''; ap.style.cssText='height:28px;font-size:11px;text-align:right;'; var ad=document.createElement('button'); ad.className='delbtn'; ad.textContent='×'; ad.style.cssText='height:28px;font-size:14px;'; ar.appendChild(an); ar.appendChild(ac); ar.appendChild(ap); ar.appendChild(ad); awEl.appendChild(ar); (function(aidx,avObj){an.oninput=function(){avObj.nombre=this.value;};ac.oninput=function(){avObj.cantidad=parseFloat(this.value)||0;};ap.oninput=function(){avObj.precio=parseFloat(this.value)||0;};ad.onclick=function(){colObj.avios.splice(aidx,1);renderAviosVar(ci,colObj);};})(ai,av); }); }
     renderAviosVar(i,col);
     (function(idx,colObj){ var i2=document.getElementById('nfcol-inp-'+idx); if(i2)i2.oninput=function(){colObj.color=this.value;}; var d2=document.getElementById('nfcol-del-'+idx); if(d2)d2.onclick=function(){nfColores.splice(idx,1);renderNfColores();}; var ab=document.getElementById('nfcol-addavio-'+idx); if(ab)ab.onclick=function(e){e.preventDefault();colObj.avios.push({nombre:'',cantidad:0,unidad:'u',precio:0});renderAviosVar(idx,colObj);}; })(i,col);
