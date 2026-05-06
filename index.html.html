@@ -4522,20 +4522,34 @@ function explotarConsumos() {
     });
     tallesUsados.sort(function(a,b){ return TALLES_TODOS.indexOf(a)-TALLES_TODOS.indexOf(b); });
     if (tallesUsados.length) {
-      var html4 = '<table class="dash-table"><thead><tr><th>Modelo</th>';
-      tallesUsados.forEach(function(t){ html4+='<th>'+t+'</th>'; });
-      html4+='<th>Total</th></tr></thead><tbody>';
+      // Filas por MODELO + COLOR
+      var filasCortadas = [];
       fichasFiltradas.forEach(function(f){
-        var mult=parseFloat(planUnidades[f.id])||0; if(!mult)return;
-        html4+='<tr><td style="font-weight:600;">'+esc(f.nombre)+'</td>';
+        var coloresConTalles = (f.colores||[]).filter(function(c){ return totalTalles(c.talles||{})>0; });
+        if (coloresConTalles.length) {
+          coloresConTalles.forEach(function(col){
+            filasCortadas.push({label:esc(f.nombre)+' — '+esc(col.color), talles:col.talles||{}});
+          });
+        } else {
+          filasCortadas.push({label:esc(f.nombre), talles:f.talles||{}});
+        }
+      });
+      var html4 = '<div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Modelo / Color</th>';
+      tallesUsados.forEach(function(t){ html4+='<th style="text-align:center;">'+t+'</th>'; });
+      html4+='<th style="text-align:center;">Total</th></tr></thead><tbody>';
+      filasCortadas.forEach(function(fila){
+        html4+='<tr><td style="font-weight:600;">'+fila.label+'</td>';
         var tot=0;
-        tallesUsados.forEach(function(t){ var c=(f.talles||{})[t]||0; tot+=c; html4+='<td style="text-align:center;">'+(c||'—')+'</td>'; });
+        tallesUsados.forEach(function(t){ var c=(fila.talles[t])||0; tot+=c; html4+='<td style="text-align:center;">'+(c||'—')+'</td>'; });
         html4+='<td style="font-weight:700;text-align:center;">'+tot+'</td></tr>';
       });
       html4+='<tr style="background:var(--sa);font-weight:700;"><td>TOTAL</td>';
       var gt=0;
-      tallesUsados.forEach(function(t){ var s=fichasFiltradas.reduce(function(acc,f){ return acc+((f.talles||{})[t]||0); },0); gt+=s; html4+='<td style="text-align:center;">'+s+'</td>'; });
-      html4+='<td style="text-align:center;">'+gt+'</td></tr></tbody></table>';
+      tallesUsados.forEach(function(t){
+        var s=filasCortadas.reduce(function(acc,f){ return acc+((f.talles[t])||0); },0);
+        gt+=s; html4+='<td style="text-align:center;">'+s+'</td>';
+      });
+      html4+='<td style="text-align:center;">'+gt+'</td></tr></tbody></table></div>';
       cortesEl.innerHTML = html4;
       window._planTallesUsados = tallesUsados;
       window._planFichasCon = fichasFiltradas;
@@ -5077,25 +5091,41 @@ function renderKgPorColor(fichas, consumosRows) {
     if (!und && f.talles) und = totalTalles(f.talles);
     if (!und) return;
 
-    (f.materiales||[]).forEach(function(m) {
+    // Procesar telas + avíos generales (misma cantidad para todos los colores)
+    var insumosGlobales = (f.telas||[]).concat(f.materiales||[]);
+    insumosGlobales.forEach(function(m) {
+      if (!(m.nombre||'').trim()) return;
       var key = m.nombre.trim();
       var rinde = (consumosRows.find(function(r){ return r.nombre===key; })||{}).rinde || 0;
-      if (!porMaterial[key]) porMaterial[key] = {rinde: rinde, colores: {}};
+      if (!porMaterial[key]) porMaterial[key] = {rinde:rinde, colores:{}, unidad:m.unidad||'m'};
       if (!porMaterial[key].rinde && rinde) porMaterial[key].rinde = rinde;
 
-      colores.forEach(function(col) {
-        var totalColor = totalTalles(col.talles||{});
-        if (!totalColor) return;
-        var mts = (parseFloat(m.cantidad)||0) * totalColor;
-        var cKey = col.color||'Sin color';
-        porMaterial[key].colores[cKey] = (porMaterial[key].colores[cKey]||0) + mts;
-      });
-
-      // Si no hay colores, usar total de unidades
-      if (!colores.length) {
-        var mts = (parseFloat(m.cantidad)||0) * und;
-        porMaterial[key].colores['Total'] = (porMaterial[key].colores['Total']||0) + mts;
+      if (colores.length) {
+        colores.forEach(function(col) {
+          var totalColor = totalTalles(col.talles||{});
+          if (!totalColor) return;
+          var cant = (parseFloat(m.cantidad)||0) * totalColor;
+          var cKey = col.color||'Sin color';
+          porMaterial[key].colores[cKey] = (porMaterial[key].colores[cKey]||0) + cant;
+        });
+      } else {
+        var cant = (parseFloat(m.cantidad)||0) * und;
+        porMaterial[key].colores['Total'] = (porMaterial[key].colores['Total']||0) + cant;
       }
+    });
+
+    // Avíos específicos por variante
+    colores.forEach(function(col) {
+      var totalColor = totalTalles(col.talles||{});
+      if (!totalColor) return;
+      (col.avios||[]).forEach(function(a) {
+        if (!(a.nombre||'').trim()) return;
+        var key = a.nombre.trim();
+        if (!porMaterial[key]) porMaterial[key] = {rinde:0, colores:{}, unidad:a.unidad||'u'};
+        var cant = (parseFloat(a.cantidad)||0) * totalColor;
+        var cKey = col.color||'Sin color';
+        porMaterial[key].colores[cKey] = (porMaterial[key].colores[cKey]||0) + cant;
+      });
     });
   });
 
@@ -5107,19 +5137,23 @@ function renderKgPorColor(fichas, consumosRows) {
     var rinde = d.rinde;
     html += '<div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:12px 14px;margin-bottom:10px;">';
     html += '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">'+esc(mat)+'</div>';
-    html += '<table class="dash-table"><thead><tr><th>Color</th><th>Metros</th><th>KG necesarios</th></tr></thead><tbody>';
-    var totalMts = 0, totalKg = 0;
+    var unidad = d.unidad||'m';
+    var showKg = unidad==='m' && rinde>0;
+    html += '<table class="dash-table"><thead><tr><th>Color</th><th>Cantidad ('+esc(unidad)+')</th>'+(showKg?'<th>KG necesarios</th>':'')+'</tr></thead><tbody>';
+    var totalCant = 0, totalKg = 0;
     Object.keys(d.colores).forEach(function(color) {
-      var mts = d.colores[color];
-      var kg = rinde > 0 ? (mts/rinde) : 0;
-      totalMts += mts; totalKg += kg;
+      var cant = d.colores[color];
+      var kg = showKg ? (cant/rinde) : 0;
+      totalCant += cant; totalKg += kg;
       html += '<tr><td>'+esc(color)+'</td>'+
-        '<td>'+mts.toFixed(2)+' m</td>'+
-        '<td style="font-weight:700;color:#2a4a8a;">'+(kg>0?kg.toFixed(2)+' kg':'—')+'</td></tr>';
+        '<td style="font-weight:600;">'+cant.toFixed(2)+' '+esc(unidad)+'</td>'+
+        (showKg?'<td style="font-weight:700;color:#2a4a8a;">'+kg.toFixed(2)+' kg</td>':'')+
+      '</tr>';
     });
     html += '<tr style="background:var(--sa);font-weight:700;"><td>TOTAL</td>'+
-      '<td>'+totalMts.toFixed(2)+' m</td>'+
-      '<td style="color:#2a4a8a;">'+(totalKg>0?totalKg.toFixed(2)+' kg':'—')+'</td></tr>';
+      '<td>'+totalCant.toFixed(2)+' '+esc(unidad)+'</td>'+
+      (showKg?'<td style="color:#2a4a8a;">'+totalKg.toFixed(2)+' kg</td>':'')+
+    '</tr>';
     html += '</tbody></table>';
     if (!rinde) html += '<div style="font-size:11px;color:#c0622a;margin-top:6px;">⚠ Sin rinde en stock — no se puede calcular KG</div>';
     html += '</div>';
