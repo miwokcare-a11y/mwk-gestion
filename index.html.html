@@ -962,7 +962,7 @@ select.fi{appearance:none;
     </div>
     <div class="cfg-step">
       <div class="cfg-step-num">3</div>
-      <div class="cfg-step-txt">Andá a <b>Settings → API</b>. Copiá la <b>Project URL</b> y la <b>anon public key</b> y pegálos acá abajo.</div>
+      <div class="cfg-step-txt">Andá a <b>Settings → API</b>. Copiá la <b>Project URL</b> y la <b>Publishable key</b> y pegálos acá abajo.</div>
     </div>
 
     <div class="cfg-sep">Script SQL para pegar en Supabase</div>
@@ -4020,8 +4020,11 @@ function renderNfMats() {
 function guardarFicha() {
   var nombre = (document.getElementById('nf-nombre').value||'').trim();
   if (!nombre) { toast('Ingresá el nombre del modelo'); return; }
-  if (!nfMats.length || !nfMats.some(function(m){return m.nombre.trim();})) {
-    toast('Agregá al menos un material'); return;
+  // Validar que haya al menos una tela O un material
+  var hayTelas = nfTelas.some(function(m){return (m.nombre||'').trim();});
+  var hayMats  = nfMats.some(function(m){return (m.nombre||'').trim();});
+  if (!hayTelas && !hayMats) {
+    toast('Agregá al menos una tela o avío'); return;
   }
   var telasData = nfTelas.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
     return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'m', precio:m.precio};
