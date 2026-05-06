@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+<h
+    if (typeof _stockCatFil !== 'undefined' && _stockCatFil !== 'todas') {
+      if ((s.categoria||'Tela') !== _stockCatFil) return false;
+    }ead>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -691,6 +694,13 @@ select.fi{appearance:none;
 
     <!-- BUSCADOR -->
     <div class="sp" style="margin-bottom:4px;">
+      <!-- Chips de categoría -->
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+        <button class="plan-tab active" id="scat-todas" onclick="stockCatTab('todas')">Todas</button>
+        <button class="plan-tab" id="scat-tela" onclick="stockCatTab('Tela')">🧵 Telas</button>
+        <button class="plan-tab" id="scat-avio" onclick="stockCatTab('Avío')">🔩 Avíos</button>
+        <button class="plan-tab" id="scat-otro" onclick="stockCatTab('Otro')">📦 Otros</button>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
         <input class="fi" type="text" id="stock-fil-hoja" placeholder="🗂 Hoja..." oninput="renderStockLista()" style="width:100%;" list="stock-hojas-list">
         <datalist id="stock-hojas-list"></datalist>
@@ -3107,6 +3117,17 @@ function stockSetProv(prov, el) {
   renderStockLista();
 }
 
+var _stockCatFil = 'todas';
+
+function stockCatTab(cat) {
+  _stockCatFil = cat;
+  ['todas','Tela','Avío','Otro'].forEach(function(c){
+    var btn = document.getElementById('scat-'+(c==='todas'?'todas':c==='Tela'?'tela':c==='Avío'?'avio':'otro'));
+    if (btn) btn.classList.toggle('active', c===cat);
+  });
+  renderStockLista();
+}
+
 function toggleFormStock() {
   var w = document.getElementById('stock-form-wrap');
   if (w) w.style.display = w.style.display === 'none' ? 'block' : 'none';
@@ -3334,8 +3355,9 @@ function renderStockLista() {
   var q = (document.getElementById('stock-buscar')||{}).value||'';
   var fHoja = (document.getElementById('stock-fil-hoja')||{}).value||'';
   var fProv = (document.getElementById('stock-fil-prov')||{}).value||'';
-  if (!q.trim() && !fHoja.trim() && !fProv.trim()) {
-    el.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--t3);font-size:13px;">Buscá por artículo, hoja o proveedor para ver el stock</div>';
+  var fCatActive = typeof _stockCatFil !== 'undefined' && _stockCatFil !== 'todas';
+  if (!q.trim() && !fHoja.trim() && !fProv.trim() && !fCatActive) {
+    el.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--t3);font-size:13px;">Seleccioná una categoría o buscá por artículo, hoja o proveedor</div>';
     return;
   }
   var lista = getStockFiltrado();
