@@ -1426,6 +1426,7 @@ function inicializar() {
     var cfgRow = cfg && cfg[0];
     st.nextNro   = cfgRow ? (cfgRow.next_nro||1) : 1;
     st.misdatos  = cfgRow ? (cfgRow.misdatos||'') : '';
+    st.corte     = cfgRow ? (cfgRow.corte||null) : null;
     dbOk = true;
     mostrarCargando(false);
     renderHome();
@@ -2326,13 +2327,19 @@ function renderHistorial(){
 
 // Persistencia local (no necesita Supabase)
 function corteGetData() {
-  try { return JSON.parse(localStorage.getItem('mwk_corte') || 'null'); } catch(e){ return null; }
+  return st.corte || null;
 }
-function corteSetData(d) {
-  try { localStorage.setItem('mwk_corte', JSON.stringify(d)); } catch(e){}
+function corteSetData(d, cb) {
+  st.corte = d;
+  SB.from('mwk_config').update({corte: d}, {id: 1})
+    .then(function(){ if(cb) cb(); })
+    .catch(function(e){ console.error('corte save:', e); if(cb) cb(); });
 }
-function corteClearData() {
-  try { localStorage.removeItem('mwk_corte'); } catch(e){}
+function corteClearData(cb) {
+  st.corte = null;
+  SB.from('mwk_config').update({corte: null}, {id: 1})
+    .then(function(){ if(cb) cb(); })
+    .catch(function(e){ console.error('corte clear:', e); if(cb) cb(); });
 }
 
 // Días hábiles entre hoy y una fecha destino (sin contar hoy, contando destino)
@@ -2421,18 +2428,22 @@ function guardarCorte() {
   var fecha = document.getElementById('corte-fecha-inp').value;
   var temp  = (document.getElementById('corte-temp-inp').value || '').trim();
   if (!fecha) { toast('⚠ Seleccioná una fecha'); return; }
-  corteSetData({ fecha: fecha, temporada: temp });
-  cerrarCorteModal();
-  renderCorteContador();
-  toast('✅ Tope de corte guardado');
+  toast('Guardando...');
+  corteSetData({ fecha: fecha, temporada: temp }, function(){
+    cerrarCorteModal();
+    renderCorteContador();
+    toast('✅ Tope de corte guardado');
+  });
 }
 
 function eliminarCorte() {
   if (!confirm('¿Eliminar el tope de corte?')) return;
-  corteClearData();
-  cerrarCorteModal();
-  renderCorteContador();
-  toast('Tope eliminado');
+  toast('Eliminando...');
+  corteClearData(function(){
+    cerrarCorteModal();
+    renderCorteContador();
+    toast('Tope eliminado');
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
