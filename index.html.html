@@ -6156,11 +6156,9 @@ function buildPDFMultipage(canvases,imgW,imgH,fname){
 // ════════════════════════════════════════════════════════════════
 // ARRANQUE
 // ════════════════════════════════════════════════════════════════
-if (cargarConfigGuardada()) {
-  inicializar();
-} else {
-  mostrarPantallaConfig();
-}
+// Credenciales hardcodeadas — inicializar directo
+SB.headers = buildHeaders(SUPABASE_KEY);
+inicializar();
 </script>
 </body>
 </html>
