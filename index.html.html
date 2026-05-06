@@ -4528,22 +4528,29 @@ function explotarConsumos() {
         var coloresConTalles = (f.colores||[]).filter(function(c){ return totalTalles(c.talles||{})>0; });
         if (coloresConTalles.length) {
           coloresConTalles.forEach(function(col){
-            filasCortadas.push({label:esc(f.nombre)+' — '+esc(col.color), talles:col.talles||{}});
+            filasCortadas.push({modelo:f.nombre, color:col.color||'—', talles:col.talles||{}});
           });
         } else {
-          filasCortadas.push({label:esc(f.nombre), talles:f.talles||{}});
+          filasCortadas.push({modelo:f.nombre, color:'—', talles:f.talles||{}});
         }
       });
-      var html4 = '<div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Modelo / Color</th>';
+      var html4 = '<div style="overflow-x:auto;"><table class="dash-table"><thead><tr><th>Modelo</th><th>Color</th><th>Rango</th>';
       tallesUsados.forEach(function(t){ html4+='<th style="text-align:center;">'+t+'</th>'; });
       html4+='<th style="text-align:center;">Total</th></tr></thead><tbody>';
       filasCortadas.forEach(function(fila){
-        html4+='<tr><td style="font-weight:600;">'+fila.label+'</td>';
+        // Calcular rango de talles con unidades > 0
+        var tallesActivos = TALLES_TODOS.filter(function(t){ return (fila.talles[t]||0)>0; });
+        var rango = tallesActivos.length > 1
+          ? tallesActivos[0]+' - '+tallesActivos[tallesActivos.length-1]
+          : (tallesActivos.length===1 ? tallesActivos[0] : '—');
+        html4+='<tr><td style="font-weight:600;">'+esc(fila.modelo)+'</td>'+
+          '<td style="color:var(--t2);font-size:12px;">'+esc(fila.color)+'</td>'+
+          '<td style="font-size:11px;color:var(--t3);white-space:nowrap;">'+rango+'</td>';
         var tot=0;
         tallesUsados.forEach(function(t){ var c=(fila.talles[t])||0; tot+=c; html4+='<td style="text-align:center;">'+(c||'—')+'</td>'; });
         html4+='<td style="font-weight:700;text-align:center;">'+tot+'</td></tr>';
       });
-      html4+='<tr style="background:var(--sa);font-weight:700;"><td>TOTAL</td>';
+      html4+='<tr style="background:var(--sa);font-weight:700;"><td colspan="3">TOTAL</td>';
       var gt=0;
       tallesUsados.forEach(function(t){
         var s=filasCortadas.reduce(function(acc,f){ return acc+((f.talles[t])||0); },0);
