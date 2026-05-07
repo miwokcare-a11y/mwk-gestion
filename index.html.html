@@ -2726,6 +2726,57 @@ function eliminarCorte() {
 }
 
 // ════════════════════════════════════════════════════════════════
+// REPOSICIÓN DESDE STOCK
+// ════════════════════════════════════════════════════════════════
+function reponerStock(idx) {
+  var s = (st.stock||[])[idx];
+  if (!s) return;
+
+  // Navegar a nueva nota de pedido
+  ir('s-pedido');
+
+  // Pre-llenar proveedor si lo tiene
+  if (s.proveedor) {
+    var pnomEl = document.getElementById('pnom');
+    if (pnomEl) pnomEl.value = s.proveedor;
+  }
+
+  // Agregar ítem usando el mecanismo de rows
+  setTimeout(function() {
+    var nombre = [s.nombre, s.color].filter(Boolean).join(' - ');
+    var precio = parseFloat(s.precio_unit)||0;
+    var moneda = s.moneda||'ARS';
+    var unidad = s.unidad_compra||'m';
+    var color  = s.color||'';
+    var colorD = s.color_diseno||'';
+
+    // Agregar nueva fila
+    rows.push({
+      id: Date.now(),
+      nombre: nombre,
+      cantidad: '',
+      unidad: unidad,
+      color: color,
+      color_diseno: colorD,
+      precio: precio||'',
+      moneda: moneda,
+      categoria: s.categoria||'Tela',
+      tipo_avio: '',
+      ancho: s.ancho||'',
+      rinde: s.rinde||''
+    });
+    renderRows();
+    toast('✅ "'+nombre+'" agregado — completá la cantidad');
+
+    // Scroll al final para ver el ítem
+    setTimeout(function(){
+      var el = document.querySelector('#s-pedido');
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 100);
+  }, 400);
+}
+
+// ════════════════════════════════════════════════════════════════
 // EDICIÓN DE ÍTEMS DEL PEDIDO (protegida con contraseña)
 // ════════════════════════════════════════════════════════════════
 var _eimIdx = null;
@@ -3695,6 +3746,7 @@ function renderStockLista() {
           '<button class="adj-btn" onclick="editarStockItem('+idx+')" title="Editar">✎</button>'+
           '<button class="adj-btn" style="color:#3a6a2a;" onclick="abrirDescuentoModal('+idx+')" title="Descontar por producción">✂</button>'+
           '<button class="adj-btn" style="color:#b06020;" onclick="abrirDevModal('+idx+')" title="Devolución al proveedor">↩</button>'+
+          '<button class="adj-btn" style="color:var(--ac,#C4866A);font-weight:700;" onclick="reponerStock('+idx+')" title="Generar reposición">+</button>'+
           '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarStock('+idx+')" title="Eliminar">×</button>'+
         '</div>'+
       '</div>'+
