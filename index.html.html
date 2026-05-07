@@ -3483,7 +3483,12 @@ function getStockFiltrado() {
   var q     = (document.getElementById('stock-buscar')||{value:''}).value.toLowerCase().trim();
   var qHoja = (document.getElementById('stock-fil-hoja')||{value:''}).value.toLowerCase().trim();
   var qProv = (document.getElementById('stock-fil-prov')||{value:''}).value.toLowerCase().trim();
+  var fCat  = (typeof _stockCatFil !== 'undefined') ? _stockCatFil : 'todas';
   return (st.stock||[]).filter(function(s) {
+    // Filtro por categoría
+    if (fCat && fCat !== 'todas') {
+      if ((s.categoria||'Tela') !== fCat) return false;
+    }
     if (qHoja && String(s.hoja||'').toLowerCase().indexOf(qHoja) === -1) return false;
     if (qProv && (s.proveedor||'').toLowerCase().indexOf(qProv) === -1) return false;
     if (q) {
@@ -3678,7 +3683,8 @@ function renderStockLista() {
   var q = (document.getElementById('stock-buscar')||{}).value||'';
   var fHoja = (document.getElementById('stock-fil-hoja')||{}).value||'';
   var fProv = (document.getElementById('stock-fil-prov')||{}).value||'';
-  var fCatActive = typeof _stockCatFil !== 'undefined' && _stockCatFil !== 'todas';
+  var fCat = (typeof _stockCatFil !== 'undefined') ? _stockCatFil : 'todas';
+  var fCatActive = fCat !== 'todas';
   if (!q.trim() && !fHoja.trim() && !fProv.trim() && !fCatActive) {
     el.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--t3);font-size:13px;">Seleccioná una categoría o buscá por artículo, hoja o proveedor</div>';
     return;
