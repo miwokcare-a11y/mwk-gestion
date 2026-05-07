@@ -2358,13 +2358,13 @@ function renderHistorial(){
       '<div class="hfoot"><span style="font-size:11px;color:var(--t3);">'+esc(h.empresa||'')+'</span>'+
       '<div style="margin-top:10px;">'+
       recBtn+
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">'+
-        '<button class="hpdf" onclick="generarPDF(true,st.historial['+idx+'])">⬇ PDF</button>'+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="color:#2a5a8a;" onclick="abrirEditNota('+idx+')">✏ Editar</button>':'')+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="color:#5a2a8a;" onclick="abrirEditItems('+idx+')">✎ Ítems</button>':'')+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="color:#b06020;" onclick="cancelarPedido('+idx+')">✕ Cancelar</button>':
-         '<span style="font-size:11px;font-weight:700;color:#b06020;padding:3px 8px;">CANCELADO</span>')+
-        '<button class="hpdf" style="color:#8b2e22;" onclick="eliminarPedido('+idx+')">🗑</button>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;">'+
+        '<button class="hpdf" style="width:100%;" onclick="generarPDF(true,st.historial['+idx+'])">⬇ PDF</button>'+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#2a5a8a;" onclick="abrirEditNota('+idx+')">✏ Editar</button>':'<span></span>')+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#5a2a8a;" onclick="abrirEditItems('+idx+')">✎ Ítems</button>':'<span></span>')+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#b06020;" onclick="cancelarPedido('+idx+')">✕ Cancelar</button>':
+         '<span style="font-size:11px;font-weight:700;color:#b06020;padding:3px 8px;grid-column:1/3;">CANCELADO</span>')+
+        '<button class="hpdf" style="width:100%;color:#8b2e22;" onclick="eliminarPedido('+idx+')">🗑</button>'+
       '</div>'+
       '</div></div>'+
     '</div>';
