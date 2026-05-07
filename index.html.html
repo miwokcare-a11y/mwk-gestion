@@ -3742,12 +3742,14 @@ function renderStockLista() {
           '<div class="stock-num" style="font-size:15px;color:var(--b2);">'+fmt(kg)+'</div>'+
           '<div class="stock-und">KG</div>'+
         '</div>'+
-        '<div class="stock-adj">'+
-          '<button class="adj-btn" onclick="editarStockItem('+idx+')" title="Editar">✎</button>'+
-          '<button class="adj-btn" style="color:#3a6a2a;" onclick="abrirDescuentoModal('+idx+')" title="Descontar por producción">✂</button>'+
-          '<button class="adj-btn" style="color:#b06020;" onclick="abrirDevModal('+idx+')" title="Devolución al proveedor">↩</button>'+
-          '<button class="adj-btn" style="color:var(--ac,#C4866A);font-weight:700;" onclick="reponerStock('+idx+')" title="Generar reposición">+</button>'+
-          '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarStock('+idx+')" title="Eliminar">×</button>'+
+        '<div style="display:flex;flex-direction:column;gap:6px;margin-left:auto;">'+
+          '<div style="display:flex;gap:6px;">'+
+            '<button class="adj-btn" onclick="editarStockItem('+idx+')" title="Editar">✎</button>'+
+            '<button class="adj-btn" style="color:#3a6a2a;" onclick="abrirDescuentoModal('+idx+')" title="Descontar">✂</button>'+
+            '<button class="adj-btn" style="color:#b06020;" onclick="abrirDevModal('+idx+')" title="Devolución">↩</button>'+
+            '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarStock('+idx+')" title="Eliminar">×</button>'+
+          '</div>'+
+          '<button onclick="reponerStock('+idx+')" style="background:var(--ac,#C4866A);color:#fff;border:none;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;">+ Reponer</button>'+
         '</div>'+
       '</div>'+
     '</div>';
