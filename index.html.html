@@ -719,11 +719,20 @@ select.fi{appearance:none;
           <input class="fi" type="text" inputmode="decimal" id="snp-rinde" placeholder="Rinde">
           <input class="fi" type="text" inputmode="decimal" id="snp-min" placeholder="Stock mínimo (alerta)">
         </div>
-        <select class="fi" id="snp-cat" style="width:100%;margin-bottom:8px;">
-          <option value="Tela">Tela</option>
-          <option value="Avío">Avío</option>
-          <option value="Otro">Otro</option>
-        </select>
+        <div class="frow">
+          <select class="fi" id="snp-cat">
+            <option value="Tela">Tela</option>
+            <option value="Avío">Avío</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <select class="fi" id="snp-unidad">
+            <option value="m">m (metros)</option>
+            <option value="kg">kg (kilos)</option>
+            <option value="u">u (unidades)</option>
+            <option value="rollo">rollo</option>
+            <option value="par">par</option>
+          </select>
+        </div>
         <textarea class="fi" id="snp-obs" placeholder="Observaciones" style="width:100%;height:55px;margin-bottom:8px;"></textarea>
         <button class="btn bmail" onclick="agregarStock()">Guardar</button>
       </div>
@@ -3884,6 +3893,7 @@ function agregarStock() {
     stock_mts: mts,
     kg: parseFloat(document.getElementById('snp-kg').value)||0,
     ancho: parseFloat(document.getElementById('snp-ancho').value)||0,
+    unidad_compra: (document.getElementById('snp-unidad')?document.getElementById('snp-unidad').value:'m')||'m',
     rinde: parseFloat(document.getElementById('snp-rinde').value)||0,
     stock_minimo: parseFloat(document.getElementById('snp-min').value)||0,
     categoria: document.getElementById('snp-cat').value||'Tela',
