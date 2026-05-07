@@ -4673,39 +4673,67 @@ function explotarConsumos() {
   var costoTotal = 0;
 
   fichasFiltradas.forEach(function(f) {
-    // Unidades reales desde la curva de talles
     var totalUnd = (f.colores||[]).reduce(function(s,col){ return s+totalTalles(col.talles||{}); },0);
     if (!totalUnd && f.talles) totalUnd = totalTalles(f.talles);
     if (!totalUnd) { toast('El modelo "'+f.nombre+'" no tiene curva de talles cargada'); return; }
     unidadesTotal += totalUnd;
     costoTotal += costoFicha(f) * totalUnd;
 
-    function acumular(m, extra) {
+    // Acumular por nombre + color
+    function acumular(m, color, cant) {
       if (!(m.nombre||'').trim()) return;
-      var key = m.nombre.trim().toLowerCase();
-      var stockItem = (st.catalogo||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(key)!==-1; }) ||
-                      (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(key)!==-1; });
+      var nom = m.nombre.trim();
+      var col = (color||'General').trim();
+      var key = nom.toLowerCase()+'|'+(col.toLowerCase());
+      var stockNom = nom.toLowerCase();
+      var stockItem = (st.stock||[]).find(function(s){
+        return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1 &&
+               ((s.color||'').toLowerCase().indexOf(col.toLowerCase())!==-1 || col==='General');
+      }) || (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1; });
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
       if (!consumos[key]) consumos[key] = {
-        nombre:m.nombre.trim(), unidad:m.unidad||'u', precio:parseFloat(m.precio)||0,
-        proveedor: prov, necesario:0, modelos:[]
+        nombre:nom, color:col, unidad:m.unidad||'u',
+        precio:parseFloat(m.precio)||0, proveedor:prov, necesario:0, modelos:[]
       };
-      var cant = (parseFloat(m.cantidad)||0) * totalUnd * (extra||1);
       consumos[key].necesario += cant;
       if (!consumos[key].precio && m.precio) consumos[key].precio = parseFloat(m.precio)||0;
       if (consumos[key].proveedor==='—' && prov!=='—') consumos[key].proveedor = prov;
-      consumos[key].modelos.push(f.nombre+' ('+Math.round(cant*100)/100+' '+m.unidad+')');
+      consumos[key].modelos.push(f.nombre+' ('+Math.round(cant*100)/100+' '+(m.unidad||'u')+')');
     }
 
-    // Telas
-    (f.telas||[]).forEach(function(m){ acumular(m); });
-    // Avíos generales
-    (f.materiales||[]).forEach(function(m){ acumular(m); });
-    // Avíos por variante — proporcional al peso de cada color
-    var totalFichaUnd = (f.colores||[]).reduce(function(s,c){ return s+(c.total||0); },0)||1;
-    (f.colores||[]).forEach(function(col){
-      var peso = (col.total||0)/totalFichaUnd;
-      (col.avios||[]).forEach(function(a){ acumular(a, peso); });
+    var colores = (f.colores||[]).filter(function(c){ return (c.total||0)>0; });
+    var totalFichaUnd = colores.reduce(function(s,c){ return s+(c.total||0); },0)||totalUnd;
+
+    // Telas: igual cantidad para todos los colores → una fila por color
+    (f.telas||[]).forEach(function(m){
+      if (colores.length) {
+        colores.forEach(function(col){
+          var cant = (parseFloat(m.cantidad)||0) * (col.total||0);
+          acumular(m, col.color, cant);
+        });
+      } else {
+        acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
+      }
+    });
+
+    // Avíos generales: igual para todos los colores
+    (f.materiales||[]).forEach(function(m){
+      if (colores.length) {
+        colores.forEach(function(col){
+          var cant = (parseFloat(m.cantidad)||0) * (col.total||0);
+          acumular(m, col.color, cant);
+        });
+      } else {
+        acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
+      }
+    });
+
+    // Avíos por variante: solo para su color
+    colores.forEach(function(col){
+      (col.avios||[]).forEach(function(a){
+        var cant = (parseFloat(a.cantidad)||0) * (col.total||0);
+        acumular(a, col.color, cant);
+      });
     });
   });
 
@@ -4713,18 +4741,26 @@ function explotarConsumos() {
   var rows = Object.keys(consumos).map(function(key){
     var mat = consumos[key];
     var unidad = mat.unidad||'u';
+    var nom = mat.nombre.toLowerCase();
+    var col = (mat.color||'').toLowerCase();
     var stockItem = (st.stock||[]).find(function(s){
-      return (s.nombre||'').toLowerCase().indexOf(key)!==-1 || key.indexOf((s.nombre||'').toLowerCase())!==-1;
-    });
+      var sn=(s.nombre||'').toLowerCase();
+      var sc=(s.color||'').toLowerCase();
+      return (sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1) &&
+             (col==='general'||sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='');
+    }) || (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(nom)!==-1; });
     var stockAct = 0;
     if (stockItem) stockAct = unidad==='kg'?(parseFloat(stockItem.kg)||0):(parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0);
     var necesario = Math.round(mat.necesario*100)/100;
     var faltante  = Math.max(0, Math.round((necesario-stockAct)*100)/100);
     return {
-      nombre:mat.nombre, unidad:unidad, precio:mat.precio, proveedor:mat.proveedor,
+      nombre:mat.nombre, color:mat.color, unidad:unidad, precio:mat.precio, proveedor:mat.proveedor,
       necesario:necesario, stock:stockAct, faltante:faltante, ok:faltante===0, modelos:mat.modelos
     };
-  }).sort(function(a,b){ return a.nombre.localeCompare(b.nombre); });
+  }).sort(function(a,b){
+    var n=a.nombre.localeCompare(b.nombre);
+    return n!==0?n:a.color.localeCompare(b.color);
+  });
 
   window._planRows = rows;
   window._planMeta = {unidades:unidadesTotal, costo:costoTotal};
@@ -4741,11 +4777,12 @@ function explotarConsumos() {
         kpiSmall(rows.filter(function(r){return !r.ok;}).length,'Materiales faltantes',rows.some(function(r){return !r.ok;})?'#c0622a':'#3a6a2a')+
       '</div>'+
       '<div style="overflow-x:auto;"><table class="dash-table">'+
-      '<thead><tr><th>Material</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
+      '<thead><tr><th>Material</th><th>Color</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
       rows.map(function(r){
         var compra = r.faltante>0 ? '$'+fmt(r.faltante*r.precio) : '—';
         return '<tr style="'+(r.ok?'':'background:rgba(192,98,42,.05);')+'">'+
           '<td style="font-weight:600;">'+esc(r.nombre)+'</td>'+
+          '<td style="font-size:12px;color:var(--t2);">'+(r.color!=='General'?esc(r.color):'—')+'</td>'+
           '<td style="font-size:11px;color:var(--t2);">'+esc(r.proveedor)+'</td>'+
           '<td>'+r.necesario+' '+esc(r.unidad)+'</td>'+
           '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
@@ -4778,10 +4815,11 @@ function explotarConsumos() {
             faltantes+' faltante'+(faltantes!==1?'s':'')+'</span>'+
         '</div>'+
         '<div style="overflow-x:auto;"><table class="dash-table">'+
-        '<thead><tr><th>Material</th><th>Necesario</th><th>Stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
+        '<thead><tr><th>Material</th><th>Color</th><th>Necesario</th><th>Stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
         gr.rows.map(function(r){
           return '<tr style="'+(r.ok?'':'background:rgba(192,98,42,.05);')+'">'+
             '<td style="font-weight:600;">'+esc(r.nombre)+'</td>'+
+            '<td style="font-size:12px;color:var(--t2);">'+(r.color!=='General'?esc(r.color):'—')+'</td>'+
             '<td>'+r.necesario+' '+esc(r.unidad)+'</td>'+
             '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
             '<td style="font-weight:700;color:'+(r.faltante>0?'#8b2e22':'#3a6a2a')+'">'+(r.faltante>0?r.faltante+' '+esc(r.unidad):'✓ OK')+'</td>'+
