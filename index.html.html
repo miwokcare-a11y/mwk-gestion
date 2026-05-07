@@ -3752,10 +3752,24 @@ function renderStockLista() {
           (s.color_diseno?'<span style="font-size:11px;background:rgba(42,90,160,.1);color:#2a4a8a;padding:1px 7px;border-radius:10px;">🎨 '+esc(s.color_diseno)+'</span>':'')+
           '<br>'+esc(s.proveedor||'')+(s.hoja?' · Hoja '+s.hoja:'')+'<br>'+
           (s.ancho?'Ancho: '+s.ancho+'m · ':'')+(s.rinde?'Rinde: '+s.rinde:'')+
-          (s.precio_metro>0||s.precio_ars>0?'<br>'+
-            (s.precio_ars>0?'<span style="font-size:11px;color:var(--t2);">$'+fmt(s.precio_ars)+' ARS/'+(s.unidad_compra||'kg')+(s.moneda==='USD'?' · USD '+fmt(s.precio_unit):'')+'</span>':'')+
-            (s.precio_metro>0?' <span style="font-size:12px;color:#2a4a8a;font-weight:700;">· $'+fmt(s.precio_metro)+'/m</span>':'')
-          :'')+ 
+          '<br>'+
+          (function(){
+            var out='';
+            var pARS=parseFloat(s.precio_ars)||0;
+            var pUSD=parseFloat(s.precio_unit)||0;
+            var pm=parseFloat(s.precio_metro)||0;
+            var rinde=parseFloat(s.rinde)||0;
+            // Costo por unidad de compra (kg/m/u)
+            if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(s.moneda==="USD"&&pUSD>0?' · U$'+fmt(pUSD):'')+'</span> ';
+            // Costo por metro (si no está calculado, calcularlo desde precio_ars/rinde)
+            if(pm>0){
+              out+='<span style="font-size:12px;color:var(--cobalt,#6A8090);font-weight:700;">$'+fmt(pm)+'/m</span>';
+            } else if(pARS>0&&rinde>0){
+              var calc=pARS/rinde;
+              out+='<span style="font-size:11px;color:var(--cobalt,#6A8090);">≈ $'+fmt(calc)+'/m</span>';
+            }
+            return out;
+          })()+ 
         '</div>'+
         (esAlerta?'<div class="stock-min">⚠ Bajo mínimo ('+s.stock_minimo+' m)</div>':'')+
         (s.observaciones?'<div style="font-size:10px;color:var(--t3);margin-top:2px;">'+esc(s.observaciones)+'</div>':'')+
