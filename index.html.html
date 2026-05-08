@@ -2227,8 +2227,9 @@ function registrar(prov,items,cb){
         st.planPedidos[key] = { nro: nro, fecha: fecha };
       });
       // Persistir en config
-      SB.from('mwk_config').update({plan_pedidos: st.planPedidos}, {id:1});
+      SB.from('mwk_config').upsert({id:1, plan_pedidos: st.planPedidos});
       window._pedidoDesdePlan = null;
+      toast('✅ Ítems marcados como pedidos en el plan');
     }
 
     if(cb) cb();
