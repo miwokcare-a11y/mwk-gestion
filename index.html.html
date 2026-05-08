@@ -3900,16 +3900,16 @@ function renderStockLista() {
         (esAlerta?'<div class="stock-min">⚠ Bajo mínimo ('+s.stock_minimo+' m)</div>':'')+
         (s.observaciones?'<div style="font-size:10px;color:var(--t3);margin-top:2px;">'+esc(s.observaciones)+'</div>':'')+
       '</div>'+
-      '<div style="display:flex;gap:12px;margin-left:auto;align-items:center;">'+
-        '<div class="stock-qty">'+
-          '<div class="stock-num" style="color:#2a4a8a;">'+fmt(mts)+'</div>'+
-          '<div class="stock-und">MTS</div>'+
-        '</div>'+
-        '<div class="stock-qty">'+
-          '<div class="stock-num" style="font-size:15px;color:var(--b2);">'+fmt(kg)+'</div>'+
-          '<div class="stock-und">KG</div>'+
-        '</div>'+
-        '<div style="display:flex;flex-direction:column;gap:6px;margin-left:auto;">'+
+      '<div style="display:flex;gap:8px;margin-left:auto;align-items:center;">'+
+        // Mostrar MTS si tiene
+        (mts>0?'<div class="stock-qty"><div class="stock-num" style="color:#2a4a8a;">'+fmt(mts)+'</div><div class="stock-und">MTS</div></div>':'')+
+        // Mostrar KG si tiene
+        (kg>0?'<div class="stock-qty"><div class="stock-num" style="color:var(--b2);">'+fmt(kg)+'</div><div class="stock-und">KG</div></div>':'')+
+        // Mostrar Unidades si tiene
+        (parseFloat(s.cantidad)>0&&(s.unidad_compra==='u'||s.unidad_compra==='unidad'||s.unidad_compra==='par'||s.unidad_compra==='rollo')?'<div class="stock-qty"><div class="stock-num" style="color:#5a3a8a;">'+fmt(s.cantidad)+'</div><div class="stock-und">'+(s.unidad_compra||'U').toUpperCase()+'</div></div>':'')+
+        // Si nada tiene valor, mostrar 0 MTS
+        (!mts&&!kg&&!(parseFloat(s.cantidad)>0&&s.unidad_compra&&s.unidad_compra!=='m'&&s.unidad_compra!=='kg')?'<div class="stock-qty"><div class="stock-num" style="color:var(--t3);">0</div><div class="stock-und">MTS</div></div>':'')+
+                '<div style="display:flex;flex-direction:column;gap:6px;margin-left:auto;">'+
           '<div style="display:flex;gap:6px;">'+
             '<button class="adj-btn" onclick="editarStockItem('+idx+')" title="Editar">✎</button>'+
             '<button class="adj-btn" style="color:#3a6a2a;" onclick="abrirDescuentoModal('+idx+')" title="Descontar">✂</button>'+
