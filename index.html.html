@@ -4251,7 +4251,7 @@ function renderDevoluciones() {
     el.innerHTML = '<div class="empty"><div class="ei">↩</div>Sin devoluciones registradas</div>';
     return;
   }
-  el.innerHTML = lista.map(function(d) {
+  el.innerHTML = lista.map(function(d, didx) {
     return '<div class="dev-item">'+
       '<div class="dev-header">'+
         '<div>'+
@@ -4265,7 +4265,10 @@ function renderDevoluciones() {
         '</div>'+
       '</div>'+
       (d.motivo?'<div style="font-size:12px;color:var(--t2);margin-top:6px;padding-top:6px;border-top:1px solid rgba(26,36,51,.08);">'+esc(d.motivo)+'</div>':'')+
-      '<div style="font-size:10px;color:var(--t3);margin-top:4px;">'+(d.desconto_stock?'✓ Stock descontado':'Solo registro')+'</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(26,36,51,.06);">'+
+        '<div style="font-size:10px;color:var(--t3);">'+(d.desconto_stock?'✓ Stock descontado':'Solo registro')+'</div>'+
+        '<button onclick="pdfDevolucion('+didx+')" style="background:none;border:1px solid var(--s3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);">⬇ PDF</button>'+
+      '</div>'+
     '</div>';
   }).join('');
 }
@@ -4275,6 +4278,111 @@ function renderDevResumenHome() {
   if (!el) return;
   var total = (st.devoluciones||[]).length;
   el.textContent = total > 0 ? total+' devolución'+(total!==1?'es':'') : 'Sin registros';
+}
+
+// ════════════════════════════════════════════════════════════════
+// PDF DEVOLUCIÓN
+// ════════════════════════════════════════════════════════════════
+function pdfDevolucion(idx) {
+  var d = (st.devoluciones||[])[idx];
+  if (!d) return;
+  toast('Generando PDF...');
+
+  var MM = 150/25.4;
+  var PW = Math.round(210*MM);
+  var PH = Math.round(297*MM);
+  var cv = document.createElement('canvas');
+  cv.width=PW; cv.height=PH;
+  var c = cv.getContext('2d');
+
+  function p(mm){ return Math.round(mm*MM); }
+  function rf(x,y,w,h,col){ c.fillStyle=col; c.fillRect(p(x),p(y),p(w),p(h)); }
+  function ln(x1,y1,x2,y2,col,lw){ c.strokeStyle=col; c.lineWidth=p(lw||0.3); c.beginPath(); c.moveTo(p(x1),p(y1)); c.lineTo(p(x2),p(y2)); c.stroke(); }
+  function tx(str,x,y,sz,col,align,bold){
+    c.font=(bold?'700 ':'400 ')+p(sz)+'px Arial,sans-serif';
+    c.fillStyle=col||'#1A1410'; c.textAlign=align||'left';
+    c.fillText(String(str||''),p(x),p(y)); c.textAlign='left';
+  }
+
+  // Fondo blanco
+  rf(0,0,210,297,'#FDFAF6');
+
+  // Header cobalt
+  rf(0,0,210,42,'#4D6478');
+
+  // Logo MWK
+  c.font='700 '+p(10)+'px Arial,sans-serif';
+  c.fillStyle='#fff'; c.letterSpacing=p(3)+'px';
+  c.fillText('MWK',p(16),p(18)); c.letterSpacing='0px';
+
+  tx('Nota de Devolución',210-16,16,5.5,'#fff','right',false);
+  tx(fmtD(d.fecha)||new Date().toLocaleDateString('es-AR'),210-16,26,4,'rgba(255,255,255,.7)','right');
+
+  // Artículo
+  var CY = 52;
+  tx('ARTÍCULO',16,CY+4,2.8,'#A89E94');
+  tx((d.nombre||'—')+(d.color_diseno?' · '+d.color_diseno:''),16,CY+12,5.5,'#2C2416',undefined,true);
+  CY += 24;
+  ln(16,CY,194,CY,'#E8E0D4',0.4); CY += 6;
+
+  // Datos
+  var datos = [
+    ['Proveedor', d.proveedor||'—'],
+    ['Hoja / Grupo', d.hoja||'—'],
+    ['Cantidad devuelta', (d.mts_devueltos?fmt(d.mts_devueltos)+' MTS':'')+(d.kg_devueltos?(d.mts_devueltos?' · ':'')+fmt(d.kg_devueltos)+' KG':'') || '—'],
+    ['Color factura', d.color||'—'],
+    ['Color diseño', d.color_diseno||'—'],
+    ['Fecha', fmtD(d.fecha)||'—'],
+    ['Stock descontado', d.desconto_stock?'Sí':'No']
+  ];
+
+  datos.forEach(function(row){
+    tx(row[0].toUpperCase(),16,CY+3.5,2.5,'#A89E94');
+    tx(row[1],90,CY+3.5,3.5,'#2C2416');
+    CY += 10;
+  });
+
+  CY += 8;
+  ln(16,CY,194,CY,'#E8E0D4',0.4); CY += 8;
+
+  // Motivo
+  tx('MOTIVO DE DEVOLUCIÓN',16,CY+4,2.8,'#A89E94');
+  CY += 10;
+  // Texto del motivo (con wrap simple)
+  var motivo = d.motivo||'Sin motivo registrado';
+  c.font='400 '+p(4.2)+'px Arial,sans-serif';
+  c.fillStyle='#2C2416';
+  var words = motivo.split(' ');
+  var line = '', maxW = p(178);
+  words.forEach(function(w){
+    var test = line ? line+' '+w : w;
+    if(c.measureText(test).width > maxW) {
+      c.fillText(line, p(16), p(CY));
+      line = w; CY += 7;
+    } else { line = test; }
+  });
+  if(line){ c.fillText(line, p(16), p(CY)); CY += 7; }
+
+  CY += 10;
+  ln(16,CY,194,CY,'#E8E0D4',0.4); CY += 20;
+
+  // Firmas
+  var FW = 65;
+  ln(16,CY,16+FW,CY,'#C8CDD6',0.4);
+  tx('FIRMA EMPRESA',16,CY+5,2.5,'#A89E94');
+  ln(194-FW,CY,194,CY,'#C8CDD6',0.4);
+  tx('FIRMA PROVEEDOR',194-FW,CY+5,2.5,'#A89E94','left');
+
+  // Footer
+  ln(16,285,194,285,'#E8E0D4',0.4);
+  c.font='700 '+p(3.5)+'px Arial,sans-serif';
+  c.fillStyle='#4D6478'; c.letterSpacing=p(1.5)+'px';
+  c.fillText('MWK',p(16),p(291)); c.letterSpacing='0px';
+  tx('miwok.com.ar',194,291,3,'#A89E94','right');
+
+  // Generar PDF
+  var jpg = cv.toDataURL('image/jpeg',0.94).split(',')[1];
+  buildPDFAndDownload(jpg, PW, PH, 'mwk-devolucion-'+esc(d.nombre||'').substring(0,20).replace(/\s/g,'-')+'.pdf');
 }
 
 // ════════════════════════════════════════════════════════════════
