@@ -1004,6 +1004,10 @@ select.fi{appearance:none;
       <div><div class="flbl">MTS</div><input class="fi" type="number" id="desc-mts" placeholder="0" min="0" step="any"></div>
       <div><div class="flbl">KG</div><input class="fi" type="number" id="desc-kg" placeholder="0" min="0" step="any"></div>
     </div>
+    <div class="frow" style="margin-bottom:10px;">
+      <div><div class="flbl">Unidades (u)</div><input class="fi" type="number" id="desc-u" placeholder="0" min="0" step="1"></div>
+      <div></div>
+    </div>
     <div class="flbl" style="margin-bottom:4px;">Motivo (opcional)</div>
     <textarea class="fi" id="desc-motivo" placeholder="Ej: Corte modelo Buzo capucha INV26..." style="width:100%;height:60px;margin-bottom:12px;"></textarea>
     <button class="btn bmail" onclick="confirmarDescuento()">✂ Descontar del stock</button>
@@ -4270,6 +4274,7 @@ function renderDevoluciones() {
         '<div style="text-align:right;">'+
           (d.mts_devueltos?'<div class="dev-badge">'+fmt(d.mts_devueltos)+' MTS</div>':'') +
           (d.kg_devueltos?'<div class="dev-badge" style="margin-top:4px;">'+fmt(d.kg_devueltos)+' KG</div>':'') +
+          (d.unidades_devueltas?'<div class="dev-badge" style="margin-top:4px;">'+fmt(d.unidades_devueltas)+' U</div>':'') +
         '</div>'+
       '</div>'+
       (d.motivo?'<div style="font-size:12px;color:var(--t2);margin-top:6px;padding-top:6px;border-top:1px solid rgba(26,36,51,.08);">'+esc(d.motivo)+'</div>':'')+
@@ -5669,6 +5674,7 @@ function abrirDescuentoModal(idx) {
     '<div style="font-size:12px;color:var(--t2);">Stock actual: <b>'+fmt(s.stock_mts||0)+' MTS</b> · '+fmt(s.kg||0)+' KG</div>';
   var dm = document.getElementById('desc-mts'); if (dm) dm.value = '';
   var dk = document.getElementById('desc-kg');  if (dk) dk.value = '';
+  var du = document.getElementById('desc-u');   if (du) du.value = '';
   var mot = document.getElementById('desc-motivo'); if (mot) mot.value = '';
   document.getElementById('desc-modal').style.display = 'flex';
 }
@@ -5685,13 +5691,15 @@ function confirmarDescuento() {
   if (!s) return;
   var mts    = parseFloat(document.getElementById('desc-mts').value)||0;
   var kg     = parseFloat(document.getElementById('desc-kg').value)||0;
+  var unids  = parseFloat(document.getElementById('desc-u').value)||0;
   var motivo = (document.getElementById('desc-motivo').value||'').trim();
-  if (!mts && !kg) { toast('Ingresá al menos MTS o KG a descontar'); return; }
+  if (!mts && !kg && !unids) { toast('Ingresá la cantidad a descontar'); return; }
 
   var nuevaMts = Math.max(0, (parseFloat(s.stock_mts)||0) - mts);
   var nuevaKg  = Math.max(0, (parseFloat(s.kg)||0) - kg);
+  var nuevaCant= Math.max(0, (parseFloat(s.cantidad)||0) - unids);
 
-  SB.from('mwk_stock').update({stock_mts:nuevaMts, kg:nuevaKg, cantidad:nuevaMts}, {id:s.id}).then(function(){
+  SB.from('mwk_stock').update({stock_mts:nuevaMts, kg:nuevaKg, cantidad:unids>0?nuevaCant:nuevaMts}, {id:s.id}).then(function(){
     // Registrar en devoluciones como movimiento de producción
     var registro = {
       stock_id: s.id,
