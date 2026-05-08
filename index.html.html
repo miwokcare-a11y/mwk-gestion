@@ -2194,6 +2194,7 @@ function registrar(prov,items,cb){
   if(md)st.misdatos=md;
   // Detectar si viene del plan de producción
   var planOrigen = window._pedidoDesdePlan || null;
+  console.log('registrar - planOrigen:', planOrigen);
 
   var record = {
     nro: nro,
@@ -4972,7 +4973,7 @@ function explotarConsumos() {
             '<span style="color:rgba(255,255,255,.7);font-size:12px;">'+
               (gr.totalCompra>0?'<b style="color:#fff;">$'+fmt(gr.totalCompra)+'</b> · ':'')+
               faltantes+' faltante'+(faltantes!==1?'s':'')+'</span>'+
-            ((function(){
+            (function(){
         if (!window._planProvRows) window._planProvRows = {};
         var pi = Object.keys(window._planProvRows).length;
         window._planProvRows[pi] = {prov:prov, rows:gr.rows.filter(function(r){return r.faltante>0;})};
