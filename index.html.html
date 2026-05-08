@@ -1057,6 +1057,8 @@ create policy "allow all" on mwk_productos for all using (true) with check (true
 create policy "allow all" on mwk_proveedores for all using (true) with check (true);
 create policy "allow all" on mwk_historial for all using (true) with check (true);
 alter table mwk_historial add column if not exists cambios jsonb default '[]'::jsonb;
+alter table mwk_historial add column if not exists plan_origen bool default false;
+alter table mwk_config add column if not exists plan_pedidos jsonb default '{}'::jsonb;
 create table mwk_stock (id bigserial primary key, nombre text, color text, color_diseno text, hoja text, proveedor text, unidad text default 'm', categoria text default 'Tela', cantidad numeric default 0, stock_mts numeric default 0, kg numeric default 0, ancho numeric default 0, rinde numeric default 0, stock_minimo numeric default 0, observaciones text, created_at timestamptz default now());
 alter table mwk_stock add column if not exists precio_unit numeric default 0;
 alter table mwk_stock add column if not exists moneda text default 'ARS';
@@ -1082,7 +1084,7 @@ create policy "allow all" on mwk_stock for all using (true) with check (true);</
 <div id="stock-modal">
   <div class="modal-box">
     <div class="modal-title">
-      <span>Editar tela</span>
+      <span id="em-modal-title">Editar artículo</span>
       <button class="modal-close" onclick="cerrarModalStock()">×</button>
     </div>
     <div class="frow">
@@ -1098,8 +1100,11 @@ create policy "allow all" on mwk_stock for all using (true) with check (true);</
       <input class="fi" type="text" id="em-hoja" placeholder="Hoja / Grupo">
     </div>
     <div class="frow">
-      <div><div class="flbl">Stock MTS</div><input class="fi" type="number" id="em-mts" placeholder="0" min="0" step="any"></div>
-      <div><div class="flbl">KG</div><input class="fi" type="number" id="em-kg" placeholder="0" min="0" step="any"></div>
+      <div><div class="flbl" id="em-mts-lbl">Stock MTS</div><input class="fi" type="number" id="em-mts" placeholder="0" min="0" step="any"></div>
+      <div><div class="flbl" id="em-kg-lbl">KG</div><input class="fi" type="number" id="em-kg" placeholder="0" min="0" step="any"></div>
+    </div>
+    <div class="frow" id="em-cant-row" style="display:none;">
+      <div style="width:100%;"><div class="flbl">Cantidad en stock (u)</div><input class="fi" type="number" id="em-cant" placeholder="0" min="0" step="1"></div>
     </div>
     <div class="frow">
       <div><div class="flbl">Ancho (m)</div><input class="fi" type="number" id="em-ancho" placeholder="0" min="0" step="any"></div>
@@ -1482,9 +1487,10 @@ function inicializar() {
       if(Array.isArray(fichas)) { st.fichas = fichas; renderFichasCount(); }
     }).catch(function(){});
     var cfgRow = cfg && cfg[0];
-    st.nextNro   = cfgRow ? (cfgRow.next_nro||1) : 1;
-    st.misdatos  = cfgRow ? (cfgRow.misdatos||'') : '';
-    st.corte     = cfgRow ? (cfgRow.corte||null) : null;
+    st.nextNro    = cfgRow ? (cfgRow.next_nro||1) : 1;
+    st.misdatos   = cfgRow ? (cfgRow.misdatos||'') : '';
+    st.corte      = cfgRow ? (cfgRow.corte||null) : null;
+    st.planPedidos = cfgRow ? (cfgRow.plan_pedidos||{}) : {};
     dbOk = true;
     mostrarCargando(false);
     renderHome();
@@ -2186,6 +2192,9 @@ function registrar(prov,items,cb){
   var temporada=(document.getElementById('temporada')?document.getElementById('temporada').value:'')||'';
   var md=(document.getElementById('mdat').value||'').trim();
   if(md)st.misdatos=md;
+  // Detectar si viene del plan de producción
+  var planOrigen = window._pedidoDesdePlan || null;
+
   var record = {
     nro: nro,
     nro_num: st.nextNro,
@@ -2201,14 +2210,27 @@ function registrar(prov,items,cb){
     detalle: items.map(function(i){return i.nombre+(i.color?' ('+i.color+')':'');}).join(', '),
     items_data: items,
     rec_confirmado: false,
-    alertas: false
+    alertas: false,
+    plan_origen: planOrigen ? true : false
   };
+
   SB.from('mwk_historial').insert(record).then(function(res){
     var row = Array.isArray(res) ? res[0] : res;
     if(row && row.id){ row.itemsData=items; st.historial.unshift(row); }
-    // Actualizar contador global
     st.nextNro++;
     SB.from('mwk_config').upsert({id:1, next_nro: st.nextNro, misdatos: st.misdatos||''});
+
+    // Marcar items como pedidos en el plan
+    if (planOrigen) {
+      if (!st.planPedidos) st.planPedidos = {};
+      planOrigen.items.forEach(function(key){
+        st.planPedidos[key] = { nro: nro, fecha: fecha };
+      });
+      // Persistir en config
+      SB.from('mwk_config').update({plan_pedidos: st.planPedidos}, {id:1});
+      window._pedidoDesdePlan = null;
+    }
+
     if(cb) cb();
   }).catch(function(e){ toast('Error al guardar: '+(e.message||e)); });
 }
@@ -2732,6 +2754,60 @@ function eliminarCorte() {
     renderCorteContador();
     toast('Tope eliminado');
   });
+}
+
+// ════════════════════════════════════════════════════════════════
+// GENERAR NOTA DE PEDIDO DESDE PLANIFICACIÓN (por proveedor)
+// ════════════════════════════════════════════════════════════════
+function generarPedidoDesdeProveedor(provEncoded) {
+  var prov = decodeURIComponent(provEncoded);
+  var planRows = window._planRows || [];
+
+  // Filtrar faltantes de este proveedor
+  var faltantes = planRows.filter(function(r){
+    return r.proveedor === prov && r.faltante > 0;
+  });
+
+  if (!faltantes.length) { toast('Sin faltantes para ' + prov); return; }
+
+  // Navegar a nueva nota de pedido
+  ir('s-pedido');
+
+  setTimeout(function() {
+    // Pre-llenar proveedor
+    var pnomEl = document.getElementById('pnom');
+    if (pnomEl) pnomEl.value = prov;
+
+    // Limpiar filas actuales
+    rows = [];
+
+    // Agregar una fila por cada faltante
+    faltantes.forEach(function(r) {
+      rows.push({
+        id: Date.now() + Math.random(),
+        nombre: r.nombre,
+        cantidad: r.faltante,
+        unidad: r.unidad || 'm',
+        color: r.color !== 'General' ? r.color : '',
+        color_diseno: '',
+        precio: r.precio || '',
+        moneda: 'ARS',
+        categoria: 'Tela',
+        tipo_avio: '',
+        ancho: '',
+        rinde: ''
+      });
+    });
+
+    // Marcar que esta nota viene del plan
+    window._pedidoDesdePlan = {
+      proveedor: prov,
+      items: faltantes.map(function(r){ return r.nombre+'|'+(r.color!=='General'?r.color:''); })
+    };
+
+    renderRows();
+    toast('✅ Nota pre-cargada con ' + faltantes.length + ' ítem' + (faltantes.length !== 1 ? 's' : '') + ' faltantes de ' + prov);
+  }, 400);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3794,6 +3870,11 @@ function editarStockItem(idx) {
   document.getElementById('em-precio-metro').value = s.precio_metro||'';
   var ucEl = document.getElementById('em-unidad-compra');
   if (ucEl) ucEl.value = s.unidad_compra||'kg';
+  var titleEl = document.getElementById('em-modal-title');
+  if (titleEl) titleEl.textContent = 'Editar ' + (s.categoria||'artículo').toLowerCase();
+  var cantEl = document.getElementById('em-cant');
+  if (cantEl) cantEl.value = s.cantidad||0;
+  actualizarPrecioARS();
   // Cargar cotización del día automáticamente
   var cotizEl = document.getElementById('em-cotiz');
   if (cotizEl) {
@@ -3849,7 +3930,7 @@ function guardarEdicionStock() {
     stock_minimo: parseFloat(document.getElementById('em-min').value)||0,
     categoria:    document.getElementById('em-cat').value,
     observaciones:document.getElementById('em-obs').value.trim(),
-    cantidad:     mts,
+    cantidad:     (function(){ var uc3=(document.getElementById('em-unidad-compra')||{}).value||'kg'; return uc3==='u'?(parseFloat(document.getElementById('em-cant')?document.getElementById('em-cant').value:0)||0):mts; })(),
     precio_unit:   precioU,
     moneda:        moneda,
     cotiz_usd:     cotizU,
@@ -4853,14 +4934,19 @@ function explotarConsumos() {
       '<thead><tr><th>Material</th><th>Color</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
       rows.map(function(r){
         var compra = r.faltante>0 ? '$'+fmt(r.faltante*r.precio) : '—';
-        return '<tr style="'+(r.ok?'':'background:rgba(192,98,42,.05);')+'">'+
-          '<td style="font-weight:600;">'+esc(r.nombre)+'</td>'+
+        var planKey = r.nombre+'|'+(r.color!=='General'?r.color:'');
+        var pedidoInfo = (st.planPedidos||{})[planKey];
+        var pedidoBadge = pedidoInfo
+          ? '<span style="font-size:10px;background:rgba(42,106,58,.12);color:#2a6a3a;border-radius:10px;padding:2px 7px;font-weight:700;">✓ N°'+pedidoInfo.nro+'</span>'
+          : '';
+        return '<tr style="'+(r.ok?'':(pedidoInfo?'background:rgba(42,106,58,.04);':'background:rgba(192,98,42,.05);'))+'">'+
+          '<td style="font-weight:600;">'+esc(r.nombre)+' '+pedidoBadge+'</td>'+
           '<td style="font-size:12px;color:var(--t2);">'+(r.color!=='General'?esc(r.color):'—')+'</td>'+
           '<td style="font-size:11px;color:var(--t2);">'+esc(r.proveedor)+'</td>'+
           '<td>'+r.necesario+' '+esc(r.unidad)+'</td>'+
           '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
-          '<td style="font-weight:700;color:'+(r.faltante>0?'#8b2e22':'#3a6a2a')+'">'+(r.faltante>0?r.faltante+' '+esc(r.unidad):'✓ OK')+'</td>'+
-          '<td style="font-weight:600;">'+compra+'</td>'+
+          '<td style="font-weight:700;color:'+(r.faltante>0?(pedidoInfo?'#2a6a3a':'#8b2e22'):'#3a6a2a')+'">'+(r.faltante>0?(pedidoInfo?'✓ Pedido':''+r.faltante+' '+esc(r.unidad)):'✓ OK')+'</td>'+
+          '<td style="font-weight:600;">'+(pedidoInfo?'—':compra)+'</td>'+
         '</tr>';
       }).join('')+
       '</tbody></table></div>';
@@ -4883,20 +4969,28 @@ function explotarConsumos() {
       html += '<div style="margin-bottom:16px;border:1px solid rgba(26,36,51,.1);border-radius:var(--r);overflow:hidden;">'+
         '<div style="background:var(--bk);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">'+
           '<span style="font-weight:700;color:#fff;font-size:14px;">🏭 '+esc(prov)+'</span>'+
-          '<span style="color:rgba(255,255,255,.7);font-size:12px;">'+
-            (gr.totalCompra>0?'<b style="color:#fff;">$'+fmt(gr.totalCompra)+'</b> a comprar · ':'')+
-            faltantes+' faltante'+(faltantes!==1?'s':'')+'</span>'+
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+            '<span style="color:rgba(255,255,255,.7);font-size:12px;">'+
+              (gr.totalCompra>0?'<b style="color:#fff;">$'+fmt(gr.totalCompra)+'</b> · ':'')+
+              faltantes+' faltante'+(faltantes!==1?'s':'')+'</span>'+
+            (faltantes>0?'<button onclick="generarPedidoDesdeProveedor(\''+encodeURIComponent(prov)+'\')"'+
+              ' style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;'+
+              'border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">'+
+              '+ Nota de pedido</button>':'')+
+          '</div>'+
         '</div>'+
         '<div style="overflow-x:auto;"><table class="dash-table">'+
         '<thead><tr><th>Material</th><th>Color</th><th>Necesario</th><th>Stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
         gr.rows.map(function(r){
-          return '<tr style="'+(r.ok?'':'background:rgba(192,98,42,.05);')+'">'+
-            '<td style="font-weight:600;">'+esc(r.nombre)+'</td>'+
+          var pk2 = r.nombre+'|'+(r.color!=='General'?r.color:'');
+          var pi2 = (st.planPedidos||{})[pk2];
+          return '<tr style="'+(r.ok?'':(pi2?'background:rgba(42,106,58,.05);':'background:rgba(192,98,42,.05);'))+'">'+
+            '<td style="font-weight:600;">'+esc(r.nombre)+(pi2?' <span style="font-size:10px;background:rgba(42,106,58,.12);color:#2a6a3a;border-radius:10px;padding:1px 6px;">✓ N°'+pi2.nro+'</span>':'')+'</td>'+
             '<td style="font-size:12px;color:var(--t2);">'+(r.color!=='General'?esc(r.color):'—')+'</td>'+
             '<td>'+r.necesario+' '+esc(r.unidad)+'</td>'+
             '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
-            '<td style="font-weight:700;color:'+(r.faltante>0?'#8b2e22':'#3a6a2a')+'">'+(r.faltante>0?r.faltante+' '+esc(r.unidad):'✓ OK')+'</td>'+
-            '<td>'+(r.faltante>0?'$'+fmt(r.faltante*r.precio):'—')+'</td>'+
+            '<td style="font-weight:700;color:'+(r.faltante>0?(pi2?'#2a6a3a':'#8b2e22'):'#3a6a2a')+'">'+(r.faltante>0?(pi2?'✓ Pedido':''+r.faltante+' '+esc(r.unidad)):'✓ OK')+'</td>'+
+            '<td>'+(pi2?'—':(r.faltante>0?'$'+fmt(r.faltante*r.precio):'—'))+'</td>'+
           '</tr>';
         }).join('')+
         '</tbody></table></div></div>';
@@ -5241,6 +5335,15 @@ function renderNfColores() {
 // COTIZACIÓN USD
 // ════════════════════════════════════════════════════════════════
 function actualizarPrecioARS() {
+
+  // Show/hide stock fields based on unit
+  var uc = (document.getElementById('em-unidad-compra')||{}).value||'kg';
+  var mtsRow = document.getElementById('em-mts-lbl');
+  var kgRow  = document.getElementById('em-kg-lbl');
+  var cantRow= document.getElementById('em-cant-row');
+  if (mtsRow) mtsRow.textContent = uc==='u'?'Stock MTS (ignorar)':'Stock MTS';
+  if (kgRow)  kgRow.textContent  = uc==='u'?'KG (ignorar)':'KG';
+  if (cantRow) cantRow.style.display = uc==='u'?'block':'none';
   var monedaEl  = document.getElementById('em-moneda');
   var precioEl  = document.getElementById('em-precio');
   var cotizEl   = document.getElementById('em-cotiz');
