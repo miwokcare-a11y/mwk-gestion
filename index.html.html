@@ -1761,17 +1761,25 @@ function actualizarStockDesdeRecepcion(items, recepcion) {
     // Agregar al stock si no existe
     if (!match) {
       // Crear ítem nuevo en stock
+      // Detectar categoría desde el ítem de la nota
+      var catAuto = (it.categoria||'').trim();
+      if (!catAuto) {
+        // Inferir por nombre: palabras clave de avíos
+        var nomLow = (it.nombre||'').toLowerCase();
+        var esAvio = /cierre|taza|boton|boto|cinta|elast|hilo|entret|velcro|broche|corchete|hebilla|ribete|vivo|etiq|label|bolsil|tela fus|interlinin|bies|coll|cuello|puño|puño|ziper/.test(nomLow);
+        catAuto = esAvio ? 'Avío' : 'Tela';
+      }
       var nuevoItem = {
         nombre: it.nombre.trim(),
         color: it.color||'',
         color_diseno: it.color_diseno||'',
         proveedor: '',
-        stock_mts: unidad!=='kg' ? rv : 0,
+        stock_mts: unidad!=='kg'&&unidad!=='u' ? rv : 0,
         kg: unidad==='kg' ? rv : 0,
         cantidad: rv,
-        unidad_compra: unidad||'m',
+        unidad_compra: unidad||'u',
         ancho: 0, rinde: 0, stock_minimo: 0,
-        categoria: 'Tela',
+        categoria: catAuto,
         observaciones: 'Creado automáticamente desde recepción'
       };
       SB.from('mwk_stock').insert(nuevoItem).then(function(res){
