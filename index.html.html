@@ -1699,8 +1699,9 @@ function confirmarRecepcion(){
   var items=h.itemsData||[];
   var faltantes=[],extras=[];
   items.forEach(function(it,i){
-    if(!h.recepcion||h.recepcion[i]==null)return;
-    var pedido=parseFloat(it.cantidad)||0,rv=parseFloat(h.recepcion[i])||0;
+    var pedido=parseFloat(it.cantidad)||0;
+    var rv=(h.recepcion&&h.recepcion[i]!=null&&h.recepcion[i]!=='')
+      ? parseFloat(h.recepcion[i])||0 : pedido;
     if(rv<pedido) faltantes.push({nombre:it.nombre,pedido:pedido,recibido:rv,unidad:it.unidad,diff:pedido-rv});
     else if(rv>pedido) extras.push({nombre:it.nombre,pedido:pedido,recibido:rv,unidad:it.unidad,diff:rv-pedido});
   });
@@ -1727,8 +1728,11 @@ function confirmarRecepcion(){
 function actualizarStockDesdeRecepcion(items, recepcion) {
   var noEncontrados = [];
   items.forEach(function(it, i) {
-    var rv = parseFloat(recepcion[i])||0;
-    if (!rv) return; // no se recibió nada de este ítem
+    // Si no se ingresó cantidad recibida, asumir que llegó todo lo pedido
+    var rv = (recepcion[i]!=null && recepcion[i]!=='') 
+      ? parseFloat(recepcion[i])||0 
+      : parseFloat(it.cantidad)||0;
+    if (!rv) return;
     var nombre = (it.nombre||'').trim().toLowerCase();
     var colorFact = (it.color||'').trim().toLowerCase();
     var colorDis  = (it.color_diseno||'').trim().toLowerCase();
