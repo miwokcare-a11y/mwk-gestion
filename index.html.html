@@ -1733,13 +1733,51 @@ function actualizarStockDesdeRecepcion(items, recepcion) {
     var colorFact = (it.color||'').trim().toLowerCase();
     var colorDis  = (it.color_diseno||'').trim().toLowerCase();
     var unidad = (it.unidad||'').toLowerCase();
-    // Buscar coincidencia exacta en stock
+    // Buscar en stock: primero exacto, luego flexible
     var match = (st.stock||[]).find(function(s){
       var sNom  = (s.nombre||'').trim().toLowerCase();
       var sCF   = (s.color||'').trim().toLowerCase();
       var sCD   = (s.color_diseno||'').trim().toLowerCase();
       return sNom === nombre && sCF === colorFact && sCD === colorDis;
     });
+    // Si no matchea exacto, buscar por nombre + color factura
+    if (!match && colorFact) {
+      match = (st.stock||[]).find(function(s){
+        var sNom = (s.nombre||'').trim().toLowerCase();
+        var sCF  = (s.color||'').trim().toLowerCase();
+        return sNom === nombre && sCF === colorFact;
+      });
+    }
+    // Si todavía no, buscar solo por nombre
+    if (!match) {
+      match = (st.stock||[]).find(function(s){
+        return (s.nombre||'').trim().toLowerCase() === nombre;
+      });
+    }
+    // Agregar al stock si no existe
+    if (!match) {
+      // Crear ítem nuevo en stock
+      var nuevoItem = {
+        nombre: it.nombre.trim(),
+        color: it.color||'',
+        color_diseno: it.color_diseno||'',
+        proveedor: '',
+        stock_mts: unidad!=='kg' ? rv : 0,
+        kg: unidad==='kg' ? rv : 0,
+        cantidad: rv,
+        unidad_compra: unidad||'m',
+        ancho: 0, rinde: 0, stock_minimo: 0,
+        categoria: 'Tela',
+        observaciones: 'Creado automáticamente desde recepción'
+      };
+      SB.from('mwk_stock').insert(nuevoItem).then(function(res){
+        var row = Array.isArray(res)?res[0]:res;
+        if(row) st.stock.push(row);
+        toast('📦 '+it.nombre+' agregado al stock');
+      }).catch(function(){});
+      noEncontrados = noEncontrados.filter(function(n){ return n !== (it.nombre+(it.color?' ('+it.color+')':'')); });
+      return;
+    }
     if (match) {
       // Sumar según unidad
       var nuevaMts = parseFloat(match.stock_mts)||0;
@@ -2364,7 +2402,13 @@ function borrarProd(id){
 function renderHistorial(){
   var c=document.getElementById('hist-lista');if(!c)return;
   if(!st.historial.length){c.innerHTML='<div class="empty"><div class="ei">🗂</div>No hay pedidos aún</div>';return;}
-  c.innerHTML=st.historial.map(function(h,idx){
+
+  // Separar pendientes de recibidas
+  var pendientes = st.historial.filter(function(h){ return !h.rec_confirmado && h.estado!=='cancelado'; });
+  var recibidas  = st.historial.filter(function(h){ return h.rec_confirmado; });
+  var canceladas = st.historial.filter(function(h){ return h.estado==='cancelado'; });
+
+  function renderCard(h, idx) {
     var estadoHTML='';
     if(h.rec_confirmado){
       if(h.alertas){
@@ -2401,7 +2445,24 @@ function renderHistorial(){
       '</div>'+
       '</div></div>'+
     '</div>';
-  }).join('');
+  }
+
+  // Render sections
+  var html = '';
+  if (pendientes.length) {
+    html += '<div class="sl" style="margin-bottom:10px;">📋 Pendientes de recepción ('+pendientes.length+')</div>';
+    html += pendientes.map(function(h){ return renderCard(h, st.historial.indexOf(h)); }).join('');
+  }
+  if (recibidas.length) {
+    html += '<div class="sl" style="margin:18px 0 10px;color:var(--gn);">✅ Recibidas ('+recibidas.length+')</div>';
+    html += recibidas.map(function(h){ return renderCard(h, st.historial.indexOf(h)); }).join('');
+  }
+  if (canceladas.length) {
+    html += '<div class="sl" style="margin:18px 0 10px;">✕ Canceladas ('+canceladas.length+')</div>';
+    html += canceladas.map(function(h){ return renderCard(h, st.historial.indexOf(h)); }).join('');
+  }
+  if (!html) html = '<div class="empty"><div class="ei">🗂</div>No hay pedidos aún</div>';
+  c.innerHTML = html;
 }
 
 
