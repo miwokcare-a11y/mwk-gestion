@@ -2759,14 +2759,11 @@ function eliminarCorte() {
 // ════════════════════════════════════════════════════════════════
 // GENERAR NOTA DE PEDIDO DESDE PLANIFICACIÓN (por proveedor)
 // ════════════════════════════════════════════════════════════════
-function generarPedidoDesdeProveedor(provEncoded) {
-  var prov = decodeURIComponent(provEncoded);
-  var planRows = window._planRows || [];
-
-  // Filtrar faltantes de este proveedor
-  var faltantes = planRows.filter(function(r){
-    return r.proveedor === prov && r.faltante > 0;
-  });
+function generarPedidoDesdeProveedor(provIdx) {
+  var provData = (window._planProvRows||{})[provIdx];
+  if (!provData) { toast('Error: recalculá la explosión primero'); return; }
+  var prov = provData.prov;
+  var faltantes = provData.rows;
 
   if (!faltantes.length) { toast('Sin faltantes para ' + prov); return; }
 
@@ -4917,6 +4914,7 @@ function explotarConsumos() {
   });
 
   window._planRows = rows;
+  window._planProvRows = {};
   window._planMeta = {unidades:unidadesTotal, costo:costoTotal};
 
   var res = document.getElementById('plan-resultado');
@@ -4973,10 +4971,12 @@ function explotarConsumos() {
             '<span style="color:rgba(255,255,255,.7);font-size:12px;">'+
               (gr.totalCompra>0?'<b style="color:#fff;">$'+fmt(gr.totalCompra)+'</b> · ':'')+
               faltantes+' faltante'+(faltantes!==1?'s':'')+'</span>'+
-            (faltantes>0?'<button onclick="generarPedidoDesdeProveedor(\''+encodeURIComponent(prov)+'\')"'+
-              ' style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;'+
-              'border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">'+
-              '+ Nota de pedido</button>':'')+
+            ((function(){
+        if (!window._planProvRows) window._planProvRows = {};
+        var pi = Object.keys(window._planProvRows).length;
+        window._planProvRows[pi] = {prov:prov, rows:gr.rows.filter(function(r){return r.faltante>0;})};
+        return faltantes>0?'<button onclick="generarPedidoDesdeProveedor('+pi+')" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">+ Nota de pedido</button>':'';
+      })()+
           '</div>'+
         '</div>'+
         '<div style="overflow-x:auto;"><table class="dash-table">'+
