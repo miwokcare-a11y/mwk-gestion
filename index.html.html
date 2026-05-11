@@ -1526,6 +1526,8 @@ function inicializar() {
     st.misdatos   = cfgRow ? (cfgRow.misdatos||'') : '';
     st.corte      = cfgRow ? (cfgRow.corte||null) : null;
     st.planPedidos = cfgRow ? (cfgRow.plan_pedidos||{}) : {};
+    st.cotizUSD=cfgRow?(parseFloat(cfgRow.cotiz_usd)||0):0;
+    if(st.cotizUSD>1){try{localStorage.setItem("mwk_cotiz_usd",String(st.cotizUSD));}catch(e){}}
     dbOk = true;
     mostrarCargando(false);
     renderHome();
@@ -3926,8 +3928,7 @@ function renderStockLista() {
     var idx = st.stock.indexOf(s);
     var mts = parseFloat(s.stock_mts)||0;
     var kg  = parseFloat(s.kg)||0;
-    var rinde = parseFloat(s.rinde)||0;
-    if (kg>0 && rinde>0 && mts===0) mts = Math.round(kg*rinde*100)/100;
+    if(kg>0&&(parseFloat(s.rinde)||0)>0&&mts===0)mts=Math.round(kg*parseFloat(s.rinde)*100)/100;
     var rinde = parseFloat(s.rinde)||0;
     // Si es tela con KG y rinde, calcular MTS equivalentes
     if (kg>0 && rinde>0 && mts===0) mts = Math.round(kg*rinde*100)/100;
@@ -3947,17 +3948,8 @@ function renderStockLista() {
             var out='';
             var pUSD=parseFloat(s.precio_unit)||0;
             var rindeC=parseFloat(s.rinde)||0;
-            // Usar cotización actual o la guardada en el artículo
-            // Obtener cotización: input activo → localStorage → guardada en el artículo
-            var cotizActual = getCotiz();
-            if (cotizActual <= 1) {
-              try { cotizActual = parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0; } catch(e){}
-            }
-            if (cotizActual <= 1) cotizActual = parseFloat(s.cotizacion||s.cotiz_usd)||1;
-            // Calcular pARS con cotización actual
-            var pARS = (s.moneda==='USD' && pUSD>0)
-              ? Math.round(pUSD * cotizActual * 100) / 100
-              : (parseFloat(s.precio_ars)||0);
+            var _c=getCotiz();if(_c<=1){try{_c=parseFloat(localStorage.getItem("mwk_cotiz_usd"))||0;}catch(e){}}if(_c<=1)_c=st.cotizUSD||0;if(_c<=1)_c=parseFloat(s.cotizacion||s.cotiz_usd)||1;
+            var pARS=(s.moneda==="USD"&&pUSD>0&&_c>1)?Math.round(pUSD*_c*100)/100:(parseFloat(s.precio_ars)||0);
             // Recalcular precio_ars con cotización actual si es USD
             if (s.moneda==='USD' && pUSD>0) {
               pARS = Math.round(pUSD * getCotiz() * 100) / 100;
@@ -5677,6 +5669,7 @@ function loadCotizForCat() {
 
 function saveCotiz(val) {
   try { localStorage.setItem('mwk_cotiz_usd', val); } catch(e){}
+  if(parseFloat(val)>1){st.cotizUSD=parseFloat(val);SB.from('mwk_config').update({cotiz_usd:parseFloat(val)},{id:1}).catch(function(){});}
 }
 
 function loadCotiz() {
