@@ -3947,9 +3947,12 @@ function renderStockLista() {
             var out='';
             var pUSD=parseFloat(s.precio_unit)||0;
             var rindeC=parseFloat(s.rinde)||0;
-            // Siempre recalcular pARS desde cotización actual si es USD
+            // Usar cotización actual o la guardada en el artículo
+            var cotizActual = getCotiz();
+            if (cotizActual <= 1) cotizActual = parseFloat(s.cotizacion||s.cotiz_usd)||1;
+            // Calcular pARS con cotización actual
             var pARS = (s.moneda==='USD' && pUSD>0)
-              ? Math.round(pUSD * getCotiz() * 100) / 100
+              ? Math.round(pUSD * cotizActual * 100) / 100
               : (parseFloat(s.precio_ars)||0);
             // Recalcular precio_ars con cotización actual si es USD
             if (s.moneda==='USD' && pUSD>0) {
