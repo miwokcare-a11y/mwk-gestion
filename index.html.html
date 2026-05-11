@@ -3929,6 +3929,9 @@ function renderStockLista() {
     var idx = st.stock.indexOf(s);
     var mts = parseFloat(s.stock_mts)||0;
     var kg  = parseFloat(s.kg)||0;
+    var rinde = parseFloat(s.rinde)||0;
+    // Si es tela con KG y rinde, calcular MTS equivalentes
+    if (kg>0 && rinde>0 && mts===0) mts = Math.round(kg*rinde*100)/100;
     var esAlerta = s.stock_minimo>0 && mts<=s.stock_minimo;
     var ini = (s.nombre||'??').substring(0,2).toUpperCase();
     return '<div class="stock-item'+(esAlerta?' alerta-stock':'')+'" style="flex-wrap:wrap;gap:8px;">'+
@@ -3945,15 +3948,21 @@ function renderStockLista() {
             var out='';
             var pARS=parseFloat(s.precio_ars)||0;
             var pUSD=parseFloat(s.precio_unit)||0;
-            var pm=parseFloat(s.precio_metro)||0;
-            var rinde=parseFloat(s.rinde)||0;
-            // Costo por unidad de compra (kg/m/u)
-            if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(s.moneda==="USD"&&pUSD>0?' · U$'+fmt(pUSD):'')+'</span> ';
-            // Costo por metro (si no está calculado, calcularlo desde precio_ars/rinde)
+            var rindeC=parseFloat(s.rinde)||0;
+            // Recalcular precio_ars con cotización actual si es USD
+            if (s.moneda==='USD' && pUSD>0) {
+              pARS = Math.round(pUSD * getCotiz() * 100) / 100;
+            }
+            var pm = (s.moneda==='USD' && pUSD>0 && rindeC>0)
+              ? Math.round(pARS/rindeC*100)/100
+              : (parseFloat(s.precio_metro)||0);
+            // Costo por unidad de compra
+            if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(s.moneda==="USD"&&pUSD>0?' · U$'+fmt(pUSD):'')+' </span> ';
+            // Costo por metro
             if(pm>0){
               out+='<span style="font-size:12px;color:var(--cobalt,#6A8090);font-weight:700;">$'+fmt(pm)+'/m</span>';
-            } else if(pARS>0&&rinde>0){
-              var calc=pARS/rinde;
+            } else if(pARS>0&&rindeC>0){
+              var calc=Math.round(pARS/rindeC*100)/100;
               out+='<span style="font-size:11px;color:var(--cobalt,#6A8090);">≈ $'+fmt(calc)+'/m</span>';
             }
             return out;
