@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<h
-    if (typeof _stockCatFil !== 'undefined' && _stockCatFil !== 'todas') {
-      if ((s.categoria||'Tela') !== _stockCatFil) return false;
-    }ead>
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3930,6 +3927,8 @@ function renderStockLista() {
     var mts = parseFloat(s.stock_mts)||0;
     var kg  = parseFloat(s.kg)||0;
     var rinde = parseFloat(s.rinde)||0;
+    if (kg>0 && rinde>0 && mts===0) mts = Math.round(kg*rinde*100)/100;
+    var rinde = parseFloat(s.rinde)||0;
     // Si es tela con KG y rinde, calcular MTS equivalentes
     if (kg>0 && rinde>0 && mts===0) mts = Math.round(kg*rinde*100)/100;
     var esAlerta = s.stock_minimo>0 && mts<=s.stock_minimo;
@@ -3946,9 +3945,12 @@ function renderStockLista() {
           '<br>'+
           (function(){
             var out='';
-            var pARS=parseFloat(s.precio_ars)||0;
             var pUSD=parseFloat(s.precio_unit)||0;
             var rindeC=parseFloat(s.rinde)||0;
+            // Siempre recalcular pARS desde cotización actual si es USD
+            var pARS = (s.moneda==='USD' && pUSD>0)
+              ? Math.round(pUSD * getCotiz() * 100) / 100
+              : (parseFloat(s.precio_ars)||0);
             // Recalcular precio_ars con cotización actual si es USD
             if (s.moneda==='USD' && pUSD>0) {
               pARS = Math.round(pUSD * getCotiz() * 100) / 100;
