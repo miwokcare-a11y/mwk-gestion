@@ -3948,7 +3948,11 @@ function renderStockLista() {
             var pUSD=parseFloat(s.precio_unit)||0;
             var rindeC=parseFloat(s.rinde)||0;
             // Usar cotización actual o la guardada en el artículo
+            // Obtener cotización: input activo → localStorage → guardada en el artículo
             var cotizActual = getCotiz();
+            if (cotizActual <= 1) {
+              try { cotizActual = parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0; } catch(e){}
+            }
             if (cotizActual <= 1) cotizActual = parseFloat(s.cotizacion||s.cotiz_usd)||1;
             // Calcular pARS con cotización actual
             var pARS = (s.moneda==='USD' && pUSD>0)
