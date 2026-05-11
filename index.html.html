@@ -733,6 +733,40 @@ select.fi{appearance:none;
             <option value="par">par</option>
           </select>
         </div>
+        <!-- PRECIO -->
+        <div style="background:rgba(74,90,106,.06);border-radius:var(--r);padding:12px;margin-bottom:8px;">
+          <div class="flbl" style="margin-bottom:8px;">💲 PRECIO DE COMPRA</div>
+          <div class="frow" style="margin-bottom:8px;">
+            <div>
+              <div class="flbl">Moneda</div>
+              <select class="fi" id="snp-moneda" onchange="snpActualizarPrecio()">
+                <option value="ARS">ARS</option>
+                <option value="USD">USD</option>
+              </select>
+            </div>
+            <div>
+              <div class="flbl">Precio por unidad</div>
+              <input class="fi" type="text" inputmode="decimal" id="snp-precio" placeholder="0" oninput="snpActualizarPrecio()">
+            </div>
+          </div>
+          <div class="frow" style="margin-bottom:8px;" id="snp-cotiz-row">
+            <div>
+              <div class="flbl">Cotización USD → ARS</div>
+              <input class="fi" type="text" inputmode="decimal" id="snp-cotiz" placeholder="1400" oninput="snpActualizarPrecio()">
+            </div>
+            <div>
+              <div class="flbl">$ ARS / unidad compra</div>
+              <input class="fi" id="snp-ars" placeholder="calculado" readonly style="background:var(--s2);color:var(--t2);">
+            </div>
+          </div>
+          <div class="frow">
+            <div>
+              <div class="flbl">$ ARS / metro (calculado)</div>
+              <input class="fi" id="snp-metro" placeholder="calculado" readonly style="background:var(--s2);color:var(--t2);">
+            </div>
+            <div></div>
+          </div>
+        </div>
         <textarea class="fi" id="snp-obs" placeholder="Observaciones" style="width:100%;height:55px;margin-bottom:8px;"></textarea>
         <button class="btn bmail" onclick="agregarStock()">Guardar</button>
       </div>
@@ -3612,9 +3646,37 @@ function stockCatTab(cat) {
   renderStockLista();
 }
 
+function snpActualizarPrecio() {
+  var moneda = (document.getElementById('snp-moneda')||{}).value||'ARS';
+  var precio  = parseFloat(document.getElementById('snp-precio').value)||0;
+  var cotiz   = parseFloat(document.getElementById('snp-cotiz').value)||getCotiz();
+  var rinde   = parseFloat(document.getElementById('snp-rinde').value)||0;
+
+  // Mostrar/ocultar fila cotización
+  var cotizRow = document.getElementById('snp-cotiz-row');
+  if (cotizRow) cotizRow.style.display = moneda==='USD' ? 'grid' : 'none';
+
+  var precioARS = moneda==='USD' ? precio*cotiz : precio;
+  var metro     = (precioARS>0 && rinde>0) ? precioARS/rinde : 0;
+
+  var arsEl = document.getElementById('snp-ars');
+  var metroEl = document.getElementById('snp-metro');
+  if (arsEl)   arsEl.value   = precioARS>0 ? fmt(precioARS) : '';
+  if (metroEl) metroEl.value = metro>0     ? fmt(metro)     : '';
+}
+
 function toggleFormStock() {
   var w = document.getElementById('stock-form-wrap');
-  if (w) w.style.display = w.style.display === 'none' ? 'block' : 'none';
+  if (w) {
+    var show = w.style.display === 'none';
+    w.style.display = show ? 'block' : 'none';
+    if (show) {
+      // Init cotiz field with current rate
+      var cEl = document.getElementById('snp-cotiz');
+      if (cEl && !cEl.value) cEl.value = getCotiz();
+      snpActualizarPrecio();
+    }
+  }
 }
 
 function renderStock() {
@@ -4051,6 +4113,10 @@ function agregarStock() {
     kg: parseFloat(document.getElementById('snp-kg').value)||0,
     ancho: parseFloat(document.getElementById('snp-ancho').value)||0,
     unidad_compra: (document.getElementById('snp-unidad')?document.getElementById('snp-unidad').value:'m')||'m',
+    moneda:       (document.getElementById('snp-moneda')||{value:'ARS'}).value||'ARS',
+    precio_unit:  parseFloat((document.getElementById('snp-precio')||{value:'0'}).value)||0,
+    precio_ars:   parseFloat(((document.getElementById('snp-ars')||{value:'0'}).value||'0').replace(/[^0-9,.]/g,'').replace(',','.'))||0,
+    precio_metro: parseFloat(((document.getElementById('snp-metro')||{value:'0'}).value||'0').replace(/[^0-9,.]/g,'').replace(',','.'))||0,
     rinde: parseFloat(document.getElementById('snp-rinde').value)||0,
     stock_minimo: parseFloat(document.getElementById('snp-min').value)||0,
     categoria: document.getElementById('snp-cat').value||'Tela',
