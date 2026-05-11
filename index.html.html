@@ -1526,8 +1526,6 @@ function inicializar() {
     st.misdatos   = cfgRow ? (cfgRow.misdatos||'') : '';
     st.corte      = cfgRow ? (cfgRow.corte||null) : null;
     st.planPedidos = cfgRow ? (cfgRow.plan_pedidos||{}) : {};
-    st.cotizUSD=cfgRow?(parseFloat(cfgRow.cotiz_usd)||0):0;
-    if(st.cotizUSD>1){try{localStorage.setItem("mwk_cotiz_usd",String(st.cotizUSD));}catch(e){}}
     dbOk = true;
     mostrarCargando(false);
     renderHome();
@@ -3946,26 +3944,14 @@ function renderStockLista() {
           '<br>'+
           (function(){
             var out='';
-            var pUSD=parseFloat(s.precio_unit)||0;
-            var rindeC=parseFloat(s.rinde)||0;
-            var _c=getCotiz();if(_c<=1){try{_c=parseFloat(localStorage.getItem("mwk_cotiz_usd"))||0;}catch(e){}}if(_c<=1)_c=st.cotizUSD||0;if(_c<=1)_c=parseFloat(s.cotizacion||s.cotiz_usd)||1;
-            var pARS=(s.moneda==="USD"&&pUSD>0&&_c>1)?Math.round(pUSD*_c*100)/100:(parseFloat(s.precio_ars)||0);
-            // Recalcular precio_ars con cotización actual si es USD
-            if (s.moneda==='USD' && pUSD>0) {
-              pARS = Math.round(pUSD * getCotiz() * 100) / 100;
-            }
-            var pm = (s.moneda==='USD' && pUSD>0 && rindeC>0)
-              ? Math.round(pARS/rindeC*100)/100
-              : (parseFloat(s.precio_metro)||0);
-            // Costo por unidad de compra
-            if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(s.moneda==="USD"&&pUSD>0?' · U$'+fmt(pUSD):'')+' </span> ';
-            // Costo por metro
-            if(pm>0){
-              out+='<span style="font-size:12px;color:var(--cobalt,#6A8090);font-weight:700;">$'+fmt(pm)+'/m</span>';
-            } else if(pARS>0&&rindeC>0){
-              var calc=Math.round(pARS/rindeC*100)/100;
-              out+='<span style="font-size:11px;color:var(--cobalt,#6A8090);">≈ $'+fmt(calc)+'/m</span>';
-            }
+            var pUSD  = parseFloat(s.precio_unit)||0;
+            var rinde = parseFloat(s.rinde)||0;
+            var pARS  = parseFloat(s.precio_ars)||0;
+            if(pARS>0 && pUSD>0 && Math.abs(pARS-pUSD)<0.02) pARS=0;
+            var pm    = parseFloat(s.precio_metro)||0;
+            if(!pm && pARS>0 && rinde>0) pm=Math.round(pARS/rinde*100)/100;
+            if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(pUSD>0?' · U$'+fmt(pUSD):'')+' </span> ';
+            if(pm>0){ out+='<span style="font-size:12px;color:var(--cobalt,#6A8090);font-weight:700;">$'+fmt(pm)+'/m</span>'; }
             return out;
           })()+ 
         '</div>'+
@@ -5669,7 +5655,6 @@ function loadCotizForCat() {
 
 function saveCotiz(val) {
   try { localStorage.setItem('mwk_cotiz_usd', val); } catch(e){}
-  if(parseFloat(val)>1){st.cotizUSD=parseFloat(val);SB.from('mwk_config').update({cotiz_usd:parseFloat(val)},{id:1}).catch(function(){});}
 }
 
 function loadCotiz() {
