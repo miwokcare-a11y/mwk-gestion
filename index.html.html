@@ -440,7 +440,7 @@ select.fi{appearance:none;
     </div>
     <div class="card" onclick="ir('s-fichas')">
       <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></span>
-      <div class="ct">Consumos</div>
+      <div class="ct">Consumos y costos</div>
       <div class="cs" id="fichas-count">Costos por modelo</div>
     </div>
     <div class="card" onclick="ir('s-produccion')">
@@ -875,7 +875,8 @@ select.fi{appearance:none;
 <div id="s-fichas" class="scr">
   <div class="tb">
     <button class="bk" onclick="ir('s-home')">Inicio</button>
-    <h1>Consumos</h1>
+    <h1>Consumos y costos</h1>
+    <button onclick="pdfReporteGeneral()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">⬇ Reporte</button>
   </div>
   <div style="margin-top:12px;">
     <div class="sp" style="margin-bottom:10px;" id="fichas-lista"></div>
@@ -3926,7 +3927,6 @@ function renderStockLista() {
     var idx = st.stock.indexOf(s);
     var mts = parseFloat(s.stock_mts)||0;
     var kg  = parseFloat(s.kg)||0;
-    if(kg>0&&(parseFloat(s.rinde)||0)>0&&mts===0)mts=Math.round(kg*parseFloat(s.rinde)*100)/100;
     var rinde = parseFloat(s.rinde)||0;
     // Si es tela con KG y rinde, calcular MTS equivalentes
     if (kg>0 && rinde>0 && mts===0) mts = Math.round(kg*rinde*100)/100;
@@ -3944,14 +3944,25 @@ function renderStockLista() {
           '<br>'+
           (function(){
             var out='';
-            var pUSD  = parseFloat(s.precio_unit)||0;
-            var rinde = parseFloat(s.rinde)||0;
-            var pARS  = parseFloat(s.precio_ars)||0;
-            if(pARS>0 && pUSD>0 && Math.abs(pARS-pUSD)<0.02) pARS=0;
-            var pm    = parseFloat(s.precio_metro)||0;
-            if(!pm && pARS>0 && rinde>0) pm=Math.round(pARS/rinde*100)/100;
-            if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(pUSD>0?' · U$'+fmt(pUSD):'')+' </span> ';
-            if(pm>0){ out+='<span style="font-size:12px;color:var(--cobalt,#6A8090);font-weight:700;">$'+fmt(pm)+'/m</span>'; }
+            var pARS=parseFloat(s.precio_ars)||0;
+            var pUSD=parseFloat(s.precio_unit)||0;
+            var rindeC=parseFloat(s.rinde)||0;
+            // Recalcular precio_ars con cotización actual si es USD
+            if (s.moneda==='USD' && pUSD>0) {
+              pARS = Math.round(pUSD * getCotiz() * 100) / 100;
+            }
+            var pm = (s.moneda==='USD' && pUSD>0 && rindeC>0)
+              ? Math.round(pARS/rindeC*100)/100
+              : (parseFloat(s.precio_metro)||0);
+            // Costo por unidad de compra
+            if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(s.moneda==="USD"&&pUSD>0?' · U$'+fmt(pUSD):'')+' </span> ';
+            // Costo por metro
+            if(pm>0){
+              out+='<span style="font-size:12px;color:var(--cobalt,#6A8090);font-weight:700;">$'+fmt(pm)+'/m</span>';
+            } else if(pARS>0&&rindeC>0){
+              var calc=Math.round(pARS/rindeC*100)/100;
+              out+='<span style="font-size:11px;color:var(--cobalt,#6A8090);">≈ $'+fmt(calc)+'/m</span>';
+            }
             return out;
           })()+ 
         '</div>'+
@@ -4049,15 +4060,8 @@ function guardarEdicionStock() {
   var mts = parseFloat(document.getElementById('em-mts').value)||0;
   var moneda    = document.getElementById('em-moneda').value||'ARS';
   var precioU   = parseFloat(document.getElementById('em-precio').value)||0;
-  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||0;
-  // Fallback: usar localStorage o el campo visible en la nota de pedido
-  if (!cotizU || cotizU<=1) { try{ cotizU=parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0; }catch(e){} }
-  if (!cotizU || cotizU<=1) cotizU = getCotiz();
-  if (!cotizU || cotizU<=1) cotizU = 1;
-  var precioARS = moneda==='USD' ? Math.round(precioU*cotizU*100)/100 : precioU;
-  // Calcular precio_metro
-  var rindeEM = parseFloat(document.getElementById('em-rinde').value)||0;
-  var precioMetroEM = precioARS>0 && rindeEM>0 ? Math.round(precioARS/rindeEM*100)/100 : 0;
+  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||1;
+  var precioARS = moneda==='USD' ? precioU*cotizU : precioU;
   var data = {
     nombre:       document.getElementById('em-nom').value.trim(),
     color:        document.getElementById('em-color').value.trim(),
@@ -4077,7 +4081,7 @@ function guardarEdicionStock() {
     cotiz_usd:     cotizU,
     precio_ars:    precioARS,
     unidad_compra: document.getElementById('em-unidad-compra')?document.getElementById('em-unidad-compra').value:'kg',
-    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||precioMetroEM
+    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||0
   };
   SB.from('mwk_stock').update(data, {id: s.id}).then(function(){
     Object.assign(s, data);
@@ -4465,6 +4469,142 @@ function pdfDevolucion(idx) {
   // Generar PDF
   var jpg = cv.toDataURL('image/jpeg',0.94).split(',')[1];
   buildPDFAndDownload(jpg, PW, PH, 'mwk-devolucion-'+esc(d.nombre||'').substring(0,20).replace(/\s/g,'-')+'.pdf');
+}
+
+// ════════════════════════════════════════════════════════════════
+// REPORTE DE COSTOS PDF
+// ════════════════════════════════════════════════════════════════
+function pdfReporteCostos(fichaIdx) {
+  var fichas = fichaIdx !== undefined ? [(st.fichas||[])[fichaIdx]] : (st.fichas||[]);
+  fichas = fichas.filter(Boolean);
+  if (!fichas.length) { toast('Sin fichas'); return; }
+  generarPDFCostos(fichas);
+}
+
+function pdfReporteGeneral() {
+  var fichas = st.fichas||[];
+  if (!fichas.length) { toast('Sin fichas'); return; }
+  generarPDFCostos(fichas);
+}
+
+function generarPDFCostos(fichas) {
+  toast('Generando reporte...');
+  var MM = 150/25.4;
+  var PW = Math.round(210*MM); var PH = Math.round(297*MM);
+  var cv = document.createElement('canvas');
+  cv.width=PW; cv.height=PH;
+  var ctx = cv.getContext('2d');
+  function p(mm){ return Math.round(mm*MM); }
+  function rf(x,y,w,h,col){ ctx.fillStyle=col; ctx.fillRect(p(x),p(y),p(w),p(h)); }
+  function tx(str,x,y,sz,col,align,bold){
+    ctx.font=(bold?'700 ':'400 ')+p(sz)+'px Arial,sans-serif';
+    ctx.fillStyle=col||'#2C2416'; ctx.textAlign=align||'left';
+    ctx.fillText(String(str||''),p(x),p(y)); ctx.textAlign='left';
+  }
+  function ln(x1,y1,x2,y2,col){ ctx.strokeStyle=col||'#E8E0D4'; ctx.lineWidth=p(0.3); ctx.beginPath(); ctx.moveTo(p(x1),p(y1)); ctx.lineTo(p(x2),p(y2)); ctx.stroke(); }
+
+  var pages = [];
+
+  fichas.forEach(function(f, fi) {
+    // Reset canvas
+    ctx.clearRect(0,0,PW,PH);
+    rf(0,0,210,297,'#FDFAF6');
+
+    // Header
+    rf(0,0,210,38,'#4D6478');
+    tx('MWK',16,16,10,'#fff',undefined,true);
+    tx('CONSUMOS Y COSTOS',210-16,16,4.5,'rgba(255,255,255,.7)','right');
+    tx(new Date().toLocaleDateString('es-AR'),210-16,26,3.5,'rgba(255,255,255,.5)','right');
+
+    var CY = 48;
+    // Modelo
+    tx(esc(f.nombre),16,CY+8,7,'#2C2416',undefined,true);
+    if (f.referencia||f.temporada) tx((f.referencia||'')+' · '+(f.temporada||''),16,CY+17,3.5,'#A89E94');
+    CY += 26;
+    ln(16,CY,194,CY);
+    CY += 8;
+
+    // Telas
+    var telas = f.telas||[];
+    if (telas.length) {
+      tx('🧵 TELAS',16,CY+4,3,'#6A8090',undefined,true);
+      CY += 10;
+      telas.forEach(function(m){
+        var tot = (parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0);
+        tx(esc(m.nombre||'—'),18,CY+4,3.5,'#2C2416');
+        tx(m.cantidad+' '+(m.unidad||'m'),110,CY+4,3.5,'#6B6158');
+        tx('$'+fmt(m.precio||0)+'/'+( m.unidad||'m'),145,CY+4,3.5,'#6B6158');
+        tx('$'+fmt(tot),194,CY+4,3.5,'#2C2416','right',true);
+        CY += 9;
+      });
+      ln(16,CY,194,CY); CY+=6;
+    }
+
+    // Avíos generales
+    var mats = f.materiales||[];
+    if (mats.length) {
+      tx('🔩 AVÍOS GENERALES',16,CY+4,3,'#6A8090',undefined,true);
+      CY += 10;
+      mats.forEach(function(m){
+        var tot = (parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0);
+        tx(esc(m.nombre||'—'),18,CY+4,3.5,'#2C2416');
+        tx(m.cantidad+' '+(m.unidad||'u'),110,CY+4,3.5,'#6B6158');
+        tx('$'+fmt(m.precio||0)+'/u',145,CY+4,3.5,'#6B6158');
+        tx('$'+fmt(tot),194,CY+4,3.5,'#2C2416','right',true);
+        CY += 9;
+      });
+      ln(16,CY,194,CY); CY+=6;
+    }
+
+    // Variantes de color
+    var colores = f.colores||[];
+    if (colores.length) {
+      tx('🎨 AVÍOS POR VARIANTE',16,CY+4,3,'#6A8090',undefined,true);
+      CY += 10;
+      colores.forEach(function(col){
+        if (!(col.avios||[]).length) return;
+        tx(esc(col.color||'—'),18,CY+4,3.5,'#C4866A',undefined,true);
+        CY += 8;
+        (col.avios||[]).forEach(function(a){
+          var tot = (parseFloat(a.cantidad)||0)*(parseFloat(a.precio)||0);
+          tx(esc(a.nombre||'—'),22,CY+4,3.2,'#2C2416');
+          tx(a.cantidad+' '+(a.unidad||'u'),110,CY+4,3.2,'#6B6158');
+          tx('$'+fmt(a.precio||0),145,CY+4,3.2,'#6B6158');
+          tx('$'+fmt(tot),194,CY+4,3.2,'#2C2416','right');
+          CY += 8;
+        });
+      });
+      ln(16,CY,194,CY); CY+=6;
+    }
+
+    // Totales
+    CY += 4;
+    rf(16,CY,178,28,'#F2EDE4');
+    var costoMats = costoFicha(f)-(parseFloat(f.mo)||0);
+    var costoMO   = parseFloat(f.mo)||0;
+    var costoTotal = costoFicha(f);
+    tx('Materiales',20,CY+10,3,'#6B6158');
+    tx('$'+fmt(costoMats),80,CY+10,4,'#2C2416',undefined,true);
+    tx('Mano de obra',100,CY+10,3,'#6B6158');
+    tx('$'+fmt(costoMO),148,CY+10,4,'#2C2416',undefined,true);
+    tx('COSTO TOTAL',20,CY+22,3,'#A89E94');
+    tx('$'+fmt(costoTotal),194,CY+22,5,'#C4866A','right',true);
+
+    // Footer
+    ln(16,285,194,285,'#E8E0D4');
+    tx('MWK · miwok.com.ar',16,291,3,'#A89E94');
+    tx((fi+1)+'/'+fichas.length,194,291,3,'#A89E94','right');
+
+    pages.push(cv.toDataURL('image/jpeg',0.92).split(',')[1]);
+  });
+
+  // Build multi-page PDF
+  var fname = fichas.length===1 ? 'costos-'+esc(fichas[0].nombre||'ficha').replace(/\s/g,'-')+'.pdf' : 'reporte-costos-mwk.pdf';
+  if (typeof buildPDFMultipage === 'function') {
+    buildPDFMultipage(pages, PW, PH, fname);
+  } else {
+    buildPDFAndDownload(pages[0], PW, PH, fname);
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -4880,6 +5020,7 @@ function renderFichasLista() {
           '<div style="display:flex;gap:6px;margin-top:8px;">'+
             '<button class="adj-btn" onclick="verFicha('+i+')" title="Ver detalle">👁</button>'+
             '<button class="adj-btn" onclick="editarFicha('+i+')" title="Editar">✎</button>'+
+            '<button class="adj-btn" style="color:var(--cobalt,#6A8090);" onclick="pdfReporteCostos('+i+')" title="Reporte PDF">⬇</button>'+
             '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarFicha('+i+')" title="Eliminar">×</button>'+
           '</div>'+
         '</div>'+
