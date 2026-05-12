@@ -4049,8 +4049,15 @@ function guardarEdicionStock() {
   var mts = parseFloat(document.getElementById('em-mts').value)||0;
   var moneda    = document.getElementById('em-moneda').value||'ARS';
   var precioU   = parseFloat(document.getElementById('em-precio').value)||0;
-  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||1;
-  var precioARS = moneda==='USD' ? precioU*cotizU : precioU;
+  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||0;
+  // Fallback: usar localStorage o el campo visible en la nota de pedido
+  if (!cotizU || cotizU<=1) { try{ cotizU=parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0; }catch(e){} }
+  if (!cotizU || cotizU<=1) cotizU = getCotiz();
+  if (!cotizU || cotizU<=1) cotizU = 1;
+  var precioARS = moneda==='USD' ? Math.round(precioU*cotizU*100)/100 : precioU;
+  // Calcular precio_metro
+  var rindeEM = parseFloat(document.getElementById('em-rinde').value)||0;
+  var precioMetroEM = precioARS>0 && rindeEM>0 ? Math.round(precioARS/rindeEM*100)/100 : 0;
   var data = {
     nombre:       document.getElementById('em-nom').value.trim(),
     color:        document.getElementById('em-color').value.trim(),
@@ -4070,7 +4077,7 @@ function guardarEdicionStock() {
     cotiz_usd:     cotizU,
     precio_ars:    precioARS,
     unidad_compra: document.getElementById('em-unidad-compra')?document.getElementById('em-unidad-compra').value:'kg',
-    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||0
+    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||precioMetroEM
   };
   SB.from('mwk_stock').update(data, {id: s.id}).then(function(){
     Object.assign(s, data);
