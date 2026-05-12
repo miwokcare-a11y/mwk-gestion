@@ -4493,6 +4493,8 @@ function generarPDFCostos(fichas) {
   var PW = Math.round(210*MM); var PH = Math.round(297*MM);
   var cv = document.createElement('canvas');
   cv.width=PW; cv.height=PH;
+  cv.style.cssText='position:fixed;left:-9999px;top:-9999px;';
+  document.body.appendChild(cv);
   var ctx = cv.getContext('2d');
   function p(mm){ return Math.round(mm*MM); }
   function rf(x,y,w,h,col){ ctx.fillStyle=col; ctx.fillRect(p(x),p(y),p(w),p(h)); }
@@ -4599,6 +4601,7 @@ function generarPDFCostos(fichas) {
   });
 
   // Build multi-page PDF
+  document.body.removeChild(cv);
   var fname = fichas.length===1 ? 'costos-'+esc(fichas[0].nombre||'ficha').replace(/\s/g,'-')+'.pdf' : 'reporte-costos-mwk.pdf';
   if (typeof buildPDFMultipage === 'function') {
     buildPDFMultipage(pages, PW, PH, fname);
