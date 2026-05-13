@@ -4720,7 +4720,7 @@ function getPrecioFromHistorial(nombre) {
   if (!nombre || !nombre.trim()) return 0;
   var query = nombre.trim().toLowerCase();
 
-  // 1. Buscar en stock primero — precio_metro es el más directo
+  // 1. Buscar en stock
   var stockItems = (st.stock||[]);
   for (var s=0; s<stockItems.length; s++) {
     var si = stockItems[s];
@@ -4728,8 +4728,37 @@ function getPrecioFromHistorial(nombre) {
     if (sNom === query || sNom.indexOf(query) !== -1 || query.indexOf(sNom) !== -1) {
       var pm = parseFloat(si.precio_metro)||0;
       if (pm > 0) return pm;
-      var pa = parseFloat(si.precio_ars)||0;
+      // Calcular desde precio_ars + rinde
+      var pa  = parseFloat(si.precio_ars)||0;
+      var pu  = parseFloat(si.precio_unit)||0;
+      var rin = parseFloat(si.rinde)||0;
+      var uc  = (si.unidad_compra||'kg').toLowerCase();
+      var mon = (si.moneda||'ARS');
+      if (pa > 0 && pu > 0 && Math.abs(pa - pu) < 1 && mon === 'USD') {
+        var cotiz = getCotiz(); if (cotiz > 1) pa = Math.round(pu * cotiz * 100) / 100;
+      }
+      if (pa > 0 && rin > 0 && uc === 'kg') return Math.round(pa / rin * 100) / 100;
+      if (pa > 0 && uc === 'm') return pa;
+      if (pu > 0 && mon === 'ARS' && rin > 0 && uc === 'kg') return Math.round(pu / rin * 100) / 100;
+      if (pu > 0 && mon === 'ARS' && uc === 'm') return pu;
       if (pa > 0) return pa;
+    }
+  }
+
+  // 1b. Buscar en catalogo
+  var catItems = (st.catalogo||[]);
+  for (var c=0; c<catItems.length; c++) {
+    var ci = catItems[c];
+    var cNom = (ci.nombre||'').trim().toLowerCase();
+    if (cNom === query || cNom.indexOf(query) !== -1 || query.indexOf(cNom) !== -1) {
+      var cpm = parseFloat(ci.precio_metro)||0;
+      if (cpm > 0) return cpm;
+      var cpa = parseFloat(ci.precio_ars)||0;
+      var crin = parseFloat(ci.rinde)||0;
+      var cuc  = (ci.unidad_compra||'kg').toLowerCase();
+      if (cpa > 0 && crin > 0 && cuc === 'kg') return Math.round(cpa / crin * 100) / 100;
+      if (cpa > 0 && cuc === 'm') return cpa;
+      if (cpa > 0) return cpa;
     }
   }
 
@@ -5802,9 +5831,22 @@ function renderNfTelas() {
         if(p>0){
           mat.precio=p;
           renderNfTelas();
-          toast('✅ $'+fmt(p)+'/m — precio encontrado para '+mat.nombre);
+          toast('✅ $'+fmt(p)+'/m cargado');
         } else {
-          toast('No se encontró precio para "'+mat.nombre+'"');
+          // Debug: mostrar qué hay en stock para este nombre
+          var q=(mat.nombre||'').toLowerCase().trim();
+          var found=(st.stock||[]).filter(function(s){return (s.nombre||'').toLowerCase().indexOf(q)!==-1;});
+          if(found.length){
+            var info=found.map(function(s){return s.nombre+' | pm='+s.precio_metro+' pa='+s.precio_ars+' pu='+s.precio_unit+' rinde='+s.rinde+' uc='+s.unidad_compra+' mon='+s.moneda;}).join('
+');
+            alert('No se calculó precio.
+Stock encontrado:
+'+info+'
+
+Cotiz actual: '+getCotiz());
+          } else {
+            toast('No se encontró "'+mat.nombre+'" en stock');
+          }
         }
       };
 
