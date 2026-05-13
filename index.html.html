@@ -4984,11 +4984,16 @@ function guardarFicha() {
   if (!hayTelas && !hayMats) {
     toast('Agregá al menos una tela o avío'); return;
   }
+  // Auto-completar precios desde stock antes de guardar
   var telasData = nfTelas.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
-    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'m', precio:m.precio};
+    var p = parseFloat(m.precio)||0;
+    if (!p) p = getPrecioFromHistorial(m.nombre);
+    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'m', precio:p};
   });
   var matsData = nfMats.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
-    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad, precio:m.precio};
+    var p = parseFloat(m.precio)||0;
+    if (!p) p = getPrecioFromHistorial(m.nombre);
+    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad, precio:p};
   });
   var coloresData = nfColores.filter(function(c){return (c.color||'').trim();}).map(function(c){
     var avios=(c.avios||[]).filter(function(a){return (a.nombre||'').trim();}).map(function(a){
@@ -5046,19 +5051,27 @@ function guardarFicha() {
   }).catch(function(e){toast('Error: '+(e.message||e));});
 }
 
+function precioMat(m) {
+  // Si tiene precio guardado, usarlo
+  var p = parseFloat(m.precio)||0;
+  if (p > 0) return p;
+  // Si no, buscar en stock/catalogo/historial
+  return getPrecioFromHistorial(m.nombre||'');
+}
+
 function costoFicha(f) {
-  var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(m.cantidad||0)*(m.precio||0); },0);
-  var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(m.cantidad||0)*(m.precio||0); },0);
+  var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
+  var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
   var totalUnd  = (f.colores||[]).reduce(function(s,c){ return s+(c.total||0); },0);
   var costAviosVar = 0;
   if (totalUnd > 0) {
     (f.colores||[]).forEach(function(c){
       var peso=(c.total||0)/totalUnd;
-      var cc=(c.avios||[]).reduce(function(s,a){ return s+(a.cantidad||0)*(a.precio||0); },0);
+      var cc=(c.avios||[]).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
       costAviosVar += cc*peso;
     });
   }
-  return costTelas + costMats + costAviosVar + (f.mo||0);
+  return costTelas + costMats + costAviosVar + (parseFloat(f.mo)||0);
 }
 
 function renderFichasLista() {
