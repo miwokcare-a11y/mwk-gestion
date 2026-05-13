@@ -3947,13 +3947,17 @@ function renderStockLista() {
             var pARS=parseFloat(s.precio_ars)||0;
             var pUSD=parseFloat(s.precio_unit)||0;
             var rindeC=parseFloat(s.rinde)||0;
-            // Recalcular precio_ars con cotización actual si es USD
-            if (s.moneda==='USD' && pUSD>0) {
-              pARS = Math.round(pUSD * getCotiz() * 100) / 100;
+            // Usar precio_ars guardado (ya calculado con cotiz real al editar)
+            // Solo recalcular si precio_ars parece ser el valor USD (guardado mal)
+            if(pARS>0 && pUSD>0 && Math.abs(pARS-pUSD)<0.5) {
+              // precio_ars es igual al USD — intentar recalcular
+              var _c=getCotiz();
+              if(_c<=1){try{_c=parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0;}catch(e){}}
+              if(_c<=1)_c=st.cotizUSD||0;
+              if(_c>1) pARS=Math.round(pUSD*_c*100)/100;
             }
-            var pm = (s.moneda==='USD' && pUSD>0 && rindeC>0)
-              ? Math.round(pARS/rindeC*100)/100
-              : (parseFloat(s.precio_metro)||0);
+            var pm = parseFloat(s.precio_metro)||0;
+            if(!pm && pARS>0 && rindeC>0) pm=Math.round(pARS/rindeC*100)/100;
             // Costo por unidad de compra
             if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(s.moneda==="USD"&&pUSD>0?' · U$'+fmt(pUSD):'')+' </span> ';
             // Costo por metro
