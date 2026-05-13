@@ -5114,7 +5114,7 @@ function buscarPrecioMat(idx) {
 }
 
 function addMatFicha() {
-  nfMats.push({nombre:'', cantidad:0, unidad:'m', precio:0, stock_id:null});
+  nfMats.push({nombre:'', cantidad:0, unidad:'u', precio:0, stock_id:null, por_talle:false});
   renderNfMats();
 }
 
@@ -5185,11 +5185,34 @@ function renderNfMats() {
     row2.appendChild(mkLbl('$ por unidad', pInp));
     div.appendChild(row2);
 
+    // Toggle: por prenda vs por talle
+    var toggleRow = document.createElement('div');
+    toggleRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    var toggleLbl = document.createElement('div');
+    toggleLbl.style.cssText = 'font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;flex:1;';
+    toggleLbl.textContent = 'Se calcula:';
+    toggleRow.appendChild(toggleLbl);
+    var btnPrenda = document.createElement('button');
+    btnPrenda.type = 'button';
+    btnPrenda.textContent = '\u00d7 prenda';
+    btnPrenda.style.cssText = 'font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid;font-family:inherit;cursor:pointer;transition:all .2s;'+(m.por_talle?'background:var(--sa);color:var(--t2);border-color:var(--s2);':'background:var(--bk);color:#fff;border-color:var(--bk);');
+    var btnTalle = document.createElement('button');
+    btnTalle.type = 'button';
+    btnTalle.textContent = '\u00d7 talle';
+    btnTalle.style.cssText = 'font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid;font-family:inherit;cursor:pointer;transition:all .2s;'+(m.por_talle?'background:var(--bk);color:#fff;border-color:var(--bk);':'background:var(--sa);color:var(--t2);border-color:var(--s2);');
+    toggleRow.appendChild(btnPrenda);
+    toggleRow.appendChild(btnTalle);
+    div.appendChild(toggleRow);
+    (function(mat, bp, bt){
+      bp.onclick = function(){ mat.por_talle=false; bp.style.background='var(--bk)'; bp.style.color='#fff'; bp.style.borderColor='var(--bk)'; bt.style.background='var(--sa)'; bt.style.color='var(--t2)'; bt.style.borderColor='var(--s2)'; };
+      bt.onclick = function(){ mat.por_talle=true; bt.style.background='var(--bk)'; bt.style.color='#fff'; bt.style.borderColor='var(--bk)'; bp.style.background='var(--sa)'; bp.style.color='var(--t2)'; bp.style.borderColor='var(--s2)'; };
+    })(m, btnPrenda, btnTalle);
+
     // Subtotal
     if (subtotal > 0) {
       var sub = document.createElement('div');
       sub.style.cssText = 'background:rgba(42,90,160,.08);border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin-bottom:6px;';
-      sub.innerHTML = '<span style="font-size:11px;color:#2a4a8a;">'+(m.cantidad)+' '+(m.unidad||'m')+' × $'+(m.precio)+'</span>'+
+      sub.innerHTML = '<span style="font-size:11px;color:#2a4a8a;">'+(m.cantidad)+' '+(m.unidad||'m')+' \u00d7 $'+(m.precio)+'</span>'+
         '<span style="font-size:13px;font-weight:700;color:#2a4a8a;">$'+fmt(subtotal)+'</span>';
       div.appendChild(sub);
     }
@@ -5304,7 +5327,7 @@ function guardarFicha() {
   var matsData = nfMats.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
     var p = parseFloat(m.precio)||0;
     if (!p) p = getPrecioFromHistorial(m.nombre);
-    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad, precio:p};
+    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad, precio:p, por_talle:!!m.por_talle};
   });
   var coloresData = nfColores.filter(function(c){return (c.color||'').trim();}).map(function(c){
     var avios=(c.avios||[]).filter(function(a){return (a.nombre||'').trim();}).map(function(a){
@@ -5544,7 +5567,8 @@ function verFicha(i) {
     '<div style="font-size:12px;color:var(--t2);margin-bottom:14px;">'+(f.referencia?f.referencia+' · ':'')+esc(f.temporada||'—')+'</div>'+
     '<table class="dash-table" style="margin-bottom:14px;"><thead><tr><th>Material</th><th>Cant.</th><th>Unid.</th><th>$ unit.</th><th>$ total</th></tr></thead><tbody>'+
     mats.map(function(m){
-      return '<tr><td>'+esc(m.nombre)+'</td><td>'+m.cantidad+'</td><td>'+esc(m.unidad)+'</td><td>$'+fmt(m.precio)+'</td><td style="font-weight:600;">$'+fmt((m.cantidad||0)*(m.precio||0))+'</td></tr>';
+      var porTalleBadge = m.por_talle ? '<span style="font-size:9px;background:rgba(90,42,160,.12);color:#5a2a8a;border-radius:8px;padding:1px 6px;margin-left:4px;">\u00d7talle</span>' : '';
+      return '<tr><td>'+esc(m.nombre)+porTalleBadge+'</td><td>'+m.cantidad+'</td><td>'+esc(m.unidad)+'</td><td>$'+fmt(m.precio)+'</td><td style="font-weight:600;">$'+fmt((m.cantidad||0)*(m.precio||0))+'</td></tr>';
     }).join('')+
     '</tbody></table>'+
     '<div style="display:flex;gap:16px;padding:12px;background:var(--sa);border-radius:var(--r);margin-bottom:14px;">'+
@@ -5599,7 +5623,7 @@ function editarFicha(i) {
   document.getElementById('nf-mo').value     = f.mo||'';
   // Cargar materiales
   nfMats = (f.materiales||[]).map(function(m){
-    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
+    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle};
   });
   // Cargar colores
   nfTelas = (f.telas||[]).map(function(m){
@@ -5765,15 +5789,40 @@ function explotarConsumos() {
       }
     });
 
-    // Avíos generales: igual para todos los colores
+    // Avíos generales: si por_talle=true → 1 por talle del total, si no → igual para todos
     (f.materiales||[]).forEach(function(m){
-      if (colores.length) {
-        colores.forEach(function(col){
-          var cant = (parseFloat(m.cantidad)||0) * (col.total||0);
-          acumular(m, col.color, cant);
-        });
+      if (m.por_talle) {
+        // Calcular sumando 1 etiqueta por cada unidad de CADA talle (resultado = total unidades)
+        // pero agrupado por talle en el detalle
+        if (colores.length) {
+          colores.forEach(function(col){
+            TALLES_TODOS.forEach(function(t){
+              var undsEseTalle = (col.talles||{})[t]||0;
+              if (!undsEseTalle) return;
+              var cant = (parseFloat(m.cantidad)||0) * undsEseTalle;
+              // Acumular con key que incluye el talle para que quede una fila por talle
+              var mConTalle = Object.assign({}, m, {nombre: m.nombre + ' (' + t + ')'});
+              acumular(mConTalle, col.color, cant);
+            });
+          });
+        } else {
+          TALLES_TODOS.forEach(function(t){
+            var undsEseTalle = (f.talles||{})[t]||0;
+            if (!undsEseTalle) return;
+            var cant = (parseFloat(m.cantidad)||0) * undsEseTalle;
+            var mConTalle = Object.assign({}, m, {nombre: m.nombre + ' (' + t + ')'});
+            acumular(mConTalle, 'General', cant);
+          });
+        }
       } else {
-        acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
+        if (colores.length) {
+          colores.forEach(function(col){
+            var cant = (parseFloat(m.cantidad)||0) * (col.total||0);
+            acumular(m, col.color, cant);
+          });
+        } else {
+          acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
+        }
       }
     });
 
