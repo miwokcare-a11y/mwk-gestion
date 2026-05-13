@@ -4089,6 +4089,7 @@ function guardarEdicionStock() {
     precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||precioMetro
   };
   SB.from('mwk_stock').update(data, {id: s.id}).then(function(){
+    console.log('Stock guardado - precio_ars:', data.precio_ars, 'precio_metro:', data.precio_metro, 'cotiz:', data.cotiz_usd);
     Object.assign(s, data);
     cerrarModalStock();
     renderStock();
