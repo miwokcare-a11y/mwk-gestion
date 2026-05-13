@@ -4070,7 +4070,16 @@ function guardarEdicionStock() {
   if (!cotizU || cotizU<=1) cotizU = 1;
   var precioARS = moneda==='USD' ? Math.round(precioU*cotizU*100)/100 : precioU;
   var rindeVal  = parseFloat(document.getElementById('em-rinde').value)||0;
-  var precioMetro = (precioARS>0 && rindeVal>0) ? Math.round(precioARS/rindeVal*100)/100 : 0;
+  var ucVal     = document.getElementById('em-unidad-compra') ? document.getElementById('em-unidad-compra').value : 'kg';
+  // Calcular precio x metro SIEMPRE desde los valores del formulario (no depender del campo readonly)
+  var precioMetro = 0;
+  if (precioARS > 0) {
+    if (ucVal === 'kg' && rindeVal > 0) {
+      precioMetro = Math.round(precioARS / rindeVal * 100) / 100;
+    } else if (ucVal === 'm') {
+      precioMetro = precioARS;
+    }
+  }
   var data = {
     nombre:       document.getElementById('em-nom').value.trim(),
     color:        document.getElementById('em-color').value.trim(),
@@ -4080,24 +4089,24 @@ function guardarEdicionStock() {
     stock_mts:    mts,
     kg:           parseFloat(document.getElementById('em-kg').value)||0,
     ancho:        parseFloat(document.getElementById('em-ancho').value)||0,
-    rinde:        parseFloat(document.getElementById('em-rinde').value)||0,
+    rinde:        rindeVal,
     stock_minimo: parseFloat(document.getElementById('em-min').value)||0,
     categoria:    document.getElementById('em-cat').value,
     observaciones:document.getElementById('em-obs').value.trim(),
-    cantidad:     (function(){ var uc3=(document.getElementById('em-unidad-compra')||{}).value||'kg'; return uc3==='u'?(parseFloat(document.getElementById('em-cant')?document.getElementById('em-cant').value:0)||0):mts; })(),
+    cantidad:     (function(){ return ucVal==='u'?(parseFloat(document.getElementById('em-cant')?document.getElementById('em-cant').value:0)||0):mts; })(),
     precio_unit:   precioU,
     moneda:        moneda,
     cotiz_usd:     cotizU,
     precio_ars:    precioARS,
-    unidad_compra: document.getElementById('em-unidad-compra')?document.getElementById('em-unidad-compra').value:'kg',
-    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||precioMetro
+    unidad_compra: ucVal,
+    precio_metro:  precioMetro
   };
   SB.from('mwk_stock').update(data, {id: s.id}).then(function(){
-    console.log('Stock guardado - precio_ars:', data.precio_ars, 'precio_metro:', data.precio_metro, 'cotiz:', data.cotiz_usd);
+    // precio_metro calculado desde formulario: ${data.precio_metro}
     Object.assign(s, data);
     cerrarModalStock();
     renderStock();
-    toast('✅ Tela actualizada');
+    var infoMsg = '✅ Actualizado'+(data.precio_metro>0?' · $'+fmt(data.precio_metro)+'/m':''); toast(infoMsg);
   }).catch(function(e){ toast('Error: '+(e.message||e)); });
 }
 
