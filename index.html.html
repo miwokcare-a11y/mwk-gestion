@@ -1066,47 +1066,99 @@ select.fi{appearance:none;
     <button onclick="pdfReporteGeneral()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">⬇ Reporte</button>
   </div>
   <div style="margin-top:12px;">
-    <div class="sp" style="margin-bottom:10px;" id="fichas-lista"></div>
-    <div class="sp">
-      <div class="sl" style="margin-bottom:9px;">Nueva ficha</div>
-      <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
 
-        <!-- Datos generales -->
-        <div class="frow">
-          <input class="fi" type="text" id="nf-nombre" placeholder="Nombre del modelo (ej: Buzo capucha)">
-          <select class="fi" id="nf-temp">
-            <option value="">Temporada...</option>
-            <option>Verano 2025</option><option>Invierno 2025</option>
-            <option>Verano 2026</option><option>Invierno 2026</option>
-            <option>Verano 2027</option><option>Invierno 2027</option>
-          </select>
-        </div>
-        <div class="frow">
-          <input class="fi" type="text" id="nf-ref" placeholder="Referencia / código (opcional)">
-          <input class="fi" type="number" id="nf-mo" placeholder="Mano de obra ($)" min="0" step="any">
-        </div>
+    <!-- LISTA DE FICHAS -->
+    <div class="sp" style="margin-bottom:16px;" id="fichas-lista"></div>
 
-        <!-- TELAS -->
-        <div class="sl" style="margin:12px 0 6px;">🧵 Telas</div>
-        <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Consumo igual para todas las variantes</div>
-        <div id="nf-telas"></div>
-        <button class="addlink" onclick="addTelaFicha()">+ Agregar tela</button>
-
-        <!-- AVÍOS GLOBALES -->
-        <div class="sl" style="margin:14px 0 6px;">🔩 Avíos generales</div>
-        <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Avíos que no cambian entre variantes</div>
-        <div id="nf-mats"></div>
-        <button class="addlink" onclick="addMatFicha()">+ Agregar avío general</button>
-
-        <!-- Variantes de color -->
-        <div class="sl" style="margin:16px 0 6px;">🎨 Variantes de color</div>
-        <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Cada color tiene su curva de talles y puede tener avíos específicos</div>
-        <div id="nf-colores"></div>
-        <button class="addlink" onclick="addColorFicha()">+ Agregar variante</button>
-
-        <button class="btn bmail" style="margin-top:14px;" onclick="guardarFicha()">Guardar ficha</button>
-      </div>
+    <!-- BOTÓN NUEVA FICHA -->
+    <div class="sp" style="margin-bottom:12px;">
+      <button class="btn bmail" onclick="toggleNuevaFicha()" id="btn-nueva-ficha">+ Nueva ficha de costos</button>
     </div>
+
+    <!-- FORMULARIO NUEVA FICHA (colapsable) -->
+    <div id="ficha-form-wrap" style="display:none;">
+
+      <!-- PASO 1: Datos del modelo -->
+      <div class="sp" style="margin-bottom:10px;">
+        <div class="ficha-step-header">
+          <div class="ficha-step-num">1</div>
+          <div>
+            <div class="ficha-step-title">Datos del modelo</div>
+            <div class="ficha-step-sub">Nombre, temporada y mano de obra</div>
+          </div>
+        </div>
+        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
+          <div class="frow">
+            <input class="fi" type="text" id="nf-nombre" placeholder="Nombre del modelo (ej: Campera Renata)">
+            <select class="fi" id="nf-temp">
+              <option value="">Temporada...</option>
+              <option>Verano 2025</option><option>Invierno 2025</option>
+              <option>Verano 2026</option><option>Invierno 2026</option>
+              <option>Verano 2027</option><option>Invierno 2027</option>
+            </select>
+          </div>
+          <div class="frow">
+            <input class="fi" type="text" id="nf-ref" placeholder="Referencia / código (opcional)">
+            <div>
+              <div class="flbl" style="margin-bottom:4px;">Mano de obra ($)</div>
+              <input class="fi" type="number" id="nf-mo" placeholder="0" min="0" step="any">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 2: Telas e insumos comunes -->
+      <div class="sp" style="margin-bottom:10px;">
+        <div class="ficha-step-header">
+          <div class="ficha-step-num">2</div>
+          <div>
+            <div class="ficha-step-title">🧵 Telas e insumos comunes</div>
+            <div class="ficha-step-sub">Mismo consumo para TODOS los colores — el precio se busca automáticamente en stock</div>
+          </div>
+        </div>
+        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
+          <div id="nf-telas"></div>
+          <button class="addlink" onclick="addTelaFicha()">+ Agregar tela / insumo común</button>
+        </div>
+      </div>
+
+      <!-- PASO 3: Variantes de color -->
+      <div class="sp" style="margin-bottom:10px;">
+        <div class="ficha-step-header">
+          <div class="ficha-step-num">3</div>
+          <div>
+            <div class="ficha-step-title">🎨 Variantes de color</div>
+            <div class="ficha-step-sub">Cada color tiene su curva de talles y avíos específicos (cierre, hilo, etiqueta, etc.)</div>
+          </div>
+        </div>
+        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
+          <div id="nf-colores"></div>
+          <button class="addlink" onclick="addColorFicha()">+ Agregar variante de color</button>
+        </div>
+      </div>
+
+      <!-- AVÍOS GENERALES (colapsable, para casos especiales) -->
+      <div class="sp" style="margin-bottom:10px;">
+        <div style="background:var(--sa);border:1px solid rgba(26,36,51,.08);border-radius:var(--r);padding:12px 14px;">
+          <button onclick="toggleAviosGlobales()" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;color:var(--t2);display:flex;align-items:center;gap:8px;padding:0;width:100%;text-align:left;">
+            <span id="avios-glob-icon">▶</span>
+            <span>🔩 Avíos generales (sin variante de color)</span>
+          </button>
+          <div id="nf-mats-wrap" style="display:none;margin-top:12px;">
+            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Avíos que no varían por color — aplican igual a todas las variantes</div>
+            <div id="nf-mats"></div>
+            <button class="addlink" onclick="addMatFicha()">+ Agregar avío general</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GUARDAR -->
+      <div class="sp" style="margin-bottom:24px;">
+        <button class="btn bmail" id="btn-guardar-ficha" onclick="guardarFicha()">💾 Guardar ficha</button>
+        <button class="btn bcpy" style="margin-top:8px;" onclick="cancelarFicha()">Cancelar</button>
+      </div>
+
+    </div><!-- /ficha-form-wrap -->
   </div>
 </div>
 
@@ -1484,6 +1536,13 @@ create policy "allow all" on mwk_stock for all using (true) with check (true);</
   </div>
 </div>
 <style>
+
+/* ── FICHA STEPS ──────────────────────────────────────────── */
+.ficha-step-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.ficha-step-num{width:28px;height:28px;border-radius:50%;background:var(--bk);color:#fff;
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ficha-step-title{font-size:14px;font-weight:700;color:var(--bk);}
+.ficha-step-sub{font-size:12px;color:var(--t2);margin-top:2px;line-height:1.4;}
 @keyframes load{from{transform:translateX(-60%)}to{transform:translateX(200%)}}
 /* ── TABS PLANIFICACIÓN ────────────────────────────────────── */
 .plan-tab{background:var(--s2);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit;}
@@ -4910,36 +4969,94 @@ function exportarDevoluciones() {
 
 var nfMats = []; // materiales de la nueva ficha en construcción
 
+function matchNombre(a, b) {
+  // Exacto
+  if (a === b) return true;
+  // Uno contiene al otro
+  if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1) return true;
+  // Match por palabras clave: al menos 2 palabras de 3+ chars en común
+  var wa = a.split(/[\s\-_\/]+/).filter(function(w){ return w.length >= 3; });
+  var wb = b.split(/[\s\-_\/]+/).filter(function(w){ return w.length >= 3; });
+  var comunes = wa.filter(function(w){ return wb.indexOf(w) !== -1; });
+  return comunes.length >= 2;
+}
+
+function calcPrecioStock(si) {
+  var pm = parseFloat(si.precio_metro)||0;
+  if (pm > 0) return pm;
+  var pa  = parseFloat(si.precio_ars)||0;
+  var pu  = parseFloat(si.precio_unit)||0;
+  var rin = parseFloat(si.rinde)||0;
+  var uc  = (si.unidad_compra||'kg').toLowerCase();
+  var mon = (si.moneda||'ARS');
+  if (pa > 0 && pu > 0 && Math.abs(pa - pu) < 1 && mon === 'USD') {
+    var cotiz = getCotiz(); if (cotiz > 1) pa = Math.round(pu * cotiz * 100) / 100;
+  }
+  if (pa > 0 && rin > 0 && uc === 'kg') return Math.round(pa / rin * 100) / 100;
+  if (pa > 0 && uc === 'm') return pa;
+  if (pu > 0 && mon === 'ARS' && rin > 0 && uc === 'kg') return Math.round(pu / rin * 100) / 100;
+  if (pu > 0 && mon === 'ARS' && uc === 'm') return pu;
+  if (pa > 0) return pa;
+  return 0;
+}
+
 function getPrecioFromHistorial(nombre) {
   if (!nombre || !nombre.trim()) return 0;
   var query = nombre.trim().toLowerCase();
 
-  // 1. Buscar en stock
+  // 1. Buscar en stock — match exacto o parcial o por palabras clave
   var stockItems = (st.stock||[]);
+  // Primero: match exacto o por contenido
   for (var s=0; s<stockItems.length; s++) {
     var si = stockItems[s];
     var sNom = (si.nombre||'').trim().toLowerCase();
     if (sNom === query || sNom.indexOf(query) !== -1 || query.indexOf(sNom) !== -1) {
-      var pm = parseFloat(si.precio_metro)||0;
-      if (pm > 0) return pm;
-      // Calcular desde precio_ars + rinde
-      var pa  = parseFloat(si.precio_ars)||0;
-      var pu  = parseFloat(si.precio_unit)||0;
-      var rin = parseFloat(si.rinde)||0;
-      var uc  = (si.unidad_compra||'kg').toLowerCase();
-      var mon = (si.moneda||'ARS');
-      if (pa > 0 && pu > 0 && Math.abs(pa - pu) < 1 && mon === 'USD') {
-        var cotiz = getCotiz(); if (cotiz > 1) pa = Math.round(pu * cotiz * 100) / 100;
-      }
-      if (pa > 0 && rin > 0 && uc === 'kg') return Math.round(pa / rin * 100) / 100;
-      if (pa > 0 && uc === 'm') return pa;
-      if (pu > 0 && mon === 'ARS' && rin > 0 && uc === 'kg') return Math.round(pu / rin * 100) / 100;
-      if (pu > 0 && mon === 'ARS' && uc === 'm') return pu;
-      if (pa > 0) return pa;
+      var p = calcPrecioStock(si);
+      if (p > 0) return p;
+    }
+  }
+  // Segundo: match por palabras clave (nombre parcial)
+  for (var s2=0; s2<stockItems.length; s2++) {
+    var si2 = stockItems[s2];
+    var sNom2 = (si2.nombre||'').trim().toLowerCase();
+    if (matchNombre(query, sNom2)) {
+      var p2 = calcPrecioStock(si2);
+      if (p2 > 0) return p2;
     }
   }
 
-  // 1b. Buscar en catalogo
+  // 1b. Buscar en stock — ignorar sufijo de color (últimos 6 chars tipo -LAV001)
+  var queryBase = query.replace(/-[a-z0-9]{3,8}$/i, '').trim();
+  if (queryBase !== query) {
+    for (var s3=0; s3<stockItems.length; s3++) {
+      var si3 = stockItems[s3];
+      var sNom3 = (si3.nombre||'').trim().toLowerCase().replace(/-[a-z0-9]{3,8}$/i, '').trim();
+      if (sNom3 === queryBase || sNom3.indexOf(queryBase) !== -1 || queryBase.indexOf(sNom3) !== -1) {
+        var p3 = calcPrecioStock(si3);
+        if (p3 > 0) return p3;
+      }
+    }
+  }
+
+  // 1c. Catálogo
+  var catItems = (st.catalogo||[]);
+  for (var c=0; c<catItems.length; c++) {
+    var ci = catItems[c];
+    var cNom = (ci.nombre||'').trim().toLowerCase();
+    if (matchNombre(query, cNom) || cNom.indexOf(query) !== -1 || query.indexOf(cNom) !== -1) {
+      var cpm = parseFloat(ci.precio_metro)||0;
+      if (cpm > 0) return cpm;
+      var cpa = parseFloat(ci.precio_ars)||0;
+      var crin = parseFloat(ci.rinde)||0;
+      var cuc  = (ci.unidad_compra||'kg').toLowerCase();
+      if (cpa > 0 && crin > 0 && cuc === 'kg') return Math.round(cpa / crin * 100) / 100;
+      if (cpa > 0 && cuc === 'm') return cpa;
+      if (cpa > 0) return cpa;
+    }
+  }
+
+
+  // 2. Buscar en historial de pedidos
   var catItems = (st.catalogo||[]);
   for (var c=0; c<catItems.length; c++) {
     var ci = catItems[c];
@@ -5191,9 +5308,14 @@ function guardarFicha() {
   });
   var coloresData = nfColores.filter(function(c){return (c.color||'').trim();}).map(function(c){
     var avios=(c.avios||[]).filter(function(a){return (a.nombre||'').trim();}).map(function(a){
-      return {nombre:a.nombre.trim(), cantidad:a.cantidad, unidad:a.unidad||'u', precio:a.precio};
+      var p=parseFloat(a.precio)||0; if(!p) p=getPrecioFromHistorial(a.nombre);
+      return {nombre:a.nombre.trim(), cantidad:a.cantidad, unidad:a.unidad||'u', precio:p};
     });
-    return {color:c.color.trim(), talles:c.talles, total:totalTalles(c.talles), avios:avios};
+    var telas=(c.telas||[]).filter(function(t){return (t.nombre||'').trim();}).map(function(t){
+      var p=parseFloat(t.precio)||0; if(!p) p=getPrecioFromHistorial(t.nombre);
+      return {nombre:t.nombre.trim(), cantidad:t.cantidad, unidad:t.unidad||'m', precio:p};
+    });
+    return {color:c.color.trim(), talles:c.talles, total:totalTalles(c.talles), avios:avios, telas:telas};
   });
   var totalUnd = coloresData.reduce(function(s,c){return s+c.total;},0);
   var data = {
@@ -5217,8 +5339,12 @@ function guardarFicha() {
     renderNfMats(); renderNfTelas(); renderNfColores();
     window._editingFichaIdx = null;
     window._editingFichaId  = null;
-    var btn = document.querySelector('#s-fichas .btn.bmail');
-    if (btn) btn.textContent = 'Guardar ficha';
+    var wrap = document.getElementById('ficha-form-wrap');
+    var btnN = document.getElementById('btn-nueva-ficha');
+    var btnG = document.getElementById('btn-guardar-ficha');
+    if (wrap) wrap.style.display = 'none';
+    if (btnN) btnN.textContent = '+ Nueva ficha de costos';
+    if (btnG) btnG.textContent = '💾 Guardar ficha';
   }
 
   // EDICIÓN
@@ -5254,18 +5380,39 @@ function precioMat(m) {
 }
 
 function costoFicha(f) {
+  // Telas comunes (mismo consumo para todos los colores)
   var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
+  // Avíos generales (sin variante)
   var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
   var totalUnd  = (f.colores||[]).reduce(function(s,c){ return s+(c.total||0); },0);
-  var costAviosVar = 0;
+  var costVar = 0;
   if (totalUnd > 0) {
     (f.colores||[]).forEach(function(c){
       var peso=(c.total||0)/totalUnd;
-      var cc=(c.avios||[]).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
-      costAviosVar += cc*peso;
+      // Telas propias de este color
+      var ct=(c.telas||[]).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
+      // Avíos de este color
+      var ca=(c.avios||[]).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+      costVar += (ct+ca)*peso;
     });
   }
-  return costTelas + costMats + costAviosVar + (parseFloat(f.mo)||0);
+  return costTelas + costMats + costVar + (parseFloat(f.mo)||0);
+}
+
+function costoFichaPorColor(f) {
+  // Devuelve {color: costo} para mostrar desglose
+  var colores = f.colores||[];
+  var result = {};
+  var costComun = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0)
+                + (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0)
+                + (parseFloat(f.mo)||0);
+  colores.forEach(function(c){
+    var ct=(c.telas||[]).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
+    var ca=(c.avios||[]).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+    result[c.color||'—'] = costComun + ct + ca;
+  });
+  if (!colores.length) result['—'] = costComun;
+  return result;
 }
 
 function diagFicha(i) {
@@ -5345,17 +5492,26 @@ function renderFichasLista() {
   }
   el.innerHTML = lista.map(function(f,i){
     var costo = costoFicha(f);
+    var costoPorColor = costoFichaPorColor(f);
+    var nColores = (f.colores||[]).filter(function(c){return c.color;}).length;
+    var colorChips = Object.keys(costoPorColor).map(function(col){
+      return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--sa);border:1px solid rgba(26,36,51,.1);border-radius:20px;padding:3px 10px;font-size:11px;margin:2px;">'+
+        esc(col)+' <b style="color:var(--bk);">$'+fmt(costoPorColor[col])+'</b></span>';
+    }).join('');
+    var nInsumos = (f.telas||[]).length + (f.materiales||[]).length +
+      (f.colores||[]).reduce(function(s,c){ return s+(c.telas||[]).length+(c.avios||[]).length; },0);
     return '<div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:13px 14px;margin-bottom:9px;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'+
-        '<div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+        '<div style="flex:1;min-width:0;">'+
           '<div style="font-size:15px;font-weight:700;">'+esc(f.nombre)+'</div>'+
           '<div style="font-size:11px;color:var(--t2);margin-top:2px;">'+(f.referencia?esc(f.referencia)+' · ':'')+esc(f.temporada||'—')+'</div>'+
-          '<div style="margin-top:6px;font-size:12px;color:var(--t2);">'+(f.materiales||[]).length+' material'+(((f.materiales||[]).length!==1)?'es':'')+'</div>'+
+          '<div style="font-size:11px;color:var(--t2);margin-top:3px;">'+nInsumos+' insumo'+(nInsumos!==1?'s':'')+' · '+nColores+' color'+(nColores!==1?'es':'')+'</div>'+
+          (colorChips?'<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:2px;">'+colorChips+'</div>':'')+
         '</div>'+
-        '<div style="text-align:right;">'+
-          '<div style="font-size:20px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div>'+
-          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">costo total</div>'+
-          '<div style="display:flex;gap:6px;margin-top:8px;">'+
+        '<div style="text-align:right;flex-shrink:0;">'+
+          (costo>0?'<div style="font-size:20px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div>'+
+          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">costo promedio</div>':'<div style="font-size:12px;color:#c0622a;font-weight:600;">Sin precios</div>')+
+          '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">'+
             '<button class="adj-btn" onclick="verFicha('+i+')" title="Ver detalle">👁</button>'+
             '<button class="adj-btn" onclick="editarFicha('+i+')" title="Editar">✎</button>'+
             '<button class="adj-btn" style="color:var(--cobalt,#6A8090);" onclick="pdfReporteCostos('+i+')" title="Reporte PDF">⬇</button>'+
@@ -5459,11 +5615,16 @@ function editarFicha(i) {
   // Marcar que estamos editando
   window._editingFichaIdx = i;
   window._editingFichaId  = f.id;
+  // Abrir formulario
+  var wrap = document.getElementById('ficha-form-wrap');
+  var btnN = document.getElementById('btn-nueva-ficha');
+  if (wrap) wrap.style.display = 'block';
+  if (btnN) btnN.textContent = '✕ Cancelar';
   // Cambiar botón guardar
-  var btn = document.querySelector('#s-fichas .btn.bmail');
+  var btn = document.getElementById('btn-guardar-ficha');
   if (btn) btn.textContent = '💾 Guardar cambios';
   // Scroll al formulario
-  document.querySelector('#s-fichas .sp:last-child').scrollIntoView({behavior:'smooth'});
+  setTimeout(function(){ if(wrap) wrap.scrollIntoView({behavior:'smooth'}); }, 100);
   toast('Editando "'+f.nombre+'" — modificá y guardá');
 }
 
@@ -5988,6 +6149,34 @@ var _origAddMatFicha = null;
 var nfTelas   = []; // [{nombre, cantidad, unidad, precio}]
 var nfColores = []; // [{color, talles:{}, avios:[]}]
 
+function toggleNuevaFicha() {
+  var wrap = document.getElementById('ficha-form-wrap');
+  var btn  = document.getElementById('btn-nueva-ficha');
+  var open = wrap.style.display === 'none';
+  wrap.style.display = open ? 'block' : 'none';
+  btn.textContent = open ? '✕ Cancelar' : '+ Nueva ficha de costos';
+  if (open) {
+    initFichaForm();
+    setTimeout(function(){ wrap.scrollIntoView({behavior:'smooth'}); }, 100);
+  }
+}
+
+function cancelarFicha() {
+  document.getElementById('ficha-form-wrap').style.display = 'none';
+  document.getElementById('btn-nueva-ficha').textContent = '+ Nueva ficha de costos';
+  window._editingFichaIdx = null;
+  window._editingFichaId  = null;
+  nfMats=[]; nfTelas=[]; nfTalles={}; nfColores=[];
+}
+
+function toggleAviosGlobales() {
+  var wrap = document.getElementById('nf-mats-wrap');
+  var icon = document.getElementById('avios-glob-icon');
+  var open = wrap.style.display === 'none';
+  wrap.style.display = open ? 'block' : 'none';
+  icon.textContent = open ? '▼' : '▶';
+}
+
 function initFichaForm() {
   nfTalles = {}; nfTelas = []; nfColores = [];
   renderNfTelas(); renderNfColores();
@@ -6123,38 +6312,233 @@ function renderNfTelas() {
   });
 }
 
+function renderInsumoRow(insumo, onDelete) {
+  // Buscar precio automáticamente si no tiene
+  if (!(parseFloat(insumo.precio) > 0) && (insumo.nombre||'').trim()) {
+    var p = getPrecioFromHistorial(insumo.nombre);
+    if (p > 0) insumo.precio = p;
+  }
+  var subtotal = (parseFloat(insumo.cantidad)||0) * (parseFloat(insumo.precio)||0);
+  var row = document.createElement('div');
+  row.style.cssText = 'background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:10px;padding:10px;margin-bottom:7px;';
+
+  // Fila nombre + delete
+  var r1 = document.createElement('div'); r1.style.cssText='display:flex;gap:6px;margin-bottom:6px;align-items:center;';
+  var nomInp = document.createElement('input'); nomInp.className='fi'; nomInp.type='text';
+  nomInp.placeholder='Nombre del insumo'; nomInp.value=insumo.nombre||''; nomInp.style.cssText='flex:1;height:34px;font-size:13px;';
+  var sug = document.createElement('div');
+  sug.style.cssText='display:none;position:absolute;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:var(--r);z-index:50;max-height:160px;overflow-y:auto;min-width:260px;';
+  var nomWrap = document.createElement('div'); nomWrap.style.cssText='position:relative;flex:1;';
+  nomWrap.appendChild(nomInp); nomWrap.appendChild(sug);
+  var delBtn = document.createElement('button'); delBtn.className='delbtn'; delBtn.textContent='×';
+  r1.appendChild(nomWrap); r1.appendChild(delBtn); row.appendChild(r1);
+
+  // Fila cant + unidad + precio
+  var r2 = document.createElement('div'); r2.style.cssText='display:grid;grid-template-columns:80px 64px 1fr;gap:6px;margin-bottom:4px;';
+  var cInp = document.createElement('input'); cInp.className='fi'; cInp.type='text'; cInp.inputMode='decimal';
+  cInp.placeholder='Consumo'; cInp.value=insumo.cantidad||''; cInp.style.cssText='height:32px;font-size:12px;text-align:center;';
+  var uSel = document.createElement('select'); uSel.className='fi'; uSel.style.cssText='height:32px;font-size:12px;';
+  ['m','kg','u'].forEach(function(v){ var o=document.createElement('option'); o.value=v; o.textContent=v; if((insumo.unidad||'m')===v) o.selected=true; uSel.appendChild(o); });
+  var pInp = document.createElement('input'); pInp.className='fi'; pInp.type='text'; pInp.inputMode='decimal';
+  pInp.placeholder='$ /unidad'; pInp.style.cssText='height:32px;font-size:12px;';
+  pInp.value = parseFloat(insumo.precio) > 0 ? fmt(insumo.precio) : '';
+  r2.appendChild(cInp); r2.appendChild(uSel); r2.appendChild(pInp); row.appendChild(r2);
+
+  // Subtotal
+  if (subtotal > 0) {
+    var sub = document.createElement('div');
+    sub.style.cssText='font-size:11px;color:#2a4a8a;font-weight:600;text-align:right;';
+    sub.textContent = (insumo.cantidad||0)+' '+(insumo.unidad||'m')+' × $'+fmt(insumo.precio)+' = $'+fmt(subtotal);
+    row.appendChild(sub);
+  } else if ((insumo.nombre||'').trim() && !(parseFloat(insumo.precio)>0)) {
+    var noP = document.createElement('div');
+    noP.style.cssText='font-size:11px;color:#c0622a;';
+    noP.textContent='⚠ Sin precio — escribí el nombre completo o ingresalo manualmente';
+    row.appendChild(noP);
+  }
+
+  // Eventos
+  function updateSug() {
+    var q=(nomInp.value||'').toLowerCase().trim();
+    if(q.length<2){sug.style.display='none';sug.innerHTML='';return;}
+    var src=(st.catalogo&&st.catalogo.length)?st.catalogo:(st.stock||[]);
+    var matches=src.filter(function(s){return (s.nombre||'').toLowerCase().indexOf(q)!==-1;}).slice(0,6);
+    if(!matches.length){sug.style.display='none';return;}
+    sug.innerHTML='';
+    matches.forEach(function(s){
+      var opt=document.createElement('div');
+      opt.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(26,36,51,.06);font-size:13px;';
+      var pm=parseFloat(s.precio_metro)||0, pa=parseFloat(s.precio_ars)||0;
+      var precio=pm||pa;
+      opt.innerHTML='<b>'+esc(s.nombre)+'</b>'+(precio>0?' <span style="color:#2a4a8a;font-weight:600;">$'+fmt(precio)+'</span>':'');
+      opt.onmousedown=function(e){
+        e.preventDefault();
+        insumo.nombre=s.nombre; insumo.unidad=s.unidad||'m';
+        var p2=pm||pa; if(p2>0) insumo.precio=p2;
+        sug.style.display='none';
+        // Re-render el padre
+        if(row.parentNode) { var clone=row.cloneNode(false); row.parentNode.replaceChild(clone,row); }
+        if(typeof onDelete==='function') onDelete('refresh');
+      };
+      sug.appendChild(opt);
+    });
+    sug.style.display='block';
+  }
+
+  nomInp.oninput=function(){ insumo.nombre=this.value; updateSug(); };
+  nomInp.onfocus=function(){ if(this.value.length>=2) updateSug(); };
+  nomInp.onblur=function(){ setTimeout(function(){ sug.style.display='none'; },200); };
+  cInp.oninput=function(){ insumo.cantidad=parseFloat(this.value)||0; };
+  uSel.onchange=function(){ insumo.unidad=this.value; };
+  pInp.oninput=function(){ insumo.precio=parseFloat(this.value.replace(/[^0-9.,]/g,'').replace(',','.'))||0; };
+  delBtn.onclick=function(){ if(typeof onDelete==='function') onDelete('delete'); };
+
+  return row;
+}
+
 function renderNfColores() {
   var el = document.getElementById('nf-colores');
   if (!el) return;
-  if (!nfColores.length) { el.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:8px;">Agregá al menos una variante</div>'; return; }
+  if (!nfColores.length) {
+    el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:8px 0;">Agregá al menos una variante con su color</div>';
+    return;
+  }
   el.innerHTML = '';
   nfColores.forEach(function(col, i) {
-    if (!col.avios) col.avios = [];
-    var div=document.createElement('div'); div.style.cssText='background:var(--sa);border-radius:var(--r);padding:12px;margin-bottom:10px;';
-    var hdr=document.createElement('div'); hdr.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:10px;';
-    var cinp=document.createElement('input'); cinp.className='fi'; cinp.type='text'; cinp.placeholder='Color (ej: Negro)'; cinp.value=col.color||''; cinp.style.flex='1'; cinp.id='nfcol-inp-'+i;
-    var cdel=document.createElement('button'); cdel.className='delbtn'; cdel.textContent='×'; cdel.id='nfcol-del-'+i;
-    hdr.appendChild(cinp); hdr.appendChild(cdel); div.appendChild(hdr);
+    if (!col.avios)  col.avios  = [];
+    if (!col.telas)  col.telas  = [];  // telas propias de este color
     if (!col.talles || typeof col.talles !== 'object') col.talles = {};
-    var tw=document.createElement('div'); tw.id='nfcol-talles-'+i; div.appendChild(tw);
-    var totDiv=document.createElement('div'); totDiv.style.cssText='font-size:11px;color:var(--t2);margin-top:4px;margin-bottom:6px;'; div.appendChild(totDiv);
-    var sepDiv=document.createElement('div'); sepDiv.style.cssText='font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 5px;display:flex;align-items:center;gap:8px;';
-    sepDiv.innerHTML='<span>🔩 Avíos de esta variante</span><button class="addlink" style="font-size:11px;padding:0;" id="nfcol-addavio-'+i+'">+ Agregar</button>';
-    div.appendChild(sepDiv);
-    var aw=document.createElement('div'); aw.id='nfcol-avios-'+i; div.appendChild(aw);
-    el.appendChild(div);
-    // Render talles AFTER div is in DOM — pass element directly
+
+    var card = document.createElement('div');
+    card.style.cssText='border:2px solid rgba(196,134,106,.3);border-radius:var(--rl);overflow:hidden;margin-bottom:14px;';
+
+    // Header del color
+    var hdr = document.createElement('div');
+    hdr.style.cssText='background:var(--bk);padding:10px 14px;display:flex;align-items:center;gap:10px;';
+    var colorDot = document.createElement('div');
+    colorDot.style.cssText='width:14px;height:14px;border-radius:50%;background:var(--ac);flex-shrink:0;';
+    var cinp = document.createElement('input'); cinp.className='fi';
+    cinp.type='text'; cinp.placeholder='Nombre del color (ej: Negro, Lavanda...)';
+    cinp.value=col.color||'';
+    cinp.style.cssText='flex:1;height:34px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;font-size:14px;font-weight:600;';
+    cinp.id='nfcol-inp-'+i;
+    var cdel = document.createElement('button'); cdel.className='delbtn';
+    cdel.style.cssText='color:rgba(255,255,255,.6);font-size:18px;';
+    cdel.textContent='×'; cdel.id='nfcol-del-'+i;
+    hdr.appendChild(colorDot); hdr.appendChild(cinp); hdr.appendChild(cdel);
+    card.appendChild(hdr);
+
+    var body = document.createElement('div');
+    body.style.cssText='padding:14px;background:var(--cr);';
+
+    // ── SECCIÓN: Telas de este color ──────────────────────────
+    var telLbl = document.createElement('div');
+    telLbl.style.cssText='font-size:11px;font-weight:700;color:var(--cobalt,#6A8090);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;';
+    telLbl.innerHTML='<span>🧵 Telas de este color</span>';
+    var addTelBtn = document.createElement('button'); addTelBtn.className='exp-btn';
+    addTelBtn.textContent='+ Agregar tela'; addTelBtn.id='nfcol-addtela-'+i;
+    telLbl.appendChild(addTelBtn);
+    body.appendChild(telLbl);
+    var telWrap = document.createElement('div'); telWrap.id='nfcol-telas-'+i; body.appendChild(telWrap);
+
+    // Separador
+    var sep = document.createElement('div');
+    sep.style.cssText='height:1px;background:rgba(26,36,51,.08);margin:12px 0;';
+    body.appendChild(sep);
+
+    // ── SECCIÓN: Avíos de este color ──────────────────────────
+    var avLbl = document.createElement('div');
+    avLbl.style.cssText='font-size:11px;font-weight:700;color:#5a3a8a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;';
+    avLbl.innerHTML='<span>🔩 Avíos de este color</span>';
+    var addAvBtn = document.createElement('button'); addAvBtn.className='exp-btn';
+    addAvBtn.textContent='+ Agregar avío'; addAvBtn.id='nfcol-addavio-'+i;
+    avLbl.appendChild(addAvBtn);
+    body.appendChild(avLbl);
+    var avWrap = document.createElement('div'); avWrap.id='nfcol-avios-'+i; body.appendChild(avWrap);
+
+    // Separador
+    var sep2 = document.createElement('div');
+    sep2.style.cssText='height:1px;background:rgba(26,36,51,.08);margin:12px 0;';
+    body.appendChild(sep2);
+
+    // ── SECCIÓN: Curva de talles ──────────────────────────────
+    var tallLbl = document.createElement('div');
+    tallLbl.style.cssText='font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;';
+    tallLbl.textContent='📐 Curva de talles';
+    body.appendChild(tallLbl);
+    var tw = document.createElement('div'); tw.id='nfcol-talles-'+i; body.appendChild(tw);
+    var totDiv = document.createElement('div');
+    totDiv.style.cssText='font-size:12px;font-weight:600;color:var(--t2);margin-top:6px;';
+    body.appendChild(totDiv);
+
+    card.appendChild(body);
+    el.appendChild(card);
+
+    // Render talles
     renderTallesGrid(tw, col.talles, function(){
       var tot=totalTalles(col.talles);
-      totDiv.textContent=tot>0?'Total: '+tot+' unidades':'Sin unidades cargadas';
-      totDiv.style.color=tot>0?'var(--t2)':'var(--t3)';
+      totDiv.textContent=tot>0?'✓ Total: '+tot+' unidades':'Sin unidades cargadas';
+      totDiv.style.color=tot>0?'#3a6a2a':'var(--t3)';
     });
     var tot0=totalTalles(col.talles);
-    totDiv.textContent=tot0>0?'Total: '+tot0+' unidades':'Sin unidades cargadas';
-    totDiv.style.color=tot0>0?'var(--t2)':'var(--t3)';
-    function renderAviosVar(ci,colObj){ var awEl=document.getElementById('nfcol-avios-'+ci); if(!awEl)return; awEl.innerHTML=''; if(!colObj.avios.length){awEl.innerHTML='<div style="font-size:11px;color:var(--t3);margin-bottom:4px;">Sin avíos específicos</div>';return;} colObj.avios.forEach(function(av,ai){ var ar=document.createElement('div'); ar.style.cssText='display:grid;grid-template-columns:1fr 52px 52px 28px;gap:5px;margin-bottom:5px;align-items:center;'; var an=document.createElement('input'); an.className='fi'; an.type='text'; an.placeholder='Avío'; an.value=av.nombre||''; an.style.cssText='height:28px;font-size:11px;'; var ac=document.createElement('input'); ac.className='fi'; ac.type='text'; ac.inputMode='decimal'; ac.placeholder='Cant.'; ac.value=av.cantidad||''; ac.style.cssText='height:28px;font-size:11px;text-align:center;'; var ap=document.createElement('input'); ap.className='fi'; ap.type='text'; ap.inputMode='decimal'; ap.placeholder='$'; ap.value=av.precio||''; ap.style.cssText='height:28px;font-size:11px;text-align:right;'; var ad=document.createElement('button'); ad.className='delbtn'; ad.textContent='×'; ad.style.cssText='height:28px;font-size:14px;'; ar.appendChild(an); ar.appendChild(ac); ar.appendChild(ap); ar.appendChild(ad); awEl.appendChild(ar); (function(aidx,avObj){an.oninput=function(){avObj.nombre=this.value;};ac.oninput=function(){avObj.cantidad=parseFloat(this.value)||0;};ap.oninput=function(){avObj.precio=parseFloat(this.value)||0;};ad.onclick=function(){colObj.avios.splice(aidx,1);renderAviosVar(ci,colObj);};})(ai,av); }); }
-    renderAviosVar(i,col);
-    (function(idx,colObj){ var i2=document.getElementById('nfcol-inp-'+idx); if(i2)i2.oninput=function(){colObj.color=this.value;}; var d2=document.getElementById('nfcol-del-'+idx); if(d2)d2.onclick=function(){nfColores.splice(idx,1);renderNfColores();}; var ab=document.getElementById('nfcol-addavio-'+idx); if(ab)ab.onclick=function(e){e.preventDefault();colObj.avios.push({nombre:'',cantidad:0,unidad:'u',precio:0});renderAviosVar(idx,colObj);}; })(i,col);
+    totDiv.textContent=tot0>0?'✓ Total: '+tot0+' unidades':'Sin unidades cargadas';
+    totDiv.style.color=tot0>0?'#3a6a2a':'var(--t3)';
+
+    // ── Render telas del color ────────────────────────────────
+    (function(ci, colObj) {
+      function renderTelasColor() {
+        var tw2 = document.getElementById('nfcol-telas-'+ci);
+        if (!tw2) return;
+        tw2.innerHTML='';
+        if (!colObj.telas.length) {
+          tw2.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Sin telas — agregá la tela principal de este color</div>';
+        }
+        colObj.telas.forEach(function(t, ti) {
+          var r = renderInsumoRow(t, function(action){
+            if(action==='delete'){ colObj.telas.splice(ti,1); renderTelasColor(); }
+            else renderTelasColor();
+          });
+          tw2.appendChild(r);
+        });
+      }
+      renderTelasColor();
+      var ab2 = document.getElementById('nfcol-addtela-'+ci);
+      if (ab2) ab2.onclick=function(e){
+        e.preventDefault();
+        colObj.telas.push({nombre:'',cantidad:0,unidad:'m',precio:0});
+        renderTelasColor();
+      };
+
+      // ── Render avíos del color ──────────────────────────────
+      function renderAviosColor() {
+        var aw2 = document.getElementById('nfcol-avios-'+ci);
+        if (!aw2) return;
+        aw2.innerHTML='';
+        if (!colObj.avios.length) {
+          aw2.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Sin avíos — ej: cierre, hilo, etiqueta</div>';
+        }
+        colObj.avios.forEach(function(a, ai) {
+          var r = renderInsumoRow(a, function(action){
+            if(action==='delete'){ colObj.avios.splice(ai,1); renderAviosColor(); }
+            else renderAviosColor();
+          });
+          aw2.appendChild(r);
+        });
+      }
+      renderAviosColor();
+      var ab3 = document.getElementById('nfcol-addavio-'+ci);
+      if (ab3) ab3.onclick=function(e){
+        e.preventDefault();
+        colObj.avios.push({nombre:'',cantidad:0,unidad:'u',precio:0});
+        renderAviosColor();
+      };
+
+      // Input color
+      var ci2 = document.getElementById('nfcol-inp-'+ci);
+      if (ci2) ci2.oninput=function(){ colObj.color=this.value; };
+      var cd2 = document.getElementById('nfcol-del-'+ci);
+      if (cd2) cd2.onclick=function(){ nfColores.splice(ci,1); renderNfColores(); };
+    })(i, col);
   });
 }
 
