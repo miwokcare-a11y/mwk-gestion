@@ -5708,23 +5708,106 @@ function renderNfTelas() {
   }
   el.innerHTML = '';
   nfTelas.forEach(function(m, i) {
+    // Auto-buscar precio si tiene nombre pero no tiene precio
+    if ((m.nombre||'').trim() && !(parseFloat(m.precio) > 0)) {
+      var p = getPrecioFromHistorial(m.nombre);
+      if (p > 0) { m.precio = p; }
+    }
+
+    var subtotal = (parseFloat(m.cantidad)||0) * (parseFloat(m.precio)||0);
     var div = document.createElement('div');
     div.style.cssText = 'background:rgba(42,90,160,.06);border:1px solid rgba(42,90,160,.15);border-radius:var(--r);padding:10px;margin-bottom:8px;';
+
+    // Fila 1: nombre + delete
     var row1 = document.createElement('div'); row1.style.cssText='display:flex;gap:8px;margin-bottom:8px;';
     var inp = document.createElement('input'); inp.className='fi'; inp.type='text'; inp.placeholder='Nombre de la tela'; inp.value=m.nombre||''; inp.style.flex='1';
     var del = document.createElement('button'); del.className='delbtn'; del.textContent='×';
     row1.appendChild(inp); row1.appendChild(del); div.appendChild(row1);
-    var row2 = document.createElement('div'); row2.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;';
+
+    // Dropdown sugerencias
+    var sug=document.createElement('div');
+    sug.style.cssText='display:none;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:var(--r);margin-bottom:8px;max-height:150px;overflow-y:auto;z-index:10;';
+    div.appendChild(sug);
+
+    // Fila 2: consumo + unidad + precio
+    var row2 = document.createElement('div'); row2.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;';
     var cInp=document.createElement('input'); cInp.className='fi'; cInp.type='text'; cInp.inputMode='decimal'; cInp.placeholder='Consumo (m)'; cInp.value=m.cantidad||'';
     var uSel=document.createElement('select'); uSel.className='fi';
     ['m','kg','u'].forEach(function(v){ var o=document.createElement('option'); o.value=v; o.textContent=v; if((m.unidad||'m')===v) o.selected=true; uSel.appendChild(o); });
-    var pInp=document.createElement('input'); pInp.className='fi'; pInp.type='text'; pInp.inputMode='decimal'; pInp.placeholder='$ /m'; pInp.value=m.precio||'';
+    var pInp=document.createElement('input'); pInp.className='fi'; pInp.type='text'; pInp.inputMode='decimal'; pInp.placeholder='$ /m';
+    pInp.value = (parseFloat(m.precio) > 0) ? m.precio : '';
     row2.appendChild(cInp); row2.appendChild(uSel); row2.appendChild(pInp); div.appendChild(row2);
-    var sug=document.createElement('div'); sug.className='sug'; div.appendChild(sug); el.appendChild(div);
-    (function(idx, mat){
-      function updateSug(){ var q=(inp.value||'').toLowerCase().trim(); if(q.length<2){sug.style.display='none';return;} var matches=(st.catalogo&&st.catalogo.length?st.catalogo:st.stock||[]).filter(function(s){return (s.nombre||'').toLowerCase().indexOf(q)!==-1;}).slice(0,5); if(!matches.length){sug.style.display='none';return;} sug.innerHTML=''; sug.style.display='block'; matches.forEach(function(s){ var opt=document.createElement('div'); opt.style.cssText='padding:7px 12px;cursor:pointer;border-bottom:1px solid rgba(26,36,51,.06);font-size:13px;'; var pm=parseFloat(s.precio_metro)||0; opt.innerHTML='<b>'+esc(s.nombre)+'</b> <span style="color:#2a4a8a;font-size:11px;">'+(pm>0?'$'+fmt(pm)+'/m':'')+'</span>'; opt.onmousedown=function(e){ e.preventDefault(); mat.nombre=s.nombre; if(pm>0) mat.precio=pm; mat.unidad=s.unidad||'m'; sug.style.display='none'; renderNfTelas(); }; sug.appendChild(opt); }); }
-      inp.oninput=function(){mat.nombre=this.value; updateSug();}; inp.onblur=function(){setTimeout(function(){sug.style.display='none';},200);};
-      cInp.oninput=function(){mat.cantidad=parseFloat(this.value)||0;}; uSel.onchange=function(){mat.unidad=this.value;}; pInp.oninput=function(){mat.precio=parseFloat(this.value)||0;}; del.onclick=function(){nfTelas.splice(idx,1); renderNfTelas();};
+
+    // Subtotal (si hay precio y cantidad)
+    if (subtotal > 0) {
+      var subDiv = document.createElement('div');
+      subDiv.style.cssText='background:rgba(42,90,160,.1);border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin-bottom:6px;';
+      subDiv.innerHTML='<span style="font-size:11px;color:#2a4a8a;">'+(m.cantidad)+' '+(m.unidad||'m')+' × $'+fmt(m.precio)+'</span>'+
+        '<span style="font-size:13px;font-weight:700;color:#2a4a8a;">$'+fmt(subtotal)+'</span>';
+      div.appendChild(subDiv);
+    }
+
+    // Botón buscar precio
+    var buscarBtn = document.createElement('button');
+    buscarBtn.className='exp-btn';
+    buscarBtn.style.cssText='width:100%;justify-content:center;font-size:11px;';
+    buscarBtn.textContent = (parseFloat(m.precio) > 0) ? '✓ Precio: $'+fmt(m.precio)+'/m  (actualizar)' : '🔍 Buscar precio en stock';
+    div.appendChild(buscarBtn);
+
+    el.appendChild(div);
+
+    // ── Eventos ──────────────────────────────────────────────────
+    (function(idx, mat) {
+
+      function updateSug() {
+        var q = (inp.value||'').toLowerCase().trim();
+        if (q.length < 2) { sug.style.display='none'; sug.innerHTML=''; return; }
+        var src = (st.catalogo&&st.catalogo.length) ? st.catalogo : (st.stock||[]);
+        var matches = src.filter(function(s){ return (s.nombre||'').toLowerCase().indexOf(q)!==-1; }).slice(0,6);
+        if (!matches.length) { sug.style.display='none'; return; }
+        sug.innerHTML='';
+        matches.forEach(function(s){
+          var opt=document.createElement('div');
+          opt.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(26,36,51,.06);font-size:13px;';
+          var pm=parseFloat(s.precio_metro)||0;
+          var pa=parseFloat(s.precio_ars)||0;
+          opt.innerHTML='<b>'+esc(s.nombre)+'</b>'+
+            (s.color_diseno?' <span style="font-size:11px;color:var(--t3);">'+esc(s.color_diseno)+'</span>':'')+
+            (pm>0?' <span style="color:#2a4a8a;font-weight:600;font-size:11px;">$'+fmt(pm)+'/m</span>':
+             pa>0?' <span style="color:#2a4a8a;font-size:11px;">$'+fmt(pa)+'</span>':'');
+          opt.onmousedown=function(e){
+            e.preventDefault();
+            mat.nombre=s.nombre;
+            var p=pm||pa;
+            if(p>0) mat.precio=p;
+            mat.unidad=s.unidad||'m';
+            sug.style.display='none';
+            renderNfTelas();
+          };
+          sug.appendChild(opt);
+        });
+        sug.style.display='block';
+      }
+
+      inp.oninput=function(){ mat.nombre=this.value; updateSug(); };
+      inp.onfocus=function(){ if(this.value.length>=2) updateSug(); };
+      inp.onblur=function(){ setTimeout(function(){ sug.style.display='none'; },200); };
+      cInp.oninput=function(){ mat.cantidad=parseFloat(this.value)||0; };
+      uSel.onchange=function(){ mat.unidad=this.value; };
+      pInp.oninput=function(){ mat.precio=parseFloat(this.value)||0; renderNfTelas(); };
+      del.onclick=function(){ nfTelas.splice(idx,1); renderNfTelas(); };
+
+      buscarBtn.onclick=function(){
+        var p=getPrecioFromHistorial(mat.nombre);
+        if(p>0){
+          mat.precio=p;
+          renderNfTelas();
+          toast('✅ $'+fmt(p)+'/m — precio encontrado para '+mat.nombre);
+        } else {
+          toast('No se encontró precio para "'+mat.nombre+'"');
+        }
+      };
+
     })(i, m);
   });
 }
