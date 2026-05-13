@@ -4060,8 +4060,13 @@ function guardarEdicionStock() {
   var mts = parseFloat(document.getElementById('em-mts').value)||0;
   var moneda    = document.getElementById('em-moneda').value||'ARS';
   var precioU   = parseFloat(document.getElementById('em-precio').value)||0;
-  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||1;
-  var precioARS = moneda==='USD' ? precioU*cotizU : precioU;
+  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||0;
+  if (!cotizU || cotizU<=1) { try{ cotizU=parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0; }catch(e){} }
+  if (!cotizU || cotizU<=1) cotizU = getCotiz();
+  if (!cotizU || cotizU<=1) cotizU = 1;
+  var precioARS = moneda==='USD' ? Math.round(precioU*cotizU*100)/100 : precioU;
+  var rindeVal  = parseFloat(document.getElementById('em-rinde').value)||0;
+  var precioMetro = (precioARS>0 && rindeVal>0) ? Math.round(precioARS/rindeVal*100)/100 : 0;
   var data = {
     nombre:       document.getElementById('em-nom').value.trim(),
     color:        document.getElementById('em-color').value.trim(),
@@ -4081,7 +4086,7 @@ function guardarEdicionStock() {
     cotiz_usd:     cotizU,
     precio_ars:    precioARS,
     unidad_compra: document.getElementById('em-unidad-compra')?document.getElementById('em-unidad-compra').value:'kg',
-    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||0
+    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||precioMetro
   };
   SB.from('mwk_stock').update(data, {id: s.id}).then(function(){
     Object.assign(s, data);
@@ -4597,17 +4602,30 @@ function generarPDFCostos(fichas) {
     tx('MWK · miwok.com.ar',16,291,3,'#A89E94');
     tx((fi+1)+'/'+fichas.length,194,291,3,'#A89E94','right');
 
-    pages.push(cv.toDataURL('image/jpeg',0.92).split(',')[1]);
+    // Capturar esta página como canvas clone
+    var pageCanvas = document.createElement('canvas');
+    pageCanvas.width=PW; pageCanvas.height=PH;
+    pageCanvas.style.cssText='position:fixed;left:-9999px;top:-9999px;';
+    document.body.appendChild(pageCanvas);
+    pageCanvas.getContext('2d').drawImage(cv,0,0);
+    pages.push(pageCanvas);
+    // Resetear para siguiente página
+    if (fi < fichas.length-1) {
+      ctx.clearRect(0,0,PW,PH);
+    }
   });
 
-  // Build multi-page PDF
+  // Build PDF
   document.body.removeChild(cv);
-  var fname = fichas.length===1 ? 'costos-'+esc(fichas[0].nombre||'ficha').replace(/\s/g,'-')+'.pdf' : 'reporte-costos-mwk.pdf';
-  if (typeof buildPDFMultipage === 'function') {
-    buildPDFMultipage(pages, PW, PH, fname);
-  } else {
-    buildPDFAndDownload(pages[0], PW, PH, fname);
-  }
+  var jpgPages = pages.map(function(pc){
+    var b64 = pc.toDataURL('image/jpeg',0.92).split(',')[1];
+    try{document.body.removeChild(pc);}catch(e){}
+    return b64;
+  });
+  var fname = fichas.length===1
+    ? 'costos-'+(fichas[0].nombre||'ficha').replace(/[^a-zA-Z0-9]/g,'-')+'.pdf'
+    : 'reporte-costos-mwk.pdf';
+  buildPDFMultipage(jpgPages, PW, PH, fname);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -6904,6 +6922,24 @@ function buildPDFAndDownload(jpgB64,imgW,imgH,fname){
 // ════════════════════════════════════════════════════════════════
 // PDF MULTIPÁGINA — ensambla N imágenes JPEG en un PDF válido
 // ════════════════════════════════════════════════════════════════
+function buildPDFMultipageRaw(jpgB64Array, imgW, imgH, fname) {
+  try {
+    // Reusar buildPDFMultipage pero convirtiendo b64 a canvas
+    var canvases = jpgB64Array.map(function(b64) {
+      var cv2 = document.createElement('canvas');
+      cv2.width=imgW; cv2.height=imgH;
+      // Store b64 directly — override toDataURL
+      cv2._b64 = b64;
+      cv2.toDataURL = function(){ return 'data:image/jpeg;base64,'+this._b64; };
+      return cv2;
+    });
+    buildPDFMultipage(canvases, imgW, imgH, fname);
+  } catch(e) {
+    // Fallback: descargar solo la primera página
+    buildPDFAndDownload(jpgB64Array[0], imgW, imgH, fname);
+  }
+}
+
 function buildPDFMultipage(canvases,imgW,imgH,fname){
   try{
     var pw=595.28, ph=841.89;
@@ -6933,9 +6969,9 @@ function buildPDFMultipage(canvases,imgW,imgH,fname){
       return b64;
     }
 
-    // Convertir cada canvas a Uint8Array JPEG
+    // Convertir cada canvas o base64 a Uint8Array JPEG
     var jpgArrays=canvases.map(function(cv){
-      var b64=cv.toDataURL('image/jpeg',0.92).split(',')[1];
+      var b64 = (typeof cv === 'string') ? cv : cv.toDataURL('image/jpeg',0.92).split(',')[1];
       var raw=atob(b64);
       var arr=new Uint8Array(raw.length);
       for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
