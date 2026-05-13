@@ -5074,6 +5074,30 @@ function costoFicha(f) {
   return costTelas + costMats + costAviosVar + (parseFloat(f.mo)||0);
 }
 
+function diagFicha(i) {
+  var f = (st.fichas||[])[i];
+  if (!f) return;
+  var lines = ['=== DIAGNÓSTICO: '+f.nombre+' ===',''];
+  var allMats = (f.telas||[]).concat(f.materiales||[]);
+  allMats.forEach(function(m) {
+    var p = getPrecioFromHistorial(m.nombre||'');
+    var pGuardado = parseFloat(m.precio)||0;
+    // Buscar en stock manualmente
+    var q = (m.nombre||'').toLowerCase().trim();
+    var enStock = (st.stock||[]).filter(function(s){ return (s.nombre||'').toLowerCase().indexOf(q)!==-1; });
+    lines.push('MATERIAL: '+m.nombre);
+    lines.push('  precio guardado: $'+pGuardado);
+    lines.push('  getPrecioFromHistorial: $'+p);
+    lines.push('  en stock ('+enStock.length+' resultados):');
+    enStock.forEach(function(s){
+      lines.push('    "'+s.nombre+'" pm='+s.precio_metro+' pa='+s.precio_ars+' pu='+s.precio_unit+' rinde='+s.rinde+' uc='+s.unidad_compra+' mon='+s.moneda);
+    });
+    lines.push('');
+  });
+  alert(lines.join('
+'));
+}
+
 function renderFichasLista() {
   var el = document.getElementById('fichas-lista');
   if (!el) return;
@@ -5098,6 +5122,7 @@ function renderFichasLista() {
             '<button class="adj-btn" onclick="verFicha('+i+')" title="Ver detalle">👁</button>'+
             '<button class="adj-btn" onclick="editarFicha('+i+')" title="Editar">✎</button>'+
             '<button class="adj-btn" style="color:var(--cobalt,#6A8090);" onclick="pdfReporteCostos('+i+')" title="Reporte PDF">⬇</button>'+
+            '<button class="adj-btn" style="color:#2a6a3a;" onclick="diagFicha('+i+')" title="Diagnóstico precios">🔍</button>'+
             '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarFicha('+i+')" title="Eliminar">×</button>'+
           '</div>'+
         '</div>'+
