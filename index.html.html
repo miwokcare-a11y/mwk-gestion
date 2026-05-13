@@ -1663,7 +1663,7 @@ function ir(id){
   if(id==='s-dashboard')renderDashboard();
   if(id==='s-stock')renderStock();
   if(id==='s-devoluciones')renderDevoluciones();
-  if(id==='s-fichas'){renderFichasLista();nfMats=nfMats||[];nfColores=nfColores||[];renderNfMats();initFichaForm();}
+  if(id==='s-fichas'){actualizarPreciosFichas();renderFichasLista();nfMats=nfMats||[];nfColores=nfColores||[];renderNfMats();initFichaForm();}
   if(id==='s-planificacion')renderPlanFichas();
   if(id==='s-produccion')renderProduccion();
 }
@@ -5077,25 +5077,68 @@ function costoFicha(f) {
 function diagFicha(i) {
   var f = (st.fichas||[])[i];
   if (!f) return;
-  var lines = ['=== DIAGNÓSTICO: '+f.nombre+' ===',''];
+  var msg = 'DIAGNOSTICO: ' + f.nombre + ' | ';
   var allMats = (f.telas||[]).concat(f.materiales||[]);
   allMats.forEach(function(m) {
     var p = getPrecioFromHistorial(m.nombre||'');
-    var pGuardado = parseFloat(m.precio)||0;
-    // Buscar en stock manualmente
+    var pG = parseFloat(m.precio)||0;
     var q = (m.nombre||'').toLowerCase().trim();
     var enStock = (st.stock||[]).filter(function(s){ return (s.nombre||'').toLowerCase().indexOf(q)!==-1; });
-    lines.push('MATERIAL: '+m.nombre);
-    lines.push('  precio guardado: $'+pGuardado);
-    lines.push('  getPrecioFromHistorial: $'+p);
-    lines.push('  en stock ('+enStock.length+' resultados):');
-    enStock.forEach(function(s){
-      lines.push('    "'+s.nombre+'" pm='+s.precio_metro+' pa='+s.precio_ars+' pu='+s.precio_unit+' rinde='+s.rinde+' uc='+s.unidad_compra+' mon='+s.moneda);
-    });
-    lines.push('');
+    msg += '[' + m.nombre + '] guardado=$' + pG + ' calculado=$' + p;
+    if (enStock.length) {
+      var s0 = enStock[0];
+      msg += ' stock: pm=' + s0.precio_metro + ' pa=' + s0.precio_ars + ' pu=' + s0.precio_unit + ' rinde=' + s0.rinde + ' uc=' + s0.unidad_compra + ' mon=' + s0.moneda;
+    } else {
+      msg += ' NO ENCONTRADO EN STOCK';
+    }
+    msg += ' || ';
   });
-  alert(lines.join('
-'));
+  alert(msg);
+}
+
+function actualizarPreciosFichas() {
+  // Recorre todas las fichas y completa precios desde stock/catalogo
+  var fichas = st.fichas || [];
+  var actualizadas = 0;
+  fichas.forEach(function(f) {
+    var cambio = false;
+    // Telas
+    (f.telas||[]).forEach(function(m) {
+      if (!(parseFloat(m.precio) > 0)) {
+        var p = getPrecioFromHistorial(m.nombre||'');
+        if (p > 0) { m.precio = p; cambio = true; }
+      }
+    });
+    // Avios generales
+    (f.materiales||[]).forEach(function(m) {
+      if (!(parseFloat(m.precio) > 0)) {
+        var p = getPrecioFromHistorial(m.nombre||'');
+        if (p > 0) { m.precio = p; cambio = true; }
+      }
+    });
+    // Avios por variante
+    (f.colores||[]).forEach(function(c) {
+      (c.avios||[]).forEach(function(a) {
+        if (!(parseFloat(a.precio) > 0)) {
+          var p = getPrecioFromHistorial(a.nombre||'');
+          if (p > 0) { a.precio = p; cambio = true; }
+        }
+      });
+    });
+    // Guardar en Supabase si hubo cambios
+    if (cambio && f.id) {
+      actualizadas++;
+      SB.from('mwk_fichas').update({
+        telas: f.telas,
+        materiales: f.materiales,
+        colores: f.colores
+      }, {id: f.id}).catch(function(){});
+    }
+  });
+  if (actualizadas > 0) {
+    setTimeout(function(){ renderFichasLista(); }, 300);
+    toast('💰 Precios actualizados en ' + actualizadas + ' ficha' + (actualizadas !== 1 ? 's' : ''));
+  }
 }
 
 function renderFichasLista() {
@@ -5875,13 +5918,7 @@ function renderNfTelas() {
           var q=(mat.nombre||'').toLowerCase().trim();
           var found=(st.stock||[]).filter(function(s){return (s.nombre||'').toLowerCase().indexOf(q)!==-1;});
           if(found.length){
-            var info=found.map(function(s){return s.nombre+' | pm='+s.precio_metro+' pa='+s.precio_ars+' pu='+s.precio_unit+' rinde='+s.rinde+' uc='+s.unidad_compra+' mon='+s.moneda;}).join('
-');
-            alert('No se calculó precio.
-Stock encontrado:
-'+info+'
-
-Cotiz actual: '+getCotiz());
+            var s0=found[0]; alert('pm='+s0.precio_metro+' pa='+s0.precio_ars+' pu='+s0.precio_unit+' rinde='+s0.rinde+' uc='+s0.unidad_compra+' mon='+s0.moneda+' cotiz='+getCotiz());
           } else {
             toast('No se encontró "'+mat.nombre+'" en stock');
           }
