@@ -5195,10 +5195,42 @@ function renderNfMats() {
     toggleRow.appendChild(btnPrenda);
     toggleRow.appendChild(btnTalle);
     div.appendChild(toggleRow);
-    (function(mat, bp, bt){
-      bp.onclick = function(){ mat.por_talle=false; bp.style.background='var(--bk)'; bp.style.color='#fff'; bp.style.borderColor='var(--bk)'; bt.style.background='var(--sa)'; bt.style.color='var(--t2)'; bt.style.borderColor='var(--s2)'; };
-      bt.onclick = function(){ mat.por_talle=true; bt.style.background='var(--bk)'; bt.style.color='#fff'; bt.style.borderColor='var(--bk)'; bp.style.background='var(--sa)'; bp.style.color='var(--t2)'; bp.style.borderColor='var(--s2)'; };
-    })(m, btnPrenda, btnTalle);
+
+    // Grilla de talles (visible solo cuando por_talle=true)
+    if (!m.talles_avio) m.talles_avio = {};
+    var tallesAvioWrap = document.createElement('div');
+    tallesAvioWrap.style.cssText = 'display:'+(m.por_talle?'block':'none')+';background:rgba(90,58,138,.05);border:1px solid rgba(90,58,138,.15);border-radius:8px;padding:10px;margin-bottom:6px;';
+    var tallesAvioLbl = document.createElement('div');
+    tallesAvioLbl.style.cssText = 'font-size:10px;color:#5a3a8a;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;';
+    tallesAvioLbl.textContent = 'Talles que llevan este avío:';
+    tallesAvioWrap.appendChild(tallesAvioLbl);
+    var tallesGrid = document.createElement('div');
+    tallesGrid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+    TALLES_TODOS.forEach(function(t){
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      var activo = !!m.talles_avio[t];
+      chip.textContent = t;
+      chip.style.cssText = 'font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid;font-family:inherit;cursor:pointer;transition:all .15s;'+(activo?'background:#5a3a8a;color:#fff;border-color:#5a3a8a;':'background:var(--sa);color:var(--t2);border-color:var(--s2);');
+      chip.onclick = (function(talle, btn, mat2){
+        return function(){
+          mat2.talles_avio[talle] = !mat2.talles_avio[talle];
+          if (mat2.talles_avio[talle]) {
+            btn.style.background='#5a3a8a'; btn.style.color='#fff'; btn.style.borderColor='#5a3a8a';
+          } else {
+            btn.style.background='var(--sa)'; btn.style.color='var(--t2)'; btn.style.borderColor='var(--s2)';
+          }
+        };
+      })(t, chip, m);
+      tallesGrid.appendChild(chip);
+    });
+    tallesAvioWrap.appendChild(tallesGrid);
+    div.appendChild(tallesAvioWrap);
+
+    (function(mat, bp, bt, taw){
+      bp.onclick = function(){ mat.por_talle=false; bp.style.background='var(--bk)'; bp.style.color='#fff'; bp.style.borderColor='var(--bk)'; bt.style.background='var(--sa)'; bt.style.color='var(--t2)'; bt.style.borderColor='var(--s2)'; taw.style.display='none'; };
+      bt.onclick = function(){ mat.por_talle=true; bt.style.background='var(--bk)'; bt.style.color='#fff'; bt.style.borderColor='var(--bk)'; bp.style.background='var(--sa)'; bp.style.color='var(--t2)'; bp.style.borderColor='var(--s2)'; taw.style.display='block'; };
+    })(m, btnPrenda, btnTalle, tallesAvioWrap);
 
     // Subtotal
     if (subtotal > 0) {
@@ -5317,7 +5349,7 @@ function guardarFicha() {
   var aviosVariante = nfMats.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
     var p = parseFloat(m.precio)||0;
     if (!p) p = getPrecioFromHistorial(m.nombre);
-    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'u', precio:p, por_talle:!!m.por_talle};
+    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'u', precio:p, por_talle:!!m.por_talle, talles_avio:m.talles_avio||{}};
   });
   // Color/variante simple
   var colorVariante = (document.getElementById('nf-color-variante').value||'').trim();
@@ -5641,7 +5673,7 @@ function duplicarFicha(i) {
   var primerColD = (f.colores&&f.colores.length) ? f.colores[0] : null;
   var aviosSrcD = (primerColD&&(primerColD.avios||[]).length) ? primerColD.avios : (f.materiales||[]);
   nfMats = aviosSrcD.map(function(m){
-    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle};
+    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle, talles_avio:Object.assign({},m.talles_avio||{})};
   });
   nfColores = [];
 
@@ -5703,7 +5735,7 @@ function editarFicha(i) {
   var primerCol = (f.colores&&f.colores.length) ? f.colores[0] : null;
   var aviosSrc = (primerCol&&(primerCol.avios||[]).length) ? primerCol.avios : (f.materiales||[]);
   nfMats = aviosSrc.map(function(m){
-    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle};
+    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle, talles_avio:Object.assign({},m.talles_avio||{})};
   });
   // Cargar telas — desde colores[0].telas (nuevo) o f.telas (legacy)
   var telasSrc = (primerCol&&(primerCol.telas||[]).length) ? primerCol.telas : (f.telas||[]);
@@ -5891,10 +5923,12 @@ function explotarConsumos() {
         acumular(m, col.color, cant);
       });
 
-      // Avíos de esta variante (con soporte por_talle)
+      // Avíos de esta variante (con soporte por_talle y talles_avio)
       (col.avios||[]).forEach(function(a){
         if (a.por_talle) {
-          TALLES_TODOS.forEach(function(t){
+          var tallesConAvio = Object.keys(a.talles_avio||{}).filter(function(t){ return a.talles_avio[t]; });
+          var fuenteTalles = tallesConAvio.length ? tallesConAvio : TALLES_TODOS;
+          fuenteTalles.forEach(function(t){
             var undsEseTalle = (col.talles||{})[t]||0;
             if (!undsEseTalle) return;
             var cant = (parseFloat(a.cantidad)||0) * undsEseTalle;
