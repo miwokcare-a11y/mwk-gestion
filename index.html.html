@@ -1107,40 +1107,36 @@ select.fi{appearance:none;
         </div>
       </div>
 
-      <!-- PASO 2: Telas e insumos comunes -->
+      <!-- PASO 2: Insumos -->
       <div class="sp" style="margin-bottom:10px;">
         <div class="ficha-step-header">
           <div class="ficha-step-num">2</div>
           <div>
-            <div class="ficha-step-title">🧵 Telas e insumos comunes</div>
-            <div class="ficha-step-sub">Mismo consumo para TODOS los colores — el precio se busca automáticamente en stock</div>
+            <div class="ficha-step-title">🧵 Telas e insumos</div>
+            <div class="ficha-step-sub">Todos los materiales y avíos del modelo</div>
           </div>
         </div>
         <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
           <div id="nf-telas"></div>
-          <button class="addlink" onclick="addTelaFicha()">+ Agregar tela / insumo común</button>
-          <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(26,36,51,.07);">
-            <button onclick="(function(){ addColorFicha(); document.getElementById('nf-colores').scrollIntoView({behavior:'smooth',block:'start'}); })()" style="background:rgba(106,128,144,.1);border:1.5px dashed rgba(106,128,144,.4);border-radius:var(--r);padding:8px 14px;font-size:12px;color:var(--t2);font-family:inherit;cursor:pointer;width:100%;text-align:left;display:flex;align-items:center;gap:8px;">
-              <span style="font-size:16px;">🎨</span>
-              <span><b>¿La tela varía según el color?</b> — Agregá una variante de color y cargá la tela ahí</span>
-              <span style="margin-left:auto;font-size:11px;opacity:.6;">→</span>
-            </button>
-          </div>
+          <button class="addlink" onclick="addTelaFicha()">+ Agregar insumo</button>
         </div>
       </div>
 
-      <!-- PASO 3: Variantes de color -->
+      <!-- PASO 3: Variante / color + talles -->
       <div class="sp" style="margin-bottom:10px;">
         <div class="ficha-step-header">
           <div class="ficha-step-num">3</div>
           <div>
-            <div class="ficha-step-title">🎨 Variantes de color</div>
-            <div class="ficha-step-sub">Cada color tiene su <b>tela</b>, curva de talles y avíos específicos (cierre, hilo, etiqueta, etc.)</div>
+            <div class="ficha-step-title">🎨 Color / variante</div>
+            <div class="ficha-step-sub">Color del modelo y curva de talles</div>
           </div>
         </div>
         <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-          <div id="nf-colores"></div>
-          <button class="addlink" onclick="addColorFicha()">+ Agregar variante de color</button>
+          <div style="margin-bottom:12px;">
+            <div class="flbl" style="margin-bottom:4px;">Color / variante (opcional)</div>
+            <input class="fi" type="text" id="nf-color-variante" placeholder="ej: Negro, Rojo, Lavanda..." style="width:100%;">
+          </div>
+          <div id="nf-talles-wrap"></div>
         </div>
       </div>
 
@@ -1149,10 +1145,10 @@ select.fi{appearance:none;
         <div style="background:var(--sa);border:1px solid rgba(26,36,51,.08);border-radius:var(--r);padding:12px 14px;">
           <button onclick="toggleAviosGlobales()" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;color:var(--t2);display:flex;align-items:center;gap:8px;padding:0;width:100%;text-align:left;">
             <span id="avios-glob-icon">▶</span>
-            <span>🔩 Avíos generales (sin variante de color)</span>
+            <span>🔩 Avíos generales</span>
           </button>
           <div id="nf-mats-wrap" style="display:none;margin-top:12px;">
-            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Avíos que no varían por color — aplican igual a todas las variantes</div>
+            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Avíos que no son tela — aplican igual a todas las variantes</div>
             <div id="nf-mats"></div>
             <button class="addlink" onclick="addMatFicha()">+ Agregar avío general</button>
           </div>
@@ -5319,13 +5315,11 @@ function renderNfMats() {
 function guardarFicha() {
   var nombre = (document.getElementById('nf-nombre').value||'').trim();
   if (!nombre) { toast('Ingresá el nombre del modelo'); return; }
-  // Validar que haya al menos una tela O un material
   var hayTelas = nfTelas.some(function(m){return (m.nombre||'').trim();});
   var hayMats  = nfMats.some(function(m){return (m.nombre||'').trim();});
   if (!hayTelas && !hayMats) {
     toast('Agregá al menos una tela o avío'); return;
   }
-  // Auto-completar precios desde stock antes de guardar
   var telasData = nfTelas.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
     var p = parseFloat(m.precio)||0;
     if (!p) p = getPrecioFromHistorial(m.nombre);
@@ -5336,18 +5330,19 @@ function guardarFicha() {
     if (!p) p = getPrecioFromHistorial(m.nombre);
     return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad, precio:p, por_talle:!!m.por_talle};
   });
-  var coloresData = nfColores.filter(function(c){return (c.color||'').trim();}).map(function(c){
-    var avios=(c.avios||[]).filter(function(a){return (a.nombre||'').trim();}).map(function(a){
-      var p=parseFloat(a.precio)||0; if(!p) p=getPrecioFromHistorial(a.nombre);
-      return {nombre:a.nombre.trim(), cantidad:a.cantidad, unidad:a.unidad||'u', precio:p};
-    });
-    var telas=(c.telas||[]).filter(function(t){return (t.nombre||'').trim();}).map(function(t){
-      var p=parseFloat(t.precio)||0; if(!p) p=getPrecioFromHistorial(t.nombre);
-      return {nombre:t.nombre.trim(), cantidad:t.cantidad, unidad:t.unidad||'m', precio:p};
-    });
-    return {color:c.color.trim(), talles:c.talles, total:totalTalles(c.talles), avios:avios, telas:telas};
-  });
-  var totalUnd = coloresData.reduce(function(s,c){return s+c.total;},0);
+  // Color/variante simple
+  var colorVariante = (document.getElementById('nf-color-variante').value||'').trim();
+  var tallesSimples = Object.assign({}, nfTalles);
+  var totalUnd = totalTalles(tallesSimples);
+  // Mantener colores como array de un elemento para compatibilidad con el resto del sistema
+  var coloresData = colorVariante || totalUnd > 0 ? [{
+    color: colorVariante || 'General',
+    talles: tallesSimples,
+    total: totalUnd,
+    avios: [],
+    telas: []
+  }] : [];
+
   var data = {
     nombre: nombre,
     temporada: document.getElementById('nf-temp').value||'',
@@ -5356,7 +5351,7 @@ function guardarFicha() {
     telas: telasData,
     materiales: matsData,
     colores: coloresData,
-    talles: coloresData.length ? coloresData[0].talles : {},
+    talles: tallesSimples,
     total_unidades: totalUnd
   };
 
@@ -5365,8 +5360,10 @@ function guardarFicha() {
     document.getElementById('nf-temp').value='';
     document.getElementById('nf-ref').value='';
     document.getElementById('nf-mo').value='';
+    var cv = document.getElementById('nf-color-variante');
+    if (cv) cv.value = '';
     nfMats=[]; nfTelas=[]; nfTalles={}; nfColores=[];
-    renderNfMats(); renderNfTelas(); renderNfColores();
+    renderNfMats(); renderNfTelas();
     window._editingFichaIdx = null;
     window._editingFichaId  = null;
     var wrap = document.getElementById('ficha-form-wrap');
@@ -5374,7 +5371,8 @@ function guardarFicha() {
     var btnG = document.getElementById('btn-guardar-ficha');
     if (wrap) wrap.style.display = 'none';
     if (btnN) btnN.textContent = '+ Nueva ficha de costos';
-    if (btnG) btnG.textContent = '💾 Guardar ficha';
+    if (btnG) btnG.textContent = '\uD83D\uDCBE Guardar ficha';
+    initFichaForm();
   }
 
   // EDICIÓN
@@ -5541,9 +5539,10 @@ function renderFichasLista() {
         '<div style="text-align:right;flex-shrink:0;">'+
           (costo>0?'<div style="font-size:20px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div>'+
           '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">costo promedio</div>':'<div style="font-size:12px;color:#c0622a;font-weight:600;">Sin precios</div>')+
-          '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">'+
+          '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap;">'+
             '<button class="adj-btn" onclick="verFicha('+i+')" title="Ver detalle">👁</button>'+
             '<button class="adj-btn" onclick="editarFicha('+i+')" title="Editar">✎</button>'+
+            '<button class="adj-btn" style="color:#2a4a8a;background:rgba(42,74,138,.08);border-color:rgba(42,74,138,.2);" onclick="duplicarFicha('+i+')" title="Duplicar — cargá como nueva y modificá">⧉ Duplicar</button>'+
             '<button class="adj-btn" style="color:var(--cobalt,#6A8090);" onclick="pdfReporteCostos('+i+')" title="Reporte PDF">⬇</button>'+
             '<button class="adj-btn" style="color:#2a6a3a;" onclick="diagFicha('+i+')" title="Diagnóstico precios">🔍</button>'+
             '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarFicha('+i+')" title="Eliminar">×</button>'+
@@ -5620,6 +5619,70 @@ function eliminarFicha(i) {
   });
 }
 
+function duplicarFicha(i) {
+  var f = (st.fichas||[])[i];
+  if (!f) return;
+
+  // Cargar todos los datos en el formulario como nueva ficha (sin _editingFichaId)
+  document.getElementById('nf-nombre').value = f.nombre + ' — copia';
+  document.getElementById('nf-temp').value   = f.temporada||'';
+  document.getElementById('nf-ref').value    = f.referencia||'';
+  document.getElementById('nf-mo').value     = f.mo||'';
+
+  nfTelas = (f.telas||[]).map(function(m){
+    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
+  });
+  nfMats = (f.materiales||[]).map(function(m){
+    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle};
+  });
+  nfColores = [];
+
+  var primerColor = (f.colores&&f.colores.length) ? (f.colores[0].color||'') : '';
+  if (primerColor === 'General') primerColor = '';
+  nfTalles = Object.assign({}, (f.colores&&f.colores.length&&f.colores[0].talles) ? f.colores[0].talles : (f.talles||{}));
+
+  // NO setear _editingFichaId → va a guardar como nueva
+  window._editingFichaIdx = null;
+  window._editingFichaId  = null;
+
+  // Abrir formulario
+  var wrap = document.getElementById('ficha-form-wrap');
+  var btnN = document.getElementById('btn-nueva-ficha');
+  if (wrap) wrap.style.display = 'block';
+  if (btnN) btnN.textContent = '\u2715 Cancelar';
+
+  renderNfTelas();
+  renderNfMats();
+  initFichaForm();
+
+  // Restaurar talles y color (initFichaForm los resetea)
+  nfTalles = Object.assign({}, (f.colores&&f.colores.length&&f.colores[0].talles) ? f.colores[0].talles : (f.talles||{}));
+  var tw = document.getElementById('nf-talles-wrap');
+  if (tw) {
+    tw.innerHTML = '';
+    var totDiv2 = document.createElement('div');
+    totDiv2.id = 'nf-talles-total';
+    totDiv2.style.cssText = 'font-size:12px;font-weight:600;color:var(--t2);margin-top:6px;';
+    renderTallesGrid(tw, nfTalles, function(){
+      var tot = totalTalles(nfTalles);
+      var td = document.getElementById('nf-talles-total');
+      if (td) { td.textContent = tot>0?'\u2713 Total: '+tot+' unidades':'Sin unidades cargadas'; td.style.color=tot>0?'#3a6a2a':'var(--t3)'; }
+    });
+    tw.appendChild(totDiv2);
+    var tot0 = totalTalles(nfTalles);
+    totDiv2.textContent = tot0>0?'\u2713 Total: '+tot0+' unidades':'Sin unidades cargadas';
+    totDiv2.style.color = tot0>0?'#3a6a2a':'var(--t3)';
+  }
+  var cv = document.getElementById('nf-color-variante');
+  if (cv) cv.value = primerColor;
+
+  var btnG = document.getElementById('btn-guardar-ficha');
+  if (btnG) btnG.textContent = '\uD83D\uDCBE Guardar como nueva ficha';
+
+  setTimeout(function(){ if(wrap) wrap.scrollIntoView({behavior:'smooth'}); }, 100);
+  toast('\u29c9 Copia de "'+f.nombre+'" lista — modificá y guardá');
+}
+
 function editarFicha(i) {
   var f = (st.fichas||[])[i];
   if (!f) return;
@@ -5632,28 +5695,51 @@ function editarFicha(i) {
   nfMats = (f.materiales||[]).map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle};
   });
-  // Cargar colores
+  // Cargar telas
   nfTelas = (f.telas||[]).map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
   });
-  nfColores = (f.colores||[]).map(function(c){
-    return {color:c.color||'', talles:Object.assign({},c.talles||{}),
-      avios:(c.avios||[]).map(function(a){return Object.assign({},a);})};
-  });
+  // Color/variante simple — tomar el primer color si existe
+  var primerColor = (f.colores&&f.colores.length) ? (f.colores[0].color||'') : '';
+  if (primerColor === 'General') primerColor = '';
+  // Talles — del primer color o de f.talles
+  nfTalles = Object.assign({}, (f.colores&&f.colores.length&&f.colores[0].talles) ? f.colores[0].talles : (f.talles||{}));
+  nfColores = [];
   renderNfTelas();
   renderNfMats();
-  renderNfColores();
-  // Marcar que estamos editando
-  window._editingFichaIdx = i;
-  window._editingFichaId  = f.id;
-  // Abrir formulario
+  // Abrir formulario primero para que existan los elementos del DOM
   var wrap = document.getElementById('ficha-form-wrap');
   var btnN = document.getElementById('btn-nueva-ficha');
   if (wrap) wrap.style.display = 'block';
-  if (btnN) btnN.textContent = '✕ Cancelar';
+  if (btnN) btnN.textContent = '\u2715 Cancelar';
+  // Luego inicializar los campos del paso 3
+  initFichaForm();
+  // Sobrescribir nfTalles después del init (initFichaForm los resetea)
+  nfTalles = Object.assign({}, (f.colores&&f.colores.length&&f.colores[0].talles) ? f.colores[0].talles : (f.talles||{}));
+  var tw = document.getElementById('nf-talles-wrap');
+  if (tw) {
+    tw.innerHTML = '';
+    var totDiv = document.createElement('div');
+    totDiv.id = 'nf-talles-total';
+    totDiv.style.cssText = 'font-size:12px;font-weight:600;color:var(--t2);margin-top:6px;';
+    renderTallesGrid(tw, nfTalles, function(){
+      var tot = totalTalles(nfTalles);
+      var td = document.getElementById('nf-talles-total');
+      if (td) { td.textContent = tot > 0 ? '\u2713 Total: '+tot+' unidades' : 'Sin unidades cargadas'; td.style.color = tot>0?'#3a6a2a':'var(--t3)'; }
+    });
+    tw.appendChild(totDiv);
+    var tot0 = totalTalles(nfTalles);
+    totDiv.textContent = tot0 > 0 ? '\u2713 Total: '+tot0+' unidades' : 'Sin unidades cargadas';
+    totDiv.style.color = tot0>0?'#3a6a2a':'var(--t3)';
+  }
+  var cv = document.getElementById('nf-color-variante');
+  if (cv) cv.value = primerColor;
+  // Marcar que estamos editando
+  window._editingFichaIdx = i;
+  window._editingFichaId  = f.id;
   // Cambiar botón guardar
   var btn = document.getElementById('btn-guardar-ficha');
-  if (btn) btn.textContent = '💾 Guardar cambios';
+  if (btn) btn.textContent = '\uD83D\uDCBE Guardar cambios';
   // Scroll al formulario
   setTimeout(function(){ if(wrap) wrap.scrollIntoView({behavior:'smooth'}); }, 100);
   toast('Editando "'+f.nombre+'" — modificá y guardá');
@@ -6235,7 +6321,23 @@ function toggleAviosGlobales() {
 
 function initFichaForm() {
   nfTalles = {}; nfTelas = []; nfColores = [];
-  renderNfTelas(); renderNfColores();
+  renderNfTelas();
+  // Render talles simples en el nuevo paso 3
+  var tw = document.getElementById('nf-talles-wrap');
+  if (tw) {
+    var totDiv = document.createElement('div');
+    totDiv.id = 'nf-talles-total';
+    totDiv.style.cssText = 'font-size:12px;font-weight:600;color:var(--t2);margin-top:6px;';
+    tw.innerHTML = '';
+    renderTallesGrid(tw, nfTalles, function(){
+      var tot = totalTalles(nfTalles);
+      var td = document.getElementById('nf-talles-total');
+      if (td) { td.textContent = tot > 0 ? '\u2713 Total: '+tot+' unidades' : 'Sin unidades cargadas'; td.style.color = tot>0?'#3a6a2a':'var(--t3)'; }
+    });
+    tw.appendChild(totDiv);
+  }
+  var cv = document.getElementById('nf-color-variante');
+  if (cv) cv.value = '';
 }
 
 function addColorFicha() {
