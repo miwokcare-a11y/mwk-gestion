@@ -5966,14 +5966,22 @@ function explotarConsumos() {
       (col.avios||[]).forEach(function(a){
         if (a.por_talle) {
           var tallesConAvio = Object.keys(a.talles_avio||{}).filter(function(t){ return a.talles_avio[t]; });
-          var fuenteTalles = tallesConAvio.length ? tallesConAvio : TALLES_TODOS;
-          fuenteTalles.forEach(function(t){
-            var undsEseTalle = (col.talles||{})[t]||0;
-            if (!undsEseTalle) return;
-            var cant = (parseFloat(a.cantidad)||0) * undsEseTalle;
-            var aConTalle = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
-            acumular(aConTalle, col.color, cant);
-          });
+          // Verificar que col.talles tiene datos para esos talles
+          var hayDatos = tallesConAvio.some(function(t){ return (col.talles||{})[t] > 0; });
+          if (tallesConAvio.length && hayDatos) {
+            // Calcular por talle específico
+            tallesConAvio.forEach(function(t){
+              var undsEseTalle = (col.talles||{})[t]||0;
+              if (!undsEseTalle) return;
+              var cant = (parseFloat(a.cantidad)||0) * undsEseTalle;
+              var aConTalle = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
+              acumular(aConTalle, col.color, cant);
+            });
+          } else {
+            // Sin datos por talle: usar total de la variante
+            var cant = (parseFloat(a.cantidad)||0) * colTotal;
+            acumular(a, col.color, cant);
+          }
         } else {
           var cant = (parseFloat(a.cantidad)||0) * colTotal;
           acumular(a, col.color, cant);
