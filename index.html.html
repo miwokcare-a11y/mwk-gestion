@@ -5428,23 +5428,41 @@ function precioMat(m) {
 }
 
 function costoFicha(f) {
-  // Telas comunes (mismo consumo para todos los colores)
   var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
-  // Avíos generales (sin variante)
   var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
   var totalUnd  = (f.colores||[]).reduce(function(s,c){ return s+(c.total||0); },0);
   var costVar = 0;
   if (totalUnd > 0) {
     (f.colores||[]).forEach(function(c){
       var peso=(c.total||0)/totalUnd;
-      // Telas propias de este color
       var ct=(c.telas||[]).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
-      // Avíos de este color
-      var ca=(c.avios||[]).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+      // Avíos: los × prenda se suman, los × talle se toma solo el más caro (son variantes del mismo avío)
+      var ca = calcCostoAvios(c.avios||[]);
       costVar += (ct+ca)*peso;
     });
   }
   return costTelas + costMats + costVar + (parseFloat(f.mo)||0);
+}
+
+function calcCostoAvios(avios) {
+  // Separa avíos normales (× prenda) de avíos × talle
+  // Los × talle: agrupa por nombre base y toma el precio más alto del grupo
+  var costoPrenda = 0;
+  var grupoPorTalle = {}; // nombre_base → precio_max
+  avios.forEach(function(a){
+    var costo = (parseFloat(a.cantidad)||0) * precioMat(a);
+    if (a.por_talle) {
+      // Nombre base: sacar el sufijo " (talle)" si lo tiene (de fichas viejas)
+      var base = (a.nombre||'').replace(/\s*\([^)]+\)\s*$/, '').trim() || a.nombre;
+      if (!grupoPorTalle[base] || costo > grupoPorTalle[base]) {
+        grupoPorTalle[base] = costo;
+      }
+    } else {
+      costoPrenda += costo;
+    }
+  });
+  var costoPorTalle = Object.keys(grupoPorTalle).reduce(function(s,k){ return s+grupoPorTalle[k]; }, 0);
+  return costoPrenda + costoPorTalle;
 }
 
 function costoFichaPorColor(f) {
@@ -5456,7 +5474,7 @@ function costoFichaPorColor(f) {
                 + (parseFloat(f.mo)||0);
   colores.forEach(function(c){
     var ct=(c.telas||[]).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
-    var ca=(c.avios||[]).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+    var ca=calcCostoAvios(c.avios||[]);
     result[c.color||'—'] = costComun + ct + ca;
   });
   if (!colores.length) result['—'] = costComun;
