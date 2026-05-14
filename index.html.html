@@ -5967,19 +5967,29 @@ function explotarConsumos() {
       (col.avios||[]).forEach(function(a){
         if (a.por_talle) {
           var tallesConAvio = Object.keys(a.talles_avio||{}).filter(function(t){ return a.talles_avio[t]; });
-          // Verificar que col.talles tiene datos para esos talles
-          var hayDatos = tallesConAvio.some(function(t){ return (col.talles||{})[t] > 0; });
-          if (tallesConAvio.length && hayDatos) {
-            // Calcular por talle específico
-            tallesConAvio.forEach(function(t){
-              var undsEseTalle = (col.talles||{})[t]||0;
-              if (!undsEseTalle) return;
-              var cant = (parseFloat(a.cantidad)||0) * undsEseTalle;
-              var aConTalle = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
-              acumular(aConTalle, col.color, cant);
-            });
+          if (tallesConAvio.length) {
+            // Verificar si col.talles tiene datos por talle
+            var totalConDatos = tallesConAvio.reduce(function(s,t){ return s+((col.talles||{})[t]||0); }, 0);
+            if (totalConDatos > 0) {
+              // Calcular por talle específico
+              tallesConAvio.forEach(function(t){
+                var undsEseTalle = (col.talles||{})[t]||0;
+                if (!undsEseTalle) return;
+                var cant = (parseFloat(a.cantidad)||0) * undsEseTalle;
+                var aConTalle = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
+                acumular(aConTalle, col.color, cant);
+              });
+            } else {
+              // col.talles vacío: repartir colTotal en partes iguales entre los talles seleccionados
+              var porTalle = colTotal / tallesConAvio.length;
+              tallesConAvio.forEach(function(t){
+                var cant = (parseFloat(a.cantidad)||0) * porTalle;
+                var aConTalle = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
+                acumular(aConTalle, col.color, cant);
+              });
+            }
           } else {
-            // Sin datos por talle: usar total de la variante
+            // Sin talles seleccionados: usar total
             var cant = (parseFloat(a.cantidad)||0) * colTotal;
             acumular(a, col.color, cant);
           }
@@ -6107,7 +6117,7 @@ function explotarConsumos() {
         kpiSmall(rows.filter(function(r){return !r.ok;}).length,'Materiales faltantes',rows.some(function(r){return !r.ok;})?'#c0622a':'#3a6a2a')+
       '</div>'+
       '<div style="overflow-x:auto;"><table class="dash-table">'+
-      '<thead><tr><th>Material</th><th>Color</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
+      '<thead><tr><th>Material</th><th>Artículo</th><th>Color</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
       rows.map(function(r){
         var compra = r.faltante>0 ? '$'+fmt(r.faltante*r.precio) : '—';
         var planKey = r.nombre+'|'+(r.color!=='General'?r.color:'');
@@ -6115,8 +6125,12 @@ function explotarConsumos() {
         var pedidoBadge = pedidoInfo
           ? '<span style="font-size:10px;background:rgba(42,106,58,.12);color:#2a6a3a;border-radius:10px;padding:2px 7px;font-weight:700;">✓ N°'+pedidoInfo.nro+'</span>'
           : '';
+        // Artículos: extraer solo el nombre del modelo (antes del paréntesis de cantidad)
+        var articulos = (r.modelos||[]).map(function(m){ return m.replace(/\s*\(.*\)\s*$/, '').trim(); });
+        var artUnicos = articulos.filter(function(a,i){ return articulos.indexOf(a)===i; });
         return '<tr style="'+(r.ok?'':(pedidoInfo?'background:rgba(42,106,58,.04);':'background:rgba(192,98,42,.05);'))+'">'+
           '<td style="font-weight:600;">'+esc(r.nombre)+' '+pedidoBadge+'</td>'+
+          '<td style="font-size:11px;color:var(--t2);">'+artUnicos.map(esc).join('<br>')+'</td>'+
           '<td style="font-size:12px;color:var(--t2);">'+(r.color!=='General'?esc(r.color):'—')+'</td>'+
           '<td style="font-size:11px;color:var(--t2);">'+esc(r.proveedor)+'</td>'+
           '<td>'+r.necesario+' '+esc(r.unidad)+'</td>'+
