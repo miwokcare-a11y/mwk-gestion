@@ -6626,12 +6626,21 @@ function renderNfTelas() {
       function updateSug() {
         var q = (inp.value||'').toLowerCase().trim();
         if (q.length < 2) { sug.style.display='none'; sug.innerHTML=''; return; }
-        var src = (st.catalogo&&st.catalogo.length) ? st.catalogo : (st.stock||[]);
-        var matches = src.filter(function(s){
-          return (s.nombre||'').toLowerCase().indexOf(q)!==-1 ||
-                 (s.hoja||'').toLowerCase().indexOf(q)!==-1 ||
-                 (s.color_diseno||'').toLowerCase().indexOf(q)!==-1;
-        }).slice(0,8);
+        // Buscar en stock (tiene hoja) y catálogo
+        var visto = {};
+        var matches = [];
+        (st.stock||[]).concat(st.catalogo||[]).forEach(function(s){
+          var key = (s.nombre||'').toLowerCase()+'|'+(s.color_diseno||'').toLowerCase();
+          if (visto[key]) return;
+          if ((s.nombre||'').toLowerCase().indexOf(q)!==-1 ||
+              String(s.hoja||'').toLowerCase().indexOf(q)!==-1 ||
+              (s.color_diseno||'').toLowerCase().indexOf(q)!==-1 ||
+              (s.proveedor||'').toLowerCase().indexOf(q)!==-1) {
+            visto[key] = true;
+            matches.push(s);
+          }
+        });
+        matches = matches.slice(0,8);
         if (!matches.length) { sug.style.display='none'; return; }
         sug.innerHTML='';
         matches.forEach(function(s){
@@ -6640,10 +6649,11 @@ function renderNfTelas() {
           var pm=parseFloat(s.precio_metro)||0;
           var pa=parseFloat(s.precio_ars)||0;
           opt.innerHTML='<b>'+esc(s.nombre)+'</b>'+
-            (s.hoja?' <span style="font-size:10px;background:rgba(26,36,51,.07);border-radius:4px;padding:1px 5px;color:var(--t2);">Hoja '+esc(s.hoja)+'</span>':'')+
-            (s.color_diseno?' <span style="font-size:11px;color:var(--t3);">'+esc(s.color_diseno)+'</span>':'')+
-            (pm>0?' <span style="color:#2a4a8a;font-weight:600;font-size:11px;">$'+fmt(pm)+'/m</span>':
-             pa>0?' <span style="color:#2a4a8a;font-size:11px;">$'+fmt(pa)+'</span>':'');
+            (s.hoja?' <span style="font-size:10px;background:rgba(26,36,51,.07);border-radius:4px;padding:1px 5px;color:var(--t2);">Hoja '+esc(String(s.hoja))+'</span>':'')+
+            (s.color_diseno?' <span style="font-size:10px;background:rgba(196,134,106,.15);border-radius:4px;padding:1px 6px;color:var(--ac2);font-weight:600;">'+esc(s.color_diseno)+'</span>':'')+
+            (s.proveedor?' <span style="font-size:10px;color:var(--t3);">'+esc(s.proveedor)+'</span>':'')+
+            (pm>0?' <span style="color:#2a4a8a;font-weight:600;font-size:11px;float:right;">$'+fmt(pm)+'/m</span>':
+             pa>0?' <span style="color:#2a4a8a;font-size:11px;float:right;">$'+fmt(pa)+'</span>':'');
           opt.onmousedown=function(e){
             e.preventDefault();
             mat.nombre=s.nombre;
