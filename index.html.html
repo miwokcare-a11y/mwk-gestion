@@ -1107,28 +1107,13 @@ select.fi{appearance:none;
         </div>
       </div>
 
-      <!-- PASO 2: Insumos -->
+      <!-- PASO 2: Variante / color + tela + avíos + talles -->
       <div class="sp" style="margin-bottom:10px;">
         <div class="ficha-step-header">
           <div class="ficha-step-num">2</div>
           <div>
-            <div class="ficha-step-title">🧵 Telas e insumos</div>
-            <div class="ficha-step-sub">Todos los materiales y avíos del modelo</div>
-          </div>
-        </div>
-        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-          <div id="nf-telas"></div>
-          <button class="addlink" onclick="addTelaFicha()">+ Agregar insumo</button>
-        </div>
-      </div>
-
-      <!-- PASO 3: Variante / color + talles + avíos -->
-      <div class="sp" style="margin-bottom:10px;">
-        <div class="ficha-step-header">
-          <div class="ficha-step-num">3</div>
-          <div>
             <div class="ficha-step-title">🎨 Color / variante</div>
-            <div class="ficha-step-sub">Color, avíos y curva de talles de esta variante</div>
+            <div class="ficha-step-sub">Tela, avíos y curva de talles de esta variante</div>
           </div>
         </div>
         <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
@@ -1137,10 +1122,18 @@ select.fi{appearance:none;
             <div class="flbl" style="margin-bottom:4px;">Color / variante (opcional)</div>
             <input class="fi" type="text" id="nf-color-variante" placeholder="ej: Negro, Rojo, Lavanda..." style="width:100%;">
           </div>
+          <!-- Tela de esta variante -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:#2a6090;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+              <span>🧵 Tela</span>
+              <button class="addlink" style="margin:0;" onclick="addTelaFicha()">+ Agregar tela</button>
+            </div>
+            <div id="nf-telas"></div>
+          </div>
           <!-- Avíos de esta variante -->
           <div style="margin-bottom:14px;">
             <div style="font-size:11px;font-weight:700;color:#5a3a8a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-              <span>🔩 Avíos de esta variante</span>
+              <span>🔩 Avíos</span>
               <button class="addlink" style="margin:0;" onclick="addMatFicha()">+ Agregar avío</button>
             </div>
             <div id="nf-mats"></div>
@@ -5335,7 +5328,7 @@ function guardarFicha() {
     talles: tallesSimples,
     total: totalUnd,
     avios: aviosVariante,
-    telas: []
+    telas: telasData
   }];
 
   var data = {
@@ -5343,8 +5336,8 @@ function guardarFicha() {
     temporada: document.getElementById('nf-temp').value||'',
     referencia: (document.getElementById('nf-ref').value||'').trim(),
     mo: parseFloat(document.getElementById('nf-mo').value)||0,
-    telas: telasData,
-    materiales: [], // avíos ahora van dentro de colores[0].avios
+    telas: [],       // telas ahora van dentro de colores[0].telas
+    materiales: [],  // avíos ahora van dentro de colores[0].avios
     colores: coloresData,
     talles: tallesSimples,
     total_unidades: totalUnd
@@ -5641,7 +5634,8 @@ function duplicarFicha(i) {
   document.getElementById('nf-ref').value    = f.referencia||'';
   document.getElementById('nf-mo').value     = f.mo||'';
 
-  nfTelas = (f.telas||[]).map(function(m){
+  var telasSrcD = (primerColD&&(primerColD.telas||[]).length) ? primerColD.telas : (f.telas||[]);
+  nfTelas = telasSrcD.map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
   });
   var primerColD = (f.colores&&f.colores.length) ? f.colores[0] : null;
@@ -5711,8 +5705,9 @@ function editarFicha(i) {
   nfMats = aviosSrc.map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle};
   });
-  // Cargar telas
-  nfTelas = (f.telas||[]).map(function(m){
+  // Cargar telas — desde colores[0].telas (nuevo) o f.telas (legacy)
+  var telasSrc = (primerCol&&(primerCol.telas||[]).length) ? primerCol.telas : (f.telas||[]);
+  nfTelas = telasSrc.map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
   });
   // Color/variante simple — tomar el primer color si existe
@@ -5883,65 +5878,85 @@ function explotarConsumos() {
       consumos[key].modelos.push(f.nombre+' ('+Math.round(cant*100)/100+' '+(m.unidad||'u')+')');
     }
 
-    var colores = (f.colores||[]).filter(function(c){ return (c.total||0)>0; });
-    var totalFichaUnd = colores.reduce(function(s,c){ return s+(c.total||0); },0)||totalUnd;
+    var colores = (f.colores||[]).filter(function(c){ return (c.total||0)>0 || totalTalles(c.talles||{})>0; });
+    var totalFichaUnd = colores.reduce(function(s,c){ return s+(c.total||totalTalles(c.talles||{})); },0)||totalUnd;
 
-    // Telas: igual cantidad para todos los colores → una fila por color
-    (f.telas||[]).forEach(function(m){
-      if (colores.length) {
-        colores.forEach(function(col){
-          var cant = (parseFloat(m.cantidad)||0) * (col.total||0);
-          acumular(m, col.color, cant);
-        });
-      } else {
-        acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
-      }
-    });
+    // Telas y avíos por variante (nuevo modelo: todo dentro de colores[x])
+    colores.forEach(function(col){
+      var colTotal = col.total || totalTalles(col.talles||{});
 
-    // Avíos generales: si por_talle=true → 1 por talle del total, si no → igual para todos
-    (f.materiales||[]).forEach(function(m){
-      if (m.por_talle) {
-        // Calcular sumando 1 etiqueta por cada unidad de CADA talle (resultado = total unidades)
-        // pero agrupado por talle en el detalle
-        if (colores.length) {
-          colores.forEach(function(col){
-            TALLES_TODOS.forEach(function(t){
-              var undsEseTalle = (col.talles||{})[t]||0;
-              if (!undsEseTalle) return;
-              var cant = (parseFloat(m.cantidad)||0) * undsEseTalle;
-              // Acumular con key que incluye el talle para que quede una fila por talle
-              var mConTalle = Object.assign({}, m, {nombre: m.nombre + ' (' + t + ')'});
-              acumular(mConTalle, col.color, cant);
-            });
+      // Telas de esta variante
+      (col.telas||[]).forEach(function(m){
+        var cant = (parseFloat(m.cantidad)||0) * colTotal;
+        acumular(m, col.color, cant);
+      });
+
+      // Avíos de esta variante (con soporte por_talle)
+      (col.avios||[]).forEach(function(a){
+        if (a.por_talle) {
+          TALLES_TODOS.forEach(function(t){
+            var undsEseTalle = (col.talles||{})[t]||0;
+            if (!undsEseTalle) return;
+            var cant = (parseFloat(a.cantidad)||0) * undsEseTalle;
+            var aConTalle = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
+            acumular(aConTalle, col.color, cant);
           });
         } else {
-          TALLES_TODOS.forEach(function(t){
-            var undsEseTalle = (f.talles||{})[t]||0;
-            if (!undsEseTalle) return;
-            var cant = (parseFloat(m.cantidad)||0) * undsEseTalle;
-            var mConTalle = Object.assign({}, m, {nombre: m.nombre + ' (' + t + ')'});
-            acumular(mConTalle, 'General', cant);
-          });
+          var cant = (parseFloat(a.cantidad)||0) * colTotal;
+          acumular(a, col.color, cant);
         }
-      } else {
+      });
+    });
+
+    // Legacy: telas en f.telas (fichas viejas)
+    if (!(colores.some(function(c){ return (c.telas||[]).length>0; }))) {
+      (f.telas||[]).forEach(function(m){
         if (colores.length) {
           colores.forEach(function(col){
-            var cant = (parseFloat(m.cantidad)||0) * (col.total||0);
+            var cant = (parseFloat(m.cantidad)||0) * (col.total||totalTalles(col.talles||{}));
             acumular(m, col.color, cant);
           });
         } else {
           acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
         }
-      }
-    });
-
-    // Avíos por variante: solo para su color
-    colores.forEach(function(col){
-      (col.avios||[]).forEach(function(a){
-        var cant = (parseFloat(a.cantidad)||0) * (col.total||0);
-        acumular(a, col.color, cant);
       });
-    });
+    }
+
+    // Legacy: avíos en f.materiales (fichas viejas)
+    if (!(colores.some(function(c){ return (c.avios||[]).length>0; }))) {
+      (f.materiales||[]).forEach(function(m){
+        if (m.por_talle) {
+          if (colores.length) {
+            colores.forEach(function(col){
+              TALLES_TODOS.forEach(function(t){
+                var undsEseTalle = (col.talles||{})[t]||0;
+                if (!undsEseTalle) return;
+                var cant = (parseFloat(m.cantidad)||0) * undsEseTalle;
+                var mConTalle = Object.assign({}, m, {nombre: m.nombre + ' (' + t + ')'});
+                acumular(mConTalle, col.color, cant);
+              });
+            });
+          } else {
+            TALLES_TODOS.forEach(function(t){
+              var undsEseTalle = (f.talles||{})[t]||0;
+              if (!undsEseTalle) return;
+              var cant = (parseFloat(m.cantidad)||0) * undsEseTalle;
+              var mConTalle = Object.assign({}, m, {nombre: m.nombre + ' (' + t + ')'});
+              acumular(mConTalle, 'General', cant);
+            });
+          }
+        } else {
+          if (colores.length) {
+            colores.forEach(function(col){
+              var cant = (parseFloat(m.cantidad)||0) * (col.total||totalTalles(col.talles||{}));
+              acumular(m, col.color, cant);
+            });
+          } else {
+            acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
+          }
+        }
+      });
+    }
   });
 
   // ── Cruzar con stock ──
@@ -6370,7 +6385,7 @@ function renderNfTelas() {
   var el = document.getElementById('nf-telas');
   if (!el) return;
   if (!nfTelas.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--t3);margin-bottom:8px;">Agregá la tela principal</div>';
+    el.innerHTML = '<div style="font-size:12px;color:var(--t3);margin-bottom:8px;">Agregá la tela principal del modelo</div>';
     return;
   }
   el.innerHTML = '';
