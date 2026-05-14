@@ -5618,7 +5618,7 @@ function verFicha(i) {
   var costo = costoFicha(f);
   var primerCol = (f.colores&&f.colores.length) ? f.colores[0] : null;
   var avios = (primerCol&&(primerCol.avios||[]).length) ? primerCol.avios : (f.materiales||[]);
-  var telas = f.telas||[];
+  var telas = (primerCol&&(primerCol.telas||[]).length) ? primerCol.telas : (f.telas||[]);
   var colorLabel = primerCol && primerCol.color && primerCol.color !== 'General' ? primerCol.color : '';
   var el = document.getElementById('ficha-modal-content');
   var tit = document.getElementById('ficha-modal-title');
