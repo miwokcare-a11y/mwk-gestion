@@ -5226,28 +5226,10 @@ function renderNfMats() {
     });
     tallesAvioWrap.appendChild(tallesGrid);
 
-    // Campo grupo costo
-    var grupoRow = document.createElement('div');
-    grupoRow.style.cssText = 'display:flex;align-items:center;gap:6px;margin-top:8px;';
-    var grupoLbl = document.createElement('div');
-    grupoLbl.style.cssText = 'font-size:10px;color:#5a3a8a;white-space:nowrap;';
-    grupoLbl.textContent = 'Grupo costo:';
-    var grupoInp = document.createElement('input');
-    grupoInp.className = 'fi';
-    grupoInp.type = 'text';
-    grupoInp.placeholder = 'ej: cierre (mismo grupo = toma el más caro)';
-    grupoInp.value = m.grupo_costo||'';
-    grupoInp.style.cssText = 'flex:1;height:28px;font-size:11px;';
-    grupoRow.appendChild(grupoLbl);
-    grupoRow.appendChild(grupoInp);
-    tallesAvioWrap.appendChild(grupoRow);
-    div.appendChild(tallesAvioWrap);
-
-    (function(mat, bp, bt, taw, gi){
+    (function(mat, bp, bt, taw){
       bp.onclick = function(){ mat.por_talle=false; bp.style.background='var(--bk)'; bp.style.color='#fff'; bp.style.borderColor='var(--bk)'; bt.style.background='var(--sa)'; bt.style.color='var(--t2)'; bt.style.borderColor='var(--s2)'; taw.style.display='none'; };
       bt.onclick = function(){ mat.por_talle=true; bt.style.background='var(--bk)'; bt.style.color='#fff'; bt.style.borderColor='var(--bk)'; bp.style.background='var(--sa)'; bp.style.color='var(--t2)'; bp.style.borderColor='var(--s2)'; taw.style.display='block'; };
-      gi.oninput = function(){ mat.grupo_costo = this.value.trim(); };
-    })(m, btnPrenda, btnTalle, tallesAvioWrap, grupoInp);
+    })(m, btnPrenda, btnTalle, tallesAvioWrap);
 
     // Subtotal
     if (subtotal > 0) {
@@ -5965,40 +5947,50 @@ function explotarConsumos() {
       });
 
       // Avíos de esta variante (con soporte por_talle y talles_avio)
-      (col.avios||[]).forEach(function(a){
-        if (a.por_talle) {
-          var tallesConAvio = Object.keys(a.talles_avio||{}).filter(function(t){ return a.talles_avio[t]; });
-          if (tallesConAvio.length) {
-            // Verificar si col.talles tiene datos por talle
-            var totalConDatos = tallesConAvio.reduce(function(s,t){ return s+((col.talles||{})[t]||0); }, 0);
-            if (totalConDatos > 0) {
-              // Calcular por talle específico
-              tallesConAvio.forEach(function(t){
-                var undsEseTalle = (col.talles||{})[t]||0;
-                if (!undsEseTalle) return;
-                var cant = (parseFloat(a.cantidad)||0) * undsEseTalle;
-                var aConTalle = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
-                acumular(aConTalle, col.color, cant);
-              });
-            } else {
-              // col.talles vacío: repartir colTotal en partes iguales entre los talles seleccionados
-              var porTalle = colTotal / tallesConAvio.length;
-              tallesConAvio.forEach(function(t){
-                var cant = (parseFloat(a.cantidad)||0) * porTalle;
-                var aConTalle = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
-                acumular(aConTalle, col.color, cant);
-              });
-            }
-          } else {
-            // Sin talles seleccionados: usar total
-            var cant = (parseFloat(a.cantidad)||0) * colTotal;
-            acumular(a, col.color, cant);
-          }
-        } else {
-          var cant = (parseFloat(a.cantidad)||0) * colTotal;
-          acumular(a, col.color, cant);
-        }
+      // Todos los avíos × talle juntos deben sumar exactamente colTotal
+      var aviosPorTalle = (col.avios||[]).filter(function(a){ return a.por_talle; });
+      var aviosNormales = (col.avios||[]).filter(function(a){ return !a.por_talle; });
+
+      // Avíos × prenda: normal
+      aviosNormales.forEach(function(a){
+        var cant = (parseFloat(a.cantidad)||0) * colTotal;
+        acumular(a, col.color, cant);
       });
+
+      // Avíos × talle: repartir colTotal según talles cubiertos por cada avío
+      if (aviosPorTalle.length) {
+        var hayTalles = totalTalles(col.talles||{}) > 0;
+
+        if (hayTalles) {
+          // Tenemos curva exacta — cada avío calcula sus talles específicos
+          aviosPorTalle.forEach(function(a){
+            var tallesConAvio = Object.keys(a.talles_avio||{}).filter(function(t){ return a.talles_avio[t]; });
+            var fuente = tallesConAvio.length ? tallesConAvio : TALLES_TODOS;
+            fuente.forEach(function(t){
+              var unds = (col.talles||{})[t]||0;
+              if (!unds) return;
+              var cant = (parseFloat(a.cantidad)||0) * unds;
+              var aConT = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
+              acumular(aConT, col.color, cant);
+            });
+          });
+        } else {
+          // Sin curva de talles — repartir colTotal proporcional a talles cubiertos
+          var tallesPorAvio = aviosPorTalle.map(function(a){
+            return Object.keys(a.talles_avio||{}).filter(function(t){ return a.talles_avio[t]; });
+          });
+          var totalTallesCubiertos = tallesPorAvio.reduce(function(s,tl){ return s+tl.length; }, 0);
+
+          aviosPorTalle.forEach(function(a, idx){
+            var tallesEste = tallesPorAvio[idx];
+            var proporcion = totalTallesCubiertos > 0
+              ? (tallesEste.length || 1) / (totalTallesCubiertos || 1)
+              : 1 / aviosPorTalle.length;
+            var cantTotal = (parseFloat(a.cantidad)||0) * Math.round(colTotal * proporcion);
+            acumular(a, col.color, cantTotal);
+          });
+        }
+      }
     });
 
     // Legacy: telas en f.telas (fichas viejas)
@@ -6087,19 +6079,43 @@ function explotarConsumos() {
     gruposBase[gk].necesario += r.necesario;
     gruposBase[gk].rows.push(r);
   });
+  // Colapsar filas del mismo grupo en una sola fila
+  var rowsColapsadas = [];
+  var gruposVisto = {};
   rows.forEach(function(r){
     var gk = r._nomBase.toLowerCase() + '|' + (r.color||'').toLowerCase();
-    var g = gruposBase[gk];
-    var faltante = Math.max(0, Math.round((g.necesario - g.stock)*100)/100);
-    // Distribuir el faltante proporcional a cada fila del grupo
-    var proporcion = g.necesario > 0 ? r.necesario / g.necesario : 0;
-    r.faltante = Math.round(faltante * proporcion * 100) / 100;
-    r.ok = faltante === 0;
+    if (gruposBase[gk] && gruposBase[gk].rows.length > 1) {
+      // Es un grupo con múltiples talles — mostrar una sola fila con nombre base
+      if (!gruposVisto[gk]) {
+        gruposVisto[gk] = true;
+        var g = gruposBase[gk];
+        var faltante = Math.max(0, Math.round((g.necesario - g.stock)*100)/100);
+        rowsColapsadas.push({
+          nombre: r._nomBase,
+          color: r.color,
+          unidad: r.unidad,
+          precio: r.precio,
+          proveedor: r.proveedor,
+          necesario: Math.round(g.necesario*100)/100,
+          stock: g.stock,
+          faltante: faltante,
+          ok: faltante === 0,
+          modelos: r.modelos,
+          _nomBase: r._nomBase
+        });
+      }
+    } else {
+      // Fila individual — mostrar tal cual
+      var g2 = gruposBase[gk];
+      var faltante2 = Math.max(0, Math.round((g2.necesario - g2.stock)*100)/100);
+      r.faltante = faltante2;
+      r.ok = faltante2 === 0;
+      rowsColapsadas.push(r);
+    }
   });
-
-  rows = rows.sort(function(a,b){
+  rows = rowsColapsadas.sort(function(a,b){
     var n=a._nomBase.localeCompare(b._nomBase);
-    return n!==0?n:a.color.localeCompare(b.color);
+    return n!==0?n:(a.color||'').localeCompare(b.color||'');
   });
 
   window._planRows = rows;
