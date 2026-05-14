@@ -5449,27 +5449,22 @@ function costoFicha(f) {
 
 function calcCostoAvios(avios) {
   // Avíos × prenda: se suman normalmente
-  // Avíos × talle: si tienen grupo_costo, se agrupa por ese campo y se toma el más caro
-  //   Si no tienen grupo, se tratan como avíos independientes y se suman
+  // Avíos × talle: se agrupan por las primeras 3 palabras del nombre y se toma el más caro
   var costoPrenda = 0;
-  var grupoPorTalle = {}; // grupo → precio_max
-  var sinGrupo = 0;
+  var grupoPorTalle = {}; // clave → precio_max
   avios.forEach(function(a){
     var costo = (parseFloat(a.cantidad)||0) * precioMat(a);
     if (a.por_talle) {
-      var grupo = (a.grupo_costo||'').trim();
-      if (grupo) {
-        var k = grupo.toLowerCase();
-        if (!grupoPorTalle[k] || costo > grupoPorTalle[k]) grupoPorTalle[k] = costo;
-      } else {
-        sinGrupo += costo;
-      }
+      // Agrupar por grupo_costo si existe, sino por primeras 3 palabras
+      var clave = (a.grupo_costo||'').trim().toLowerCase();
+      if (!clave) clave = (a.nombre||'').trim().split(/\s+/).slice(0,3).join(' ').toLowerCase();
+      if (!grupoPorTalle[clave] || costo > grupoPorTalle[clave]) grupoPorTalle[clave] = costo;
     } else {
       costoPrenda += costo;
     }
   });
   var costoPorTalle = Object.keys(grupoPorTalle).reduce(function(s,k){ return s+grupoPorTalle[k]; }, 0);
-  return costoPrenda + costoPorTalle + sinGrupo;
+  return costoPrenda + costoPorTalle;
 }
 
 function costoFichaPorColor(f) {
@@ -5639,11 +5634,12 @@ function verFicha(i) {
   var grupos = {};
   avios.forEach(function(a, idx){
     if (!a.por_talle) return;
-    var palabras = (a.nombre||'').trim().split(/\s+/).slice(0,3).join(' ').toLowerCase();
+    var clave = (a.grupo_costo||'').trim().toLowerCase();
+    if (!clave) clave = (a.nombre||'').trim().split(/\s+/).slice(0,3).join(' ').toLowerCase();
     var costo = (parseFloat(a.cantidad)||0)*(parseFloat(a.precio)||0);
-    if (!grupos[palabras] || costo > grupos[palabras].costo) {
-      if (grupos[palabras]) aviosConFlag[grupos[palabras].idx].excluir = true;
-      grupos[palabras] = {costo:costo, idx:idx};
+    if (!grupos[clave] || costo > grupos[clave].costo) {
+      if (grupos[clave]) aviosConFlag[grupos[clave].idx].excluir = true;
+      grupos[clave] = {costo:costo, idx:idx};
     } else {
       aviosConFlag[idx].excluir = true;
     }
