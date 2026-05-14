@@ -6072,9 +6072,9 @@ function explotarConsumos() {
     var col = (mat.color||'').toLowerCase();
     var stockItem = (st.stock||[]).find(function(s){
       var sn=(s.nombre||'').toLowerCase();
-      var sc=(s.color||'').toLowerCase();
+      var sc=(s.color||s.color_diseno||'').toLowerCase();
       return (sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1) &&
-             (col==='general'||sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='');
+             (col==='general'||col===''||sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='');
     }) || (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(nom)!==-1; });
     var stockAct = 0;
     if (stockItem) stockAct = unidad==='kg'?(parseFloat(stockItem.kg)||0):(parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0);
@@ -6170,7 +6170,7 @@ function explotarConsumos() {
         return '<tr style="'+trStyle+'">'+
           '<td style="text-align:center;width:32px;">'+
             (r.faltante>0||comprado?
-              '<input type="checkbox" '+(comprado?'checked':'')+' onchange="togglePlanCompra(\''+planKey.replace(/'/g,"\\'")+'\')" style="width:16px;height:16px;cursor:pointer;accent-color:#3a6a2a;">':
+              '<input type="checkbox" '+(comprado?'checked':'')+' data-plankey="'+ri+'" onchange="togglePlanCompraIdx(this,'+ri+')" style="width:16px;height:16px;cursor:pointer;accent-color:#3a6a2a;">':
               '')+
           '</td>'+
           '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+esc(r.nombre)+' '+pedidoBadge+
@@ -6335,6 +6335,14 @@ function explotarConsumos() {
   // Activar tab por material
   planTab('total');
   toast('✅ Explosión calculada');
+}
+
+function togglePlanCompraIdx(el, idx) {
+  var rows = window._planRows||[];
+  var r = rows[idx];
+  if (!r) return;
+  var planKey = (r._nomBase||r.nombre).toLowerCase()+'|'+(r.color&&r.color!=='General'?r.color.toLowerCase():'');
+  togglePlanCompra(planKey);
 }
 
 function togglePlanCompra(planKey) {
