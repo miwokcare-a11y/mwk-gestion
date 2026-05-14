@@ -5225,12 +5225,8 @@ function renderNfMats() {
       tallesGrid.appendChild(chip);
     });
     tallesAvioWrap.appendChild(tallesGrid);
-    div.appendChild(tallesAvioWrap);
 
-    (function(mat, bp, bt, taw){
-      bp.onclick = function(){ mat.por_talle=false; bp.style.background='var(--bk)'; bp.style.color='#fff'; bp.style.borderColor='var(--bk)'; bt.style.background='var(--sa)'; bt.style.color='var(--t2)'; bt.style.borderColor='var(--s2)'; taw.style.display='none'; };
-      bt.onclick = function(){ mat.por_talle=true; bt.style.background='var(--bk)'; bt.style.color='#fff'; bt.style.borderColor='var(--bk)'; bp.style.background='var(--sa)'; bp.style.color='var(--t2)'; bp.style.borderColor='var(--s2)'; taw.style.display='block'; };
-    // Campo grupo (para agrupar variantes del mismo avío en el costo)
+    // Campo grupo costo
     var grupoRow = document.createElement('div');
     grupoRow.style.cssText = 'display:flex;align-items:center;gap:6px;margin-top:8px;';
     var grupoLbl = document.createElement('div');
@@ -5239,14 +5235,19 @@ function renderNfMats() {
     var grupoInp = document.createElement('input');
     grupoInp.className = 'fi';
     grupoInp.type = 'text';
-    grupoInp.placeholder = 'ej: cierre (mismo nombre = toma el más caro)';
+    grupoInp.placeholder = 'ej: cierre (mismo grupo = toma el más caro)';
     grupoInp.value = m.grupo_costo||'';
     grupoInp.style.cssText = 'flex:1;height:28px;font-size:11px;';
-    grupoInp.oninput = function(){ m.grupo_costo = this.value.trim(); };
     grupoRow.appendChild(grupoLbl);
     grupoRow.appendChild(grupoInp);
     tallesAvioWrap.appendChild(grupoRow);
-    })(m, btnPrenda, btnTalle, tallesAvioWrap);
+    div.appendChild(tallesAvioWrap);
+
+    (function(mat, bp, bt, taw, gi){
+      bp.onclick = function(){ mat.por_talle=false; bp.style.background='var(--bk)'; bp.style.color='#fff'; bp.style.borderColor='var(--bk)'; bt.style.background='var(--sa)'; bt.style.color='var(--t2)'; bt.style.borderColor='var(--s2)'; taw.style.display='none'; };
+      bt.onclick = function(){ mat.por_talle=true; bt.style.background='var(--bk)'; bt.style.color='#fff'; bt.style.borderColor='var(--bk)'; bp.style.background='var(--sa)'; bp.style.color='var(--t2)'; bp.style.borderColor='var(--s2)'; taw.style.display='block'; };
+      gi.oninput = function(){ mat.grupo_costo = this.value.trim(); };
+    })(m, btnPrenda, btnTalle, tallesAvioWrap, grupoInp);
 
     // Subtotal
     if (subtotal > 0) {
