@@ -5603,11 +5603,11 @@ function renderFichasLista() {
         '</div>'+
         '<div style="text-align:right;flex-shrink:0;">'+
           (costo>0?'<div style="font-size:20px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div>'+
-          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">costo promedio</div>':'<div style="font-size:12px;color:#c0622a;font-weight:600;">Sin precios</div>')+
-          '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap;">'+
+          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">cotización</div>':'<div style="font-size:12px;color:#c0622a;font-weight:600;">Sin precios</div>')+
+          '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">'+
             '<button class="adj-btn" onclick="verFicha('+i+')" title="Ver detalle">👁</button>'+
             '<button class="adj-btn" onclick="editarFicha('+i+')" title="Editar">✎</button>'+
-            '<button class="adj-btn" style="color:#2a4a8a;background:rgba(42,74,138,.08);border-color:rgba(42,74,138,.2);" onclick="duplicarFicha('+i+')" title="Duplicar — cargá como nueva y modificá">⧉ Duplicar</button>'+
+            '<button class="adj-btn" onclick="duplicarFicha('+i+')" title="Duplicar">⧉</button>'+
             '<button class="adj-btn" style="color:var(--cobalt,#6A8090);" onclick="pdfReporteCostos('+i+')" title="Reporte PDF">⬇</button>'+
             '<button class="adj-btn" style="color:#2a6a3a;" onclick="diagFicha('+i+')" title="Diagnóstico precios">🔍</button>'+
             '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarFicha('+i+')" title="Eliminar">×</button>'+
