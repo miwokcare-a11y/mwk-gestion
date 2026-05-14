@@ -5933,7 +5933,8 @@ function explotarConsumos() {
       var nom = m.nombre.trim();
       var col = (color||'General').trim();
       var key = nom.toLowerCase()+'|'+(col.toLowerCase());
-      var stockNom = nom.toLowerCase();
+      // Para buscar en stock, quitar el sufijo " (talle)" si lo tiene
+      var stockNom = nom.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
       var stockItem = (st.stock||[]).find(function(s){
         return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1 &&
                ((s.color||'').toLowerCase().indexOf(col.toLowerCase())!==-1 || col==='General');
@@ -6044,7 +6045,8 @@ function explotarConsumos() {
   var rows = Object.keys(consumos).map(function(key){
     var mat = consumos[key];
     var unidad = mat.unidad||'u';
-    var nom = mat.nombre.toLowerCase();
+    // Quitar sufijo " (talle)" para buscar en stock
+    var nom = mat.nombre.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
     var col = (mat.color||'').toLowerCase();
     var stockItem = (st.stock||[]).find(function(s){
       var sn=(s.nombre||'').toLowerCase();
@@ -6055,13 +6057,37 @@ function explotarConsumos() {
     var stockAct = 0;
     if (stockItem) stockAct = unidad==='kg'?(parseFloat(stockItem.kg)||0):(parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0);
     var necesario = Math.round(mat.necesario*100)/100;
-    var faltante  = Math.max(0, Math.round((necesario-stockAct)*100)/100);
+    // Guardar stockAct en el consumo para agrupar después
+    mat._stockAct = stockAct;
+    mat._stockItem = !!stockItem;
     return {
       nombre:mat.nombre, color:mat.color, unidad:unidad, precio:mat.precio, proveedor:mat.proveedor,
-      necesario:necesario, stock:stockAct, faltante:faltante, ok:faltante===0, modelos:mat.modelos
+      necesario:necesario, stock:stockAct, modelos:mat.modelos,
+      _nomBase: mat.nombre.replace(/\s*\([^)]+\)\s*$/, '').trim()
     };
-  }).sort(function(a,b){
-    var n=a.nombre.localeCompare(b.nombre);
+  });
+
+  // Agrupar filas con el mismo nombre base + color (avíos × talle del mismo avío)
+  // El stock se comparte entre los talles — comparar el total necesario contra el stock una vez
+  var gruposBase = {};
+  rows.forEach(function(r){
+    var gk = r._nomBase.toLowerCase() + '|' + (r.color||'').toLowerCase();
+    if (!gruposBase[gk]) gruposBase[gk] = {necesario:0, stock:r.stock, rows:[]};
+    gruposBase[gk].necesario += r.necesario;
+    gruposBase[gk].rows.push(r);
+  });
+  rows.forEach(function(r){
+    var gk = r._nomBase.toLowerCase() + '|' + (r.color||'').toLowerCase();
+    var g = gruposBase[gk];
+    var faltante = Math.max(0, Math.round((g.necesario - g.stock)*100)/100);
+    // Distribuir el faltante proporcional a cada fila del grupo
+    var proporcion = g.necesario > 0 ? r.necesario / g.necesario : 0;
+    r.faltante = Math.round(faltante * proporcion * 100) / 100;
+    r.ok = faltante === 0;
+  });
+
+  rows = rows.sort(function(a,b){
+    var n=a._nomBase.localeCompare(b._nomBase);
     return n!==0?n:a.color.localeCompare(b.color);
   });
 
