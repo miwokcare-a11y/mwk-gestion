@@ -5685,45 +5685,40 @@ function duplicarFicha(i) {
   var f = (st.fichas||[])[i];
   if (!f) return;
 
-  // Cargar todos los datos en el formulario como nueva ficha (sin _editingFichaId)
+  var wrap = document.getElementById('ficha-form-wrap');
+  var btnN = document.getElementById('btn-nueva-ficha');
+  if (wrap) wrap.style.display = 'block';
+  if (btnN) btnN.textContent = '\u2715 Cancelar';
+
+  initFichaForm();
+
   document.getElementById('nf-nombre').value = f.nombre + ' — copia';
   document.getElementById('nf-temp').value   = f.temporada||'';
   document.getElementById('nf-ref').value    = f.referencia||'';
   document.getElementById('nf-mo').value     = f.mo||'';
 
-  var telasSrcD = (primerColD&&(primerColD.telas||[]).length) ? primerColD.telas : (f.telas||[]);
-  nfTelas = telasSrcD.map(function(m){
-    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
-  });
   var primerColD = (f.colores&&f.colores.length) ? f.colores[0] : null;
+
   var aviosSrcD = (primerColD&&(primerColD.avios||[]).length) ? primerColD.avios : (f.materiales||[]);
   nfMats = aviosSrcD.map(function(m){
     var ta = {};
     Object.keys(m.talles_avio||{}).forEach(function(t){ ta[t] = m.talles_avio[t]===true || m.talles_avio[t]==='true'; });
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle, talles_avio:ta};
   });
-  nfColores = [];
-
-  var primerColor = (f.colores&&f.colores.length) ? (f.colores[0].color||'') : '';
-  if (primerColor === 'General') primerColor = '';
-  nfTalles = Object.assign({}, (f.colores&&f.colores.length&&f.colores[0].talles) ? f.colores[0].talles : (f.talles||{}));
-
-  // NO setear _editingFichaId → va a guardar como nueva
-  window._editingFichaIdx = null;
-  window._editingFichaId  = null;
-
-  // Abrir formulario
-  var wrap = document.getElementById('ficha-form-wrap');
-  var btnN = document.getElementById('btn-nueva-ficha');
-  if (wrap) wrap.style.display = 'block';
-  if (btnN) btnN.textContent = '\u2715 Cancelar';
-
-  renderNfTelas();
   renderNfMats();
-  initFichaForm();
 
-  // Restaurar talles y color (initFichaForm los resetea)
-  nfTalles = Object.assign({}, (f.colores&&f.colores.length&&f.colores[0].talles) ? f.colores[0].talles : (f.talles||{}));
+  var telasSrcD = (primerColD&&(primerColD.telas||[]).length) ? primerColD.telas : (f.telas||[]);
+  nfTelas = telasSrcD.map(function(m){
+    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
+  });
+  renderNfTelas();
+
+  var primerColor = primerColD ? (primerColD.color||'') : '';
+  if (primerColor === 'General') primerColor = '';
+  var cv = document.getElementById('nf-color-variante');
+  if (cv) cv.value = primerColor;
+
+  nfTalles = Object.assign({}, (primerColD&&primerColD.talles) ? primerColD.talles : (f.talles||{}));
   var tw = document.getElementById('nf-talles-wrap');
   if (tw) {
     tw.innerHTML = '';
@@ -5740,12 +5735,12 @@ function duplicarFicha(i) {
     totDiv2.textContent = tot0>0?'\u2713 Total: '+tot0+' unidades':'Sin unidades cargadas';
     totDiv2.style.color = tot0>0?'#3a6a2a':'var(--t3)';
   }
-  var cv = document.getElementById('nf-color-variante');
-  if (cv) cv.value = primerColor;
 
+  nfColores = [];
+  window._editingFichaIdx = null;
+  window._editingFichaId  = null;
   var btnG = document.getElementById('btn-guardar-ficha');
   if (btnG) btnG.textContent = '\uD83D\uDCBE Guardar como nueva ficha';
-
   setTimeout(function(){ if(wrap) wrap.scrollIntoView({behavior:'smooth'}); }, 100);
   toast('\u29c9 Copia de "'+f.nombre+'" lista — modificá y guardá');
 }
@@ -5753,12 +5748,23 @@ function duplicarFicha(i) {
 function editarFicha(i) {
   var f = (st.fichas||[])[i];
   if (!f) return;
-  // Cargar datos en el formulario de nueva ficha
+
+  // Abrir formulario primero para que existan los elementos del DOM
+  var wrap = document.getElementById('ficha-form-wrap');
+  var btnN = document.getElementById('btn-nueva-ficha');
+  if (wrap) wrap.style.display = 'block';
+  if (btnN) btnN.textContent = '\u2715 Cancelar';
+
+  // Inicializar form (resetea nfTelas, nfTalles, etc.)
+  initFichaForm();
+
+  // Cargar datos del modelo
   document.getElementById('nf-nombre').value = f.nombre||'';
   document.getElementById('nf-temp').value   = f.temporada||'';
   document.getElementById('nf-ref').value    = f.referencia||'';
   document.getElementById('nf-mo').value     = f.mo||'';
-  // Cargar materiales — desde colores[0].avios (nuevo) o materiales (legacy)
+
+  // Cargar avíos — desde colores[0].avios (nuevo) o materiales (legacy)
   var primerCol = (f.colores&&f.colores.length) ? f.colores[0] : null;
   var aviosSrc = (primerCol&&(primerCol.avios||[]).length) ? primerCol.avios : (f.materiales||[]);
   nfMats = aviosSrc.map(function(m){
@@ -5766,28 +5772,23 @@ function editarFicha(i) {
     Object.keys(m.talles_avio||{}).forEach(function(t){ ta[t] = m.talles_avio[t]===true || m.talles_avio[t]==='true'; });
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle, talles_avio:ta};
   });
+  renderNfMats();
+
   // Cargar telas — desde colores[0].telas (nuevo) o f.telas (legacy)
   var telasSrc = (primerCol&&(primerCol.telas||[]).length) ? primerCol.telas : (f.telas||[]);
   nfTelas = telasSrc.map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
   });
-  // Color/variante simple — tomar el primer color si existe
-  var primerColor = (f.colores&&f.colores.length) ? (f.colores[0].color||'') : '';
-  if (primerColor === 'General') primerColor = '';
-  // Talles — del primer color o de f.talles
-  nfTalles = Object.assign({}, (f.colores&&f.colores.length&&f.colores[0].talles) ? f.colores[0].talles : (f.talles||{}));
-  nfColores = [];
   renderNfTelas();
-  renderNfMats();
-  // Abrir formulario primero para que existan los elementos del DOM
-  var wrap = document.getElementById('ficha-form-wrap');
-  var btnN = document.getElementById('btn-nueva-ficha');
-  if (wrap) wrap.style.display = 'block';
-  if (btnN) btnN.textContent = '\u2715 Cancelar';
-  // Luego inicializar los campos del paso 3
-  initFichaForm();
-  // Sobrescribir nfTalles después del init (initFichaForm los resetea)
-  nfTalles = Object.assign({}, (f.colores&&f.colores.length&&f.colores[0].talles) ? f.colores[0].talles : (f.talles||{}));
+
+  // Color/variante
+  var primerColor = primerCol ? (primerCol.color||'') : '';
+  if (primerColor === 'General') primerColor = '';
+  var cv = document.getElementById('nf-color-variante');
+  if (cv) cv.value = primerColor;
+
+  // Talles — del primer color o de f.talles
+  nfTalles = Object.assign({}, (primerCol&&primerCol.talles) ? primerCol.talles : (f.talles||{}));
   var tw = document.getElementById('nf-talles-wrap');
   if (tw) {
     tw.innerHTML = '';
@@ -5797,22 +5798,19 @@ function editarFicha(i) {
     renderTallesGrid(tw, nfTalles, function(){
       var tot = totalTalles(nfTalles);
       var td = document.getElementById('nf-talles-total');
-      if (td) { td.textContent = tot > 0 ? '\u2713 Total: '+tot+' unidades' : 'Sin unidades cargadas'; td.style.color = tot>0?'#3a6a2a':'var(--t3)'; }
+      if (td) { td.textContent = tot>0?'\u2713 Total: '+tot+' unidades':'Sin unidades cargadas'; td.style.color=tot>0?'#3a6a2a':'var(--t3)'; }
     });
     tw.appendChild(totDiv);
     var tot0 = totalTalles(nfTalles);
-    totDiv.textContent = tot0 > 0 ? '\u2713 Total: '+tot0+' unidades' : 'Sin unidades cargadas';
+    totDiv.textContent = tot0>0?'\u2713 Total: '+tot0+' unidades':'Sin unidades cargadas';
     totDiv.style.color = tot0>0?'#3a6a2a':'var(--t3)';
   }
-  var cv = document.getElementById('nf-color-variante');
-  if (cv) cv.value = primerColor;
-  // Marcar que estamos editando
+
+  nfColores = [];
   window._editingFichaIdx = i;
   window._editingFichaId  = f.id;
-  // Cambiar botón guardar
   var btn = document.getElementById('btn-guardar-ficha');
   if (btn) btn.textContent = '\uD83D\uDCBE Guardar cambios';
-  // Scroll al formulario
   setTimeout(function(){ if(wrap) wrap.scrollIntoView({behavior:'smooth'}); }, 100);
   toast('Editando "'+f.nombre+'" — modificá y guardá');
 }
