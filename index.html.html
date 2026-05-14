@@ -1122,36 +1122,32 @@ select.fi{appearance:none;
         </div>
       </div>
 
-      <!-- PASO 3: Variante / color + talles -->
+      <!-- PASO 3: Variante / color + talles + avíos -->
       <div class="sp" style="margin-bottom:10px;">
         <div class="ficha-step-header">
           <div class="ficha-step-num">3</div>
           <div>
             <div class="ficha-step-title">🎨 Color / variante</div>
-            <div class="ficha-step-sub">Color del modelo y curva de talles</div>
+            <div class="ficha-step-sub">Color, avíos y curva de talles de esta variante</div>
           </div>
         </div>
         <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-          <div style="margin-bottom:12px;">
+          <!-- Color -->
+          <div style="margin-bottom:14px;">
             <div class="flbl" style="margin-bottom:4px;">Color / variante (opcional)</div>
             <input class="fi" type="text" id="nf-color-variante" placeholder="ej: Negro, Rojo, Lavanda..." style="width:100%;">
           </div>
-          <div id="nf-talles-wrap"></div>
-        </div>
-      </div>
-
-      <!-- AVÍOS GENERALES (colapsable, para casos especiales) -->
-      <div class="sp" style="margin-bottom:10px;">
-        <div style="background:var(--sa);border:1px solid rgba(26,36,51,.08);border-radius:var(--r);padding:12px 14px;">
-          <button onclick="toggleAviosGlobales()" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;color:var(--t2);display:flex;align-items:center;gap:8px;padding:0;width:100%;text-align:left;">
-            <span id="avios-glob-icon">▶</span>
-            <span>🔩 Avíos generales</span>
-          </button>
-          <div id="nf-mats-wrap" style="display:none;margin-top:12px;">
-            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Avíos que no son tela — aplican igual a todas las variantes</div>
+          <!-- Avíos de esta variante -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:#5a3a8a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+              <span>🔩 Avíos de esta variante</span>
+              <button class="addlink" style="margin:0;" onclick="addMatFicha()">+ Agregar avío</button>
+            </div>
             <div id="nf-mats"></div>
-            <button class="addlink" onclick="addMatFicha()">+ Agregar avío general</button>
           </div>
+          <!-- Talles -->
+          <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">📐 Curva de talles</div>
+          <div id="nf-talles-wrap"></div>
         </div>
       </div>
 
@@ -5125,7 +5121,7 @@ function renderNfMats() {
   var el = document.getElementById('nf-mats');
   if (!el) return;
   if (!nfMats.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--t3);margin-bottom:8px;">Agregá al menos un material</div>';
+    el.innerHTML = '<div style="font-size:12px;color:var(--t3);margin-bottom:8px;">Sin avíos — ej: cierre, hilo, etiqueta, botón...</div>';
     return;
   }
   el.innerHTML = '';
@@ -5325,23 +5321,22 @@ function guardarFicha() {
     if (!p) p = getPrecioFromHistorial(m.nombre);
     return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'m', precio:p};
   });
-  var matsData = nfMats.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
+  var aviosVariante = nfMats.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
     var p = parseFloat(m.precio)||0;
     if (!p) p = getPrecioFromHistorial(m.nombre);
-    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad, precio:p, por_talle:!!m.por_talle};
+    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'u', precio:p, por_talle:!!m.por_talle};
   });
   // Color/variante simple
   var colorVariante = (document.getElementById('nf-color-variante').value||'').trim();
   var tallesSimples = Object.assign({}, nfTalles);
   var totalUnd = totalTalles(tallesSimples);
-  // Mantener colores como array de un elemento para compatibilidad con el resto del sistema
-  var coloresData = colorVariante || totalUnd > 0 ? [{
+  var coloresData = [{
     color: colorVariante || 'General',
     talles: tallesSimples,
     total: totalUnd,
-    avios: [],
+    avios: aviosVariante,
     telas: []
-  }] : [];
+  }];
 
   var data = {
     nombre: nombre,
@@ -5349,7 +5344,7 @@ function guardarFicha() {
     referencia: (document.getElementById('nf-ref').value||'').trim(),
     mo: parseFloat(document.getElementById('nf-mo').value)||0,
     telas: telasData,
-    materiales: matsData,
+    materiales: [], // avíos ahora van dentro de colores[0].avios
     colores: coloresData,
     talles: tallesSimples,
     total_unidades: totalUnd
@@ -5478,14 +5473,7 @@ function actualizarPreciosFichas() {
         if (p > 0) { m.precio = p; cambio = true; }
       }
     });
-    // Avios generales
-    (f.materiales||[]).forEach(function(m) {
-      if (!(parseFloat(m.precio) > 0)) {
-        var p = getPrecioFromHistorial(m.nombre||'');
-        if (p > 0) { m.precio = p; cambio = true; }
-      }
-    });
-    // Avios por variante
+    // Avios por variante (nuevo: colores[0].avios, legacy: materiales)
     (f.colores||[]).forEach(function(c) {
       (c.avios||[]).forEach(function(a) {
         if (!(parseFloat(a.precio) > 0)) {
@@ -5493,6 +5481,19 @@ function actualizarPreciosFichas() {
           if (p > 0) { a.precio = p; cambio = true; }
         }
       });
+      (c.telas||[]).forEach(function(t) {
+        if (!(parseFloat(t.precio) > 0)) {
+          var p = getPrecioFromHistorial(t.nombre||'');
+          if (p > 0) { t.precio = p; cambio = true; }
+        }
+      });
+    });
+    // Legacy: avios en materiales
+    (f.materiales||[]).forEach(function(m) {
+      if (!(parseFloat(m.precio) > 0)) {
+        var p = getPrecioFromHistorial(m.nombre||'');
+        if (p > 0) { m.precio = p; cambio = true; }
+      }
     });
     // Guardar en Supabase si hubo cambios
     if (cambio && f.id) {
@@ -5565,17 +5566,28 @@ function verFicha(i) {
   var f = (st.fichas||[])[i];
   if (!f) return;
   var costo = costoFicha(f);
-  var mats = f.materiales||[];
+  var primerCol = (f.colores&&f.colores.length) ? f.colores[0] : null;
+  var avios = (primerCol&&(primerCol.avios||[]).length) ? primerCol.avios : (f.materiales||[]);
+  var telas = f.telas||[];
+  var colorLabel = primerCol && primerCol.color && primerCol.color !== 'General' ? primerCol.color : '';
   var el = document.getElementById('ficha-modal-content');
   var tit = document.getElementById('ficha-modal-title');
-  if (tit) tit.textContent = f.nombre;
+  if (tit) tit.textContent = f.nombre + (colorLabel ? ' — ' + colorLabel : '');
+
+  function insumoRow(m, tipo) {
+    var badge = tipo === 'tela'
+      ? '<span style="font-size:9px;background:rgba(42,90,160,.1);color:#2a4a8a;border-radius:6px;padding:1px 6px;margin-left:4px;">tela</span>'
+      : '<span style="font-size:9px;background:rgba(90,42,160,.1);color:#5a2a8a;border-radius:6px;padding:1px 6px;margin-left:4px;">avío</span>';
+    var ptBadge = m.por_talle ? '<span style="font-size:9px;background:rgba(90,42,160,.12);color:#5a2a8a;border-radius:6px;padding:1px 6px;margin-left:2px;">\u00d7talle</span>' : '';
+    return '<tr><td>'+esc(m.nombre)+badge+ptBadge+'</td><td>'+m.cantidad+'</td><td>'+esc(m.unidad||'u')+'</td><td>'+(m.precio>0?'$'+fmt(m.precio):'—')+'</td><td style="font-weight:600;">'+(m.precio>0?'$'+fmt((m.cantidad||0)*(m.precio||0)):'—')+'</td></tr>';
+  }
+
   if (el) el.innerHTML =
     '<div style="font-size:12px;color:var(--t2);margin-bottom:14px;">'+(f.referencia?f.referencia+' · ':'')+esc(f.temporada||'—')+'</div>'+
-    '<table class="dash-table" style="margin-bottom:14px;"><thead><tr><th>Material</th><th>Cant.</th><th>Unid.</th><th>$ unit.</th><th>$ total</th></tr></thead><tbody>'+
-    mats.map(function(m){
-      var porTalleBadge = m.por_talle ? '<span style="font-size:9px;background:rgba(90,42,160,.12);color:#5a2a8a;border-radius:8px;padding:1px 6px;margin-left:4px;">\u00d7talle</span>' : '';
-      return '<tr><td>'+esc(m.nombre)+porTalleBadge+'</td><td>'+m.cantidad+'</td><td>'+esc(m.unidad)+'</td><td>$'+fmt(m.precio)+'</td><td style="font-weight:600;">$'+fmt((m.cantidad||0)*(m.precio||0))+'</td></tr>';
-    }).join('')+
+    '<table class="dash-table" style="margin-bottom:14px;"><thead><tr><th>Insumo</th><th>Cant.</th><th>Unid.</th><th>$ unit.</th><th>$ total</th></tr></thead><tbody>'+
+    telas.map(function(m){ return insumoRow(m,'tela'); }).join('')+
+    avios.map(function(m){ return insumoRow(m,'avio'); }).join('')+
+    (!telas.length&&!avios.length?'<tr><td colspan="5" style="text-align:center;color:var(--t3);">Sin insumos cargados</td></tr>':'')+
     '</tbody></table>'+
     '<div style="display:flex;gap:16px;padding:12px;background:var(--sa);border-radius:var(--r);margin-bottom:14px;">'+
       '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Materiales</div><div style="font-size:16px;font-weight:700;">$'+fmt(costo-(f.mo||0))+'</div></div>'+
@@ -5583,12 +5595,12 @@ function verFicha(i) {
       '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Costo total</div><div style="font-size:18px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div></div>'+
     '</div>'+
     ((f.colores && f.colores.length) ?
-      '<div class="sl" style="margin-bottom:8px;">Curva de talles por color</div>'+
+      '<div class="sl" style="margin-bottom:8px;">Curva de talles</div>'+
       f.colores.map(function(col){
         var activos = TALLES_TODOS.filter(function(t){return (col.talles||{})[t]>0;});
         if (!activos.length) return '';
         return '<div style="margin-bottom:12px;">'+
-          '<div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;">'+esc(col.color||'—')+'</div>'+
+          (col.color&&col.color!=='General'?'<div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;">'+esc(col.color)+'</div>':'')+
           '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+
           activos.map(function(t){
             return '<div style="background:var(--sa);border-radius:var(--r);padding:5px 10px;text-align:center;min-width:44px;">'+
@@ -5632,7 +5644,9 @@ function duplicarFicha(i) {
   nfTelas = (f.telas||[]).map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
   });
-  nfMats = (f.materiales||[]).map(function(m){
+  var primerColD = (f.colores&&f.colores.length) ? f.colores[0] : null;
+  var aviosSrcD = (primerColD&&(primerColD.avios||[]).length) ? primerColD.avios : (f.materiales||[]);
+  nfMats = aviosSrcD.map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle};
   });
   nfColores = [];
@@ -5691,8 +5705,10 @@ function editarFicha(i) {
   document.getElementById('nf-temp').value   = f.temporada||'';
   document.getElementById('nf-ref').value    = f.referencia||'';
   document.getElementById('nf-mo').value     = f.mo||'';
-  // Cargar materiales
-  nfMats = (f.materiales||[]).map(function(m){
+  // Cargar materiales — desde colores[0].avios (nuevo) o materiales (legacy)
+  var primerCol = (f.colores&&f.colores.length) ? f.colores[0] : null;
+  var aviosSrc = (primerCol&&(primerCol.avios||[]).length) ? primerCol.avios : (f.materiales||[]);
+  nfMats = aviosSrc.map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'u', precio:m.precio||0, por_talle:!!m.por_talle};
   });
   // Cargar telas
