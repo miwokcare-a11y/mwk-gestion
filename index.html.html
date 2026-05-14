@@ -5227,6 +5227,7 @@ function renderNfMats() {
       tallesGrid.appendChild(chip);
     });
     tallesAvioWrap.appendChild(tallesGrid);
+    div.appendChild(tallesAvioWrap);
 
     (function(mat, bp, bt, taw){
       bp.onclick = function(){ mat.por_talle=false; bp.style.background='var(--bk)'; bp.style.color='#fff'; bp.style.borderColor='var(--bk)'; bt.style.background='var(--sa)'; bt.style.color='var(--t2)'; bt.style.borderColor='var(--s2)'; taw.style.display='none'; };
