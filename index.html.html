@@ -5950,12 +5950,13 @@ function explotarConsumos() {
       consumos[key].modelos.push(f.nombre+' ('+Math.round(cant*100)/100+' '+(m.unidad||'u')+')');
     }
 
-    var colores = (f.colores||[]).filter(function(c){ return (c.total||0)>0 || totalTalles(c.talles||{})>0; });
+    var colores = (f.colores||[]).filter(function(c){ return (c.total||0)>0 || totalTalles(c.talles||{})>0 || (c.avios||[]).length>0 || (c.telas||[]).length>0; });
     var totalFichaUnd = colores.reduce(function(s,c){ return s+(c.total||totalTalles(c.talles||{})); },0)||totalUnd;
 
     // Telas y avíos por variante (nuevo modelo: todo dentro de colores[x])
     colores.forEach(function(col){
-      var colTotal = col.total || totalTalles(col.talles||{});
+      // colTotal: usar total guardado, o calcular de talles, o usar el total general de la ficha
+      var colTotal = col.total || totalTalles(col.talles||{}) || totalUnd;
 
       // Telas de esta variante
       (col.telas||[]).forEach(function(m){
@@ -6117,7 +6118,7 @@ function explotarConsumos() {
         kpiSmall(rows.filter(function(r){return !r.ok;}).length,'Materiales faltantes',rows.some(function(r){return !r.ok;})?'#c0622a':'#3a6a2a')+
       '</div>'+
       '<div style="overflow-x:auto;"><table class="dash-table">'+
-      '<thead><tr><th>Material</th><th>Artículo</th><th>Color</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
+      '<thead><tr><th>Material</th><th>Artículo</th><th>Variante</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
       rows.map(function(r){
         var compra = r.faltante>0 ? '$'+fmt(r.faltante*r.precio) : '—';
         var planKey = r.nombre+'|'+(r.color!=='General'?r.color:'');
