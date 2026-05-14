@@ -6627,7 +6627,11 @@ function renderNfTelas() {
         var q = (inp.value||'').toLowerCase().trim();
         if (q.length < 2) { sug.style.display='none'; sug.innerHTML=''; return; }
         var src = (st.catalogo&&st.catalogo.length) ? st.catalogo : (st.stock||[]);
-        var matches = src.filter(function(s){ return (s.nombre||'').toLowerCase().indexOf(q)!==-1; }).slice(0,6);
+        var matches = src.filter(function(s){
+          return (s.nombre||'').toLowerCase().indexOf(q)!==-1 ||
+                 (s.hoja||'').toLowerCase().indexOf(q)!==-1 ||
+                 (s.color_diseno||'').toLowerCase().indexOf(q)!==-1;
+        }).slice(0,8);
         if (!matches.length) { sug.style.display='none'; return; }
         sug.innerHTML='';
         matches.forEach(function(s){
@@ -6636,6 +6640,7 @@ function renderNfTelas() {
           var pm=parseFloat(s.precio_metro)||0;
           var pa=parseFloat(s.precio_ars)||0;
           opt.innerHTML='<b>'+esc(s.nombre)+'</b>'+
+            (s.hoja?' <span style="font-size:10px;background:rgba(26,36,51,.07);border-radius:4px;padding:1px 5px;color:var(--t2);">Hoja '+esc(s.hoja)+'</span>':'')+
             (s.color_diseno?' <span style="font-size:11px;color:var(--t3);">'+esc(s.color_diseno)+'</span>':'')+
             (pm>0?' <span style="color:#2a4a8a;font-weight:600;font-size:11px;">$'+fmt(pm)+'/m</span>':
              pa>0?' <span style="color:#2a4a8a;font-size:11px;">$'+fmt(pa)+'</span>':'');
