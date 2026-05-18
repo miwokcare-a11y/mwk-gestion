@@ -6923,7 +6923,7 @@ function renderNfTelas() {
 
     // Dropdown sugerencias
     var sug=document.createElement('div');
-    sug.style.cssText='display:none;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:var(--r);margin-bottom:8px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(26,36,51,.12);';
+    sug.style.cssText='position:absolute;left:0;right:0;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:var(--r);margin-top:2px;max-height:220px;overflow-y:auto;z-index:999;box-shadow:0 4px 16px rgba(26,36,51,.18);';
     div.appendChild(sug);
 
     // Fila 2: consumo + unidad + precio
@@ -6973,7 +6973,7 @@ function renderNfTelas() {
             matches.push(s);
           }
         });
-        matches = matches.slice(0,8);
+        matches = matches.slice(0,5);
         if (!matches.length) { sug.style.display='none'; return; }
         sug.innerHTML='';
         matches.forEach(function(s){
@@ -7055,7 +7055,7 @@ function renderInsumoRow(insumo, onDelete) {
   var nomInp = document.createElement('input'); nomInp.className='fi'; nomInp.type='text';
   nomInp.placeholder='Nombre del insumo'; nomInp.value=insumo.nombre||''; nomInp.style.cssText='flex:1;height:34px;font-size:13px;';
   var sug = document.createElement('div');
-  sug.style.cssText='display:none;position:absolute;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:var(--r);z-index:50;max-height:160px;overflow-y:auto;min-width:260px;';
+  sug.style.cssText='display:none;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:var(--r);z-index:10;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(26,36,51,.12);margin-top:2px;margin-bottom:4px;';
   var nomWrap = document.createElement('div'); nomWrap.style.cssText='position:relative;flex:1;';
   nomWrap.appendChild(nomInp); nomWrap.appendChild(sug);
   var delBtn = document.createElement('button'); delBtn.className='delbtn'; delBtn.textContent='×';
