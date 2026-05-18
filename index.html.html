@@ -6086,10 +6086,11 @@ function explotarConsumos() {
         stockAct = parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||parseFloat(stockItem.metros)||0;
       }
     }
+    var necesario = Math.round(mat.necesario*100)/100;
     if (!stockItem) {
-      console.warn('[STOCK] No encontrado:', nom, '| color:', col, '| stock nombres:', (st.stock||[]).slice(0,5).map(function(s){return s.nombre;}));
+      console.warn('[STOCK] No encontrado:', nom);
     } else {
-      console.log('[STOCK] Encontrado:', stockItem.nombre, '| stock_mts:', stockItem.stock_mts, '| cantidad:', stockItem.cantidad, '| stockAct:', stockAct);
+      console.log('[STOCK]', stockItem.nombre, '| stock_mts:', stockItem.stock_mts, '| cantidad:', stockItem.cantidad, '| rinde:', stockItem.rinde, '| stockAct:', stockAct);
     }
     // Guardar stockAct en el consumo para agrupar después
     mat._stockAct = stockAct;
