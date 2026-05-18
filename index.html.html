@@ -6190,13 +6190,15 @@ function explotarConsumos() {
       } else {
         var mts = parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0;
         if (!mts) {
-          // Convertir kg a metros usando rinde
           var kg = parseFloat(stockItem.kg)||0;
           var rinde = parseFloat(stockItem.rinde)||0;
           mts = (kg && rinde) ? kg * rinde : kg;
         }
         stockAct = mts;
       }
+      if (nom.indexOf('jersey')!==-1||nom.indexOf('ribb')!==-1) console.log('[STOCK]',nom,'→ stockItem:',stockItem.nombre,'kg:',stockItem.kg,'rinde:',stockItem.rinde,'stock_mts:',stockItem.stock_mts,'stockAct:',stockAct);
+    } else {
+      if (nom.indexOf('jersey')!==-1||nom.indexOf('ribb')!==-1) console.warn('[STOCK NO ENCONTRADO]',nom,'col:',col,'talleStr:',talleStr);
     }
     var necesario = Math.round(mat.necesario*100)/100;
     if (!stockItem) {
@@ -6347,9 +6349,32 @@ function explotarConsumos() {
         var compraInfo = (st.planCompras||{})[planKey];
         var comprado = compraInfo && compraInfo.comprado;
         var fechaCompra = compraInfo ? (compraInfo.fecha||'') : '';
-        var pedidoBadge = pedidoInfo
-          ? '<span style="font-size:10px;background:rgba(42,106,58,.12);color:#2a6a3a;border-radius:10px;padding:2px 7px;font-weight:700;">✓ N°'+pedidoInfo.nro+'</span>'
-          : '';
+
+        // Cruzar con historial para encontrar pedido y fecha entrega
+        var nomBuscar = (r._nomBase||r.nombre).toLowerCase();
+        var pedidoHist = null;
+        var fechaEntrega = null;
+        ;(st.historial||[]).forEach(function(h){
+          if (h.rec_confirmado || h.estado==='cancelado') return;
+          (h.itemsData||[]).forEach(function(item){
+            var itn = (item.nombre||item.articulo||'').toLowerCase();
+            if (itn.indexOf(nomBuscar)!==-1 || nomBuscar.indexOf(itn)!==-1) {
+              var fe = parseFechaArg(h.fecha_ent);
+              if (!pedidoHist || (fe && fe < fechaEntrega)) {
+                pedidoHist = h;
+                fechaEntrega = fe;
+              }
+            }
+          });
+        });
+
+        var pedidoBadge = '';
+        if (pedidoInfo) {
+          pedidoBadge = '<span style="font-size:10px;background:rgba(42,106,58,.12);color:#2a6a3a;border-radius:10px;padding:2px 7px;font-weight:700;">✓ N°'+pedidoInfo.nro+'</span>';
+        } else if (pedidoHist) {
+          var fechaStr = pedidoHist.fecha_ent ? '📦 '+pedidoHist.fecha_ent : '';
+          pedidoBadge = '<span style="font-size:10px;background:rgba(90,58,138,.1);color:#5a3a8a;border-radius:10px;padding:2px 7px;font-weight:700;">N°'+pedidoHist.nro+(fechaStr?' · '+fechaStr:'')+'</span>';
+        }
         var articulos = (r.modelos||[]);
         var artUnicos = articulos.filter(function(a,i){ return articulos.indexOf(a)===i; });
         var trStyle = comprado ? 'background:rgba(42,106,58,.06);opacity:.75;' : (r.ok?'':(pedidoInfo?'background:rgba(42,106,58,.04);':'background:rgba(192,98,42,.05);'));
