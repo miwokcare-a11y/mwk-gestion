@@ -6126,11 +6126,19 @@ function explotarConsumos() {
       var stockNom = nom.toLowerCase().trim();
       var stockItemsMatch = (st.stock||[]).filter(function(s){
         var sn = (s.nombre||'').toLowerCase().trim();
-        return sn === stockNom || sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
+        var sc = (s.color||s.color_diseno||'').toLowerCase().trim();
+        var snFull = sc ? sn+' '+sc : sn; // nombre completo combinado
+        return snFull === stockNom 
+          || sn === stockNom 
+          || stockNom.indexOf(snFull)!==-1 
+          || snFull.indexOf(stockNom)!==-1
+          || (sc && stockNom === sn+' '+sc);
       });
-      // Preferir match exacto, luego el que contiene el nombre completo
-      var stockItem = stockItemsMatch.find(function(s){ 
-          return (s.nombre||'').toLowerCase().trim() === stockNom; 
+      var stockItem = stockItemsMatch.find(function(s){
+          var sn = (s.nombre||'').toLowerCase().trim();
+          var sc = (s.color||s.color_diseno||'').toLowerCase().trim();
+          var snFull = sc ? sn+' '+sc : sn;
+          return snFull === stockNom || sn === stockNom;
         }) || stockItemsMatch.find(function(s){ 
           return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1; 
         }) || stockItemsMatch[0] || null;
@@ -6288,18 +6296,19 @@ function explotarConsumos() {
     var nom = mat.nombre.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
     var col = (mat.color||'').toLowerCase();
     var stockItem = (st.stock||[]).find(function(s){
-      var sn=(s.nombre||'').toLowerCase();
+      var sn=(s.nombre||'').toLowerCase().trim();
+      var sc=(s.color||s.color_diseno||'').toLowerCase().trim();
+      var snFull = sc ? sn+' '+sc : sn;
+      // Primero intentar match nombre+color combinado
+      if (snFull === nom || nom === snFull) return true;
+      if (snFull.indexOf(nom)!==-1 || nom.indexOf(snFull)!==-1) return true;
       if (sn.indexOf(nom)===-1 && nom.indexOf(sn)===-1) return false;
       if (talleStr) {
-        var sc = (s.color||s.color_diseno||'').toLowerCase();
-        // Buscar coincidencia exacta del talle: "l" debe matchear "talle l" pero NO "talle xl"
-        // Usar word boundary: el talle debe estar al final o precedido por espacio
         return sc === 'talle '+talleStr || sc === talleStr ||
-               sc.match(new RegExp('(?:^|\\s)'+talleStr.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$'));
+               !!(sc.match(new RegExp('(?:^|\\s)'+talleStr.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$')));
       }
       if (col==='general') return true;
-      var sc2=(s.color||s.color_diseno||'').toLowerCase();
-      return sc2.indexOf(col)!==-1||col.indexOf(sc2)!==-1||sc2==='';
+      return sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='';
     });
     // Para avíos × talle sin stock específico por talle: buscar stock compartido
     var stockCompartido = false;
