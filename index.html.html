@@ -2965,20 +2965,42 @@ function renderCronograma() {
         html += '<div style="text-align:right;"><div style="font-size:20px;font-weight:800;color:'+dcColor+';">'+(dc<=0?'HOY':dc)+'</div>';
         html += '<div style="font-size:10px;color:var(--t3);">'+(dc<=0?'días vencido':'días para corte')+'</div></div>';
       } else if (isDisp) {
-        // Verificar si hay avíos faltantes
+        // Verificar si hay avíos faltantes — cruzar con historial para fecha de entrega
         var aviosFaltantes = [];
         var planRows = window._planRows||[];
         planRows.forEach(function(pr){
           if (!pr.ok && pr.faltante>0) {
             var enEsteFicha = (pr.modelos||[]).some(function(mod){ return mod.toLowerCase().indexOf(f.nombre.toLowerCase())!==-1; });
-            if (enEsteFicha) aviosFaltantes.push(pr.nombre);
+            if (!enEsteFicha) return;
+            // Buscar en historial si hay pedido para este avío
+            var nomBuscar = (pr._nomBase||pr.nombre).toLowerCase();
+            var fechaEntrega = null;
+            var nroPedido = null;
+            historial.forEach(function(h){
+              if (h.rec_confirmado) return;
+              (h.itemsData||[]).forEach(function(item){
+                var itn = (item.nombre||'').toLowerCase();
+                if (itn.indexOf(nomBuscar)!==-1 || nomBuscar.indexOf(itn)!==-1) {
+                  var fe = parseFechaArg(h.fecha_ent);
+                  if (fe && (!fechaEntrega || fe < fechaEntrega)) {
+                    fechaEntrega = fe;
+                    nroPedido = h.nro;
+                  }
+                }
+              });
+            });
+            aviosFaltantes.push({nombre: pr.nombre, fechaEntrega: fechaEntrega, nroPedido: nroPedido});
           }
         });
         if (aviosFaltantes.length) {
           html += '<div style="text-align:right;">';
           html += '<div style="font-size:11px;font-weight:700;color:#c0622a;background:rgba(192,98,42,.1);padding:4px 10px;border-radius:20px;margin-bottom:4px;">⚠ FALTA MATERIAL</div>';
           aviosFaltantes.forEach(function(av){
-            html += '<div style="font-size:10px;color:#c0622a;">· '+esc(av)+'</div>';
+            var fechaStr = av.fechaEntrega
+              ? '📦 '+fmtD2(av.fechaEntrega).trim()+(av.nroPedido?' (N°'+av.nroPedido+')':'')
+              : '⏳ Sin fecha de pedido';
+            var col = av.fechaEntrega ? '#5a3a8a' : '#8b3a14';
+            html += '<div style="font-size:10px;color:'+col+';margin-top:2px;">· '+esc(av.nombre)+' — <b>'+fechaStr+'</b></div>';
           });
           html += '</div>';
         } else {
