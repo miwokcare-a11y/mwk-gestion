@@ -6085,12 +6085,13 @@ function explotarConsumos() {
       if (!(m.nombre||'').trim()) return;
       var nom = m.nombre.trim();
       var col = (color||'General').trim();
+      // Normalizar: tratar '' y 'General' como equivalentes
+      var colNorm = (col === 'General' || col === '') ? 'general' : col.toLowerCase();
       var key;
       if (esTela) {
-        key = nom.toLowerCase()+'|'+col.toLowerCase();
+        key = nom.toLowerCase()+'|'+colNorm;
       } else if (esPorTalle) {
-        // Mantener el sufijo del talle para ver el detalle por talle
-        key = nom.toLowerCase(); // nom ya incluye " (S)", " (M)", etc.
+        key = nom.toLowerCase();
       } else {
         key = nom.toLowerCase();
       }
@@ -6108,6 +6109,7 @@ function explotarConsumos() {
       consumos[key].necesario += cant;
       if (!consumos[key].precio && m.precio) consumos[key].precio = parseFloat(m.precio)||0;
       if (consumos[key].proveedor==='—' && prov!=='—') consumos[key].proveedor = prov;
+      if (cant <= 0) return; // no acumular avíos con 0 unidades
       var entry = f.nombre+(col&&col!=='General'?' ('+col+')':'')+': '+Math.round(cant*100)/100+' '+(m.unidad||'u');
       if (consumos[key].modelos.indexOf(entry)===-1) consumos[key].modelos.push(entry);
     }
@@ -6225,7 +6227,9 @@ function explotarConsumos() {
   });
 
   // ── Cruzar con stock ──
-  var rows = Object.keys(consumos).map(function(key){
+  var rows = Object.keys(consumos).filter(function(key){
+    return consumos[key].necesario > 0;
+  }).map(function(key){
     var mat = consumos[key];
     var unidad = mat.unidad||'u';
     // Extraer sufijo de talle si existe: "Cierre (XS)" → nom="cierre", talleStr="xs"
@@ -6499,7 +6503,7 @@ function explotarConsumos() {
             (comprado&&fechaCompra?'<br><span style="font-size:10px;color:#3a6a2a;font-weight:400;">✓ comprado '+fechaCompra+'</span>':'')+
           '</td>'+
           '<td style="font-size:11px;color:var(--t2);">'+artUnicos.map(esc).join('<br>')+'</td>'+
-          '<td style="font-size:12px;color:var(--t2);">'+(r.color&&r.color!=='General'?esc(r.color):'—')+'</td>'+
+          '<td style="font-size:12px;color:var(--t2);">'+(r.color&&r.color!=='General'?'<b>'+esc(r.color)+'</b>':'<span style="color:var(--t3);">—</span>')+'</td>'+
           '<td style="font-size:11px;color:var(--t2);">'+esc(r.proveedor)+'</td>'+
           '<td>'+(r.necesarioDetalle
             ? '<span style="font-weight:600;">'+r.necesario+' '+esc(r.unidad)+'</span><br><span style="font-size:10px;color:var(--t2);">'+esc(r.necesarioDetalle)+'</span>'
