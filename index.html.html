@@ -6101,8 +6101,9 @@ function explotarConsumos() {
         return sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
       });
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
+      var colorStock = (stockItem&&(stockItem.color||stockItem.color_diseno))||'';
       if (!consumos[key]) consumos[key] = {
-        nombre:nom, color: esTela ? col : 'General', unidad:m.unidad||'u',
+        nombre:nom, color: esTela ? col : 'General', colorStock: colorStock, unidad:m.unidad||'u',
         precio:parseFloat(m.precio)||0, proveedor:prov, necesario:0, modelos:[],
         esPorTalle: !!esPorTalle
       };
@@ -6297,7 +6298,7 @@ function explotarConsumos() {
     mat._stockItem = !!stockItem;
     mat._stockCompartido = stockCompartido;
     return {
-      nombre:mat.nombre, color:mat.color, unidad:unidad, precio:mat.precio, proveedor:mat.proveedor,
+      nombre:mat.nombre, color:mat.color, colorStock:mat.colorStock||'', unidad:unidad, precio:mat.precio, proveedor:mat.proveedor,
       necesario:necesario, stock:stockAct, modelos:mat.modelos,
       stockCompartido: stockCompartido,
       _nomBase: mat.nombre.replace(/\s*\([^)]+\)\s*$/, '').trim()
@@ -6499,7 +6500,10 @@ function explotarConsumos() {
               '<input type="checkbox" '+(comprado?'checked':'')+' data-plankey="'+ri+'" onchange="togglePlanCompraIdx(this,'+ri+')" style="width:16px;height:16px;cursor:pointer;accent-color:#3a6a2a;">':
               '')+
           '</td>'+
-          '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+esc(nombreMostrar)+talleBadge+' '+pedidoBadge+
+          '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+
+            esc(nombreMostrar)+talleBadge+
+            (r.colorStock?' <span style="font-size:11px;color:var(--t2);font-weight:400;">· '+esc(r.colorStock)+'</span>':'')+
+            ' '+pedidoBadge+
             (comprado&&fechaCompra?'<br><span style="font-size:10px;color:#3a6a2a;font-weight:400;">✓ comprado '+fechaCompra+'</span>':'')+
           '</td>'+
           '<td style="font-size:11px;color:var(--t2);">'+artUnicos.map(esc).join('<br>')+'</td>'+
