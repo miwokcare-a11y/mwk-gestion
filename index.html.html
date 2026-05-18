@@ -2976,8 +2976,10 @@ function renderCronograma() {
         });
         if (aviosFaltantes.length) {
           html += '<div style="text-align:right;">';
-          html += '<div style="font-size:11px;font-weight:700;color:#c0622a;background:rgba(192,98,42,.1);padding:4px 10px;border-radius:20px;">⚠ FALTA MATERIAL</div>';
-          html += '<div style="font-size:9px;color:#c0622a;margin-top:3px;">'+aviosFaltantes.slice(0,2).map(esc).join(', ')+(aviosFaltantes.length>2?' +'+( aviosFaltantes.length-2)+' más':'')+'</div>';
+          html += '<div style="font-size:11px;font-weight:700;color:#c0622a;background:rgba(192,98,42,.1);padding:4px 10px;border-radius:20px;margin-bottom:4px;">⚠ FALTA MATERIAL</div>';
+          aviosFaltantes.forEach(function(av){
+            html += '<div style="font-size:10px;color:#c0622a;">· '+esc(av)+'</div>';
+          });
           html += '</div>';
         } else {
           html += '<div style="font-size:12px;font-weight:700;color:#2a6a3a;background:rgba(42,106,58,.1);padding:4px 10px;border-radius:20px;">✓ CORTAR</div>';
