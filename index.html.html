@@ -6963,7 +6963,8 @@ function renderNfTelas() {
         var visto = {};
         var matches = [];
         (st.stock||[]).concat(st.catalogo||[]).forEach(function(s){
-          var key = (s.nombre||'').toLowerCase()+'|'+(s.color_diseno||'').toLowerCase();
+          // Usar id como clave única para no perder artículos con mismo nombre y color
+          var key = s.id ? String(s.id) : (s.nombre||'').toLowerCase()+'|'+(s.color||s.color_diseno||'').toLowerCase()+'|'+(s.hoja||'');
           if (visto[key]) return;
           if ((s.nombre||'').toLowerCase().indexOf(q)!==-1 ||
               String(s.hoja||'').toLowerCase().indexOf(q)!==-1 ||
