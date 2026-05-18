@@ -6990,9 +6990,10 @@ function renderNfTelas() {
             ? esc(nombreBase)+'-<b style="color:var(--ac2);">'+esc(colorCode)+'</b>'
             : '<b>'+esc(s.nombre)+'</b>';
           var stockMts = parseFloat(s.stock_mts)||parseFloat(s.cantidad)||0;
+          var colorMostrar = s.color_diseno || s.color || '';
           opt.innerHTML = nombreHtml+
             (s.hoja?' <span style="font-size:10px;background:rgba(26,36,51,.07);border-radius:4px;padding:1px 5px;color:var(--t2);">Hoja '+esc(String(s.hoja))+'</span>':'')+
-            (s.color_diseno?' <span style="font-size:10px;background:rgba(196,134,106,.15);border-radius:4px;padding:1px 6px;color:var(--ac2);font-weight:600;">'+esc(s.color_diseno)+'</span>':'')+
+            (colorMostrar?' <span style="font-size:10px;background:rgba(196,134,106,.15);border-radius:4px;padding:1px 6px;color:var(--ac2);font-weight:600;">'+esc(colorMostrar)+'</span>':'')+
             (s.proveedor?' <span style="font-size:10px;color:var(--t3);">'+esc(s.proveedor)+'</span>':'')+
             '<div style="font-size:10px;color:var(--t2);margin-top:2px;">'+
               (pm>0?'$'+fmt(pm)+'/m':'')+(stockMts>0?' · Stock: '+fmt(stockMts)+'m':'')+
