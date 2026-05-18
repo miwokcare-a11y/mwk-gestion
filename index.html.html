@@ -2553,6 +2553,12 @@ function registrar(prov,items,cb){
     st.nextNro++;
     SB.from('mwk_config').upsert({id:1, next_nro: st.nextNro, misdatos: st.misdatos||''});
 
+    // Sincronizar precios al stock desde la nota de pedido
+    items.forEach(function(item){
+      var p = parseFloat(item.precio_unit||item.precio_ars||item.precio)||0;
+      if (p > 0 && item.nombre) sincronizarPrecioAlStock(item.nombre, p);
+    });
+
     // Marcar items como pedidos en el plan
     if (planOrigen) {
       if (!st.planPedidos) st.planPedidos = {};
@@ -4417,8 +4423,12 @@ function guardarEdicionStock() {
     precio_metro:  precioMetro
   };
   SB.from('mwk_stock').update(data, {id: s.id}).then(function(){
-    // precio_metro calculado desde formulario: ${data.precio_metro}
     Object.assign(s, data);
+    // Si cambió el precio, actualizar fichas que usen este material
+    if (data.precio_metro > 0 || data.precio_ars > 0) {
+      var nuevoPrecio = data.precio_metro || data.precio_ars || 0;
+      if (nuevoPrecio > 0) actualizarPrecioEnFichas(s.nombre, nuevoPrecio);
+    }
     cerrarModalStock();
     renderStock();
     var infoMsg = '✅ Actualizado'+(data.precio_metro>0?' · $'+fmt(data.precio_metro)+'/m':''); toast(infoMsg);
@@ -5472,11 +5482,18 @@ function guardarFicha() {
     initFichaForm();
   }
 
+  // Sincronizar precios al stock
+  function sincPreciosFicha() {
+    telasData.forEach(function(t){ if (t.precio>0) sincronizarPrecioAlStock(t.nombre, t.precio); });
+    aviosVariante.forEach(function(a){ if (a.precio>0) sincronizarPrecioAlStock(a.nombre, a.precio); });
+  }
+
   // EDICIÓN
   if (window._editingFichaId) {
     SB.from('mwk_fichas').update(data, {id: window._editingFichaId}).then(function(){
       var idx = window._editingFichaIdx;
       if (idx !== null && idx !== undefined) Object.assign(st.fichas[idx], data);
+      sincPreciosFicha();
       resetForm();
       renderFichasLista();
       renderFichasCount();
@@ -5489,6 +5506,7 @@ function guardarFicha() {
   SB.from('mwk_fichas').insert(data).then(function(res){
     var row = Array.isArray(res)?res[0]:res;
     if (row && row.id) { if(!st.fichas)st.fichas=[]; st.fichas.push(row); }
+    sincPreciosFicha();
     resetForm();
     renderFichasLista();
     renderFichasCount();
@@ -5497,11 +5515,74 @@ function guardarFicha() {
 }
 
 function precioMat(m) {
-  // Si tiene precio guardado, usarlo
-  var p = parseFloat(m.precio)||0;
-  if (p > 0) return p;
-  // Si no, buscar en stock/catalogo/historial
-  return getPrecioFromHistorial(m.nombre||'');
+  // Siempre buscar en stock primero (fuente de verdad)
+  var pStock = getPrecioFromHistorial(m.nombre||'');
+  if (pStock > 0) return pStock;
+  // Fallback: precio guardado en la ficha
+  return parseFloat(m.precio)||0;
+}
+
+function actualizarPrecioEnFichas(nombreMaterial, nuevoPrecio) {
+  if (!nombreMaterial || !nuevoPrecio) return;
+  var nom = nombreMaterial.trim().toLowerCase();
+  var fichasActualizar = [];
+  (st.fichas||[]).forEach(function(f, idx){
+    var cambio = false;
+    function actualizarArr(arr) {
+      (arr||[]).forEach(function(m){
+        var mn = (m.nombre||'').toLowerCase();
+        if (mn === nom || mn.indexOf(nom) !== -1 || nom.indexOf(mn) !== -1) {
+          if (Math.abs((parseFloat(m.precio)||0) - nuevoPrecio) > 0.01) {
+            m.precio = nuevoPrecio;
+            cambio = true;
+          }
+        }
+      });
+    }
+    actualizarArr(f.telas);
+    actualizarArr(f.materiales);
+    (f.colores||[]).forEach(function(c){
+      actualizarArr(c.telas);
+      actualizarArr(c.avios);
+    });
+    if (cambio) fichasActualizar.push({idx:idx, f:f});
+  });
+  // Guardar fichas modificadas en Supabase
+  fichasActualizar.forEach(function(item){
+    SB.from('mwk_fichas').update({
+      telas: item.f.telas,
+      materiales: item.f.materiales,
+      colores: item.f.colores
+    }, {id: item.f.id}).catch(function(){});
+  });
+  if (fichasActualizar.length > 0) {
+    renderFichasLista();
+    toast('💰 Precio actualizado en '+fichasActualizar.length+' ficha'+(fichasActualizar.length>1?'s':''));
+  }
+}
+
+function sincronizarPrecioAlStock(nombre, precio) {
+  if (!nombre || !precio || precio <= 0) return;
+  var nom = nombre.trim().toLowerCase();
+  var stockItem = (st.stock||[]).find(function(s){
+    var sn = (s.nombre||'').toLowerCase();
+    return sn === nom || sn.indexOf(nom) !== -1 || nom.indexOf(sn) !== -1;
+  });
+  if (!stockItem || !stockItem.id) return;
+  // Solo actualizar si el precio cambió
+  var precioActual = calcPrecioStock(stockItem);
+  if (Math.abs(precioActual - precio) < 0.01) return;
+  // Actualizar en Supabase
+  var update = {};
+  if ((stockItem.unidad_compra||'m') === 'kg' && stockItem.rinde > 0) {
+    update.precio_ars = Math.round(precio * stockItem.rinde * 100) / 100;
+  } else {
+    update.precio_metro = precio;
+    update.precio_ars = precio;
+  }
+  SB.from('mwk_stock').update(update, {id: stockItem.id}).then(function(){
+    Object.assign(stockItem, update);
+  }).catch(function(){});
 }
 
 function costoFicha(f) {
