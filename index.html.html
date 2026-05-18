@@ -6290,8 +6290,9 @@ function explotarConsumos() {
   Object.keys(talleGrupos).forEach(function(base){
     var grupo = talleGrupos[base];
     var totalNec = grupo.reduce(function(s,r){ return s+r.necesario; },0);
-    var totalStock = grupo.reduce(function(s,r){ return s+r.stock; },0);
-    var totalFaltante = Math.max(0, Math.round((totalNec-totalStock)*100)/100);
+    var totalFaltante = grupo.reduce(function(s,r){ return s+(r.faltante||0); },0);
+    // Stock: solo sumar el stock que "cubre" necesario de cada talle (no el excedente)
+    var totalStockUtil = grupo.reduce(function(s,r){ return s+Math.min(r.necesario, r.stock); },0);
     var desglose = grupo.map(function(r){
       var t=(r.nombre.match(/\(([^)]+)\)$/)||[])[1]||'';
       var falta = r.faltante > 0 ? ' ⚠'+r.faltante : ' ✓';
@@ -6306,8 +6307,8 @@ function explotarConsumos() {
       proveedor: grupo[0].proveedor,
       necesario: Math.round(totalNec*100)/100,
       necesarioDetalle: desglose,
-      stock: totalStock,
-      faltante: totalFaltante,
+      stock: totalStockUtil,
+      faltante: Math.round(totalFaltante*100)/100,
       ok: totalFaltante===0,
       modelos: todosModelos,
       _nomBase: grupo[0]._nomBase
