@@ -6344,14 +6344,13 @@ function explotarConsumos() {
       '<div style="overflow-x:auto;"><table class="dash-table">'+
       '<thead><tr><th></th><th>Material</th><th>Artículo</th><th>Variante</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
       rows.map(function(r, ri){
-        var compra = r.faltante>0 ? '$'+fmt(r.faltante*r.precio) : '—';
         var planKey = r._nomBase.toLowerCase()+'|'+(r.color&&r.color!=='General'?r.color.toLowerCase():'');
         var pedidoInfo = (st.planPedidos||{})[planKey] || (st.planPedidos||{})[r.nombre+'|'+(r.color!=='General'?r.color:'')];
         var compraInfo = (st.planCompras||{})[planKey];
         var comprado = compraInfo && compraInfo.comprado;
         var fechaCompra = compraInfo ? (compraInfo.fecha||'') : '';
 
-        // Cruzar con historial para encontrar pedido y fecha entrega
+        // Cruzar con historial
         var nomBuscar = (r._nomBase||r.nombre).toLowerCase();
         var pedidoHist = null;
         var fechaEntrega = null;
@@ -6368,6 +6367,27 @@ function explotarConsumos() {
             }
           });
         });
+
+        // Precio: stock → historial → ficha
+        var precioUnit = r.precio||0;
+        var stockItemP = (st.stock||[]).find(function(s){
+          var sn=(s.nombre||'').toLowerCase();
+          return sn.indexOf(nomBuscar)!==-1||nomBuscar.indexOf(sn)!==-1;
+        });
+        if (stockItemP) {
+          var p2 = parseFloat(stockItemP.precio_metro)||parseFloat(stockItemP.precio_ars)||parseFloat(stockItemP.precio_unit)||0;
+          if (p2>0) precioUnit = p2;
+        }
+        if (pedidoHist) {
+          (pedidoHist.itemsData||[]).forEach(function(item){
+            var itn=(item.nombre||item.articulo||'').toLowerCase();
+            if (itn.indexOf(nomBuscar)!==-1||nomBuscar.indexOf(itn)!==-1) {
+              var p3 = parseFloat(item.precio_unit||item.precio||item.precio_ars)||0;
+              if (p3>0) precioUnit = p3;
+            }
+          });
+        }
+        var compra = r.faltante>0 ? '$'+fmt(r.faltante*precioUnit) : '—';
 
         var pedidoBadge = '';
         if (pedidoInfo) {
