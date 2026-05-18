@@ -6482,106 +6482,41 @@ function explotarConsumos() {
   if (res) res.style.display='block';
 
   // ── VISTA 1: Por material ──
+  // Guardar precio y pedido en cada row para renderPlanTabla
+  rows.forEach(function(r){
+    var nomBuscar = (r._nomBase||r.nombre).toLowerCase();
+    var stockItemP = (st.stock||[]).find(function(s){
+      var sn=(s.nombre||'').toLowerCase();
+      return sn.indexOf(nomBuscar)!==-1||nomBuscar.indexOf(sn)!==-1;
+    });
+    var precioUnit = r.precio||0;
+    if (stockItemP) {
+      var p2 = parseFloat(stockItemP.precio_metro)||parseFloat(stockItemP.precio_ars)||parseFloat(stockItemP.precio_unit)||0;
+      if (p2>0) precioUnit = p2;
+    }
+    var pedidoHist = null;
+    var fechaEntrega = null;
+    ;(st.historial||[]).forEach(function(h){
+      if (h.rec_confirmado || h.estado==='cancelado') return;
+      (h.itemsData||[]).forEach(function(item){
+        var itn = (item.nombre||item.articulo||'').toLowerCase();
+        if (itn.indexOf(nomBuscar)!==-1 || nomBuscar.indexOf(itn)!==-1) {
+          if (p2 <= 0) {
+            var p3 = parseFloat(item.precio_unit||item.precio||item.precio_ars)||0;
+            if (p3>0) precioUnit = p3;
+          }
+          var fe = parseFechaArg(h.fecha_ent);
+          if (!pedidoHist || (fe && fe < fechaEntrega)) { pedidoHist = h; fechaEntrega = fe; }
+        }
+      });
+    });
+    r._precioUnit = precioUnit;
+    r._pedidoHist = pedidoHist;
+    var planKey = (r._nomBase||r.nombre).toLowerCase()+'|'+(r.color&&r.color!=='General'?r.color.toLowerCase():'');
+    r._pedidoInfo = (st.planPedidos||{})[planKey];
+  });
   var el = document.getElementById('plan-tabla');
-  if (el) {
-    el.innerHTML =
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'+
-        kpiSmall(Math.round(unidadesTotal),'Unidades totales')+
-        kpiSmall(rows.filter(function(r){return !r.ok;}).length,'Materiales faltantes',rows.some(function(r){return !r.ok;})?'#c0622a':'#3a6a2a')+
-      '</div>'+
-      '<div style="overflow-x:auto;"><table class="dash-table">'+
-      '<thead><tr><th></th><th>Material</th><th>Artículo</th><th>Variante</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
-      rows.map(function(r, ri){
-        var planKey = r._nomBase.toLowerCase()+'|'+(r.color&&r.color!=='General'?r.color.toLowerCase():'');
-        var pedidoInfo = (st.planPedidos||{})[planKey] || (st.planPedidos||{})[r.nombre+'|'+(r.color!=='General'?r.color:'')];
-        var compraInfo = (st.planCompras||{})[planKey];
-        var comprado = compraInfo && compraInfo.comprado;
-        var fechaCompra = compraInfo ? (compraInfo.fecha||'') : '';
-
-        // Cruzar con historial
-        var nomBuscar = (r._nomBase||r.nombre).toLowerCase();
-        var pedidoHist = null;
-        var fechaEntrega = null;
-        ;(st.historial||[]).forEach(function(h){
-          if (h.rec_confirmado || h.estado==='cancelado') return;
-          (h.itemsData||[]).forEach(function(item){
-            var itn = (item.nombre||item.articulo||'').toLowerCase();
-            if (itn.indexOf(nomBuscar)!==-1 || nomBuscar.indexOf(itn)!==-1) {
-              var fe = parseFechaArg(h.fecha_ent);
-              if (!pedidoHist || (fe && fe < fechaEntrega)) {
-                pedidoHist = h;
-                fechaEntrega = fe;
-              }
-            }
-          });
-        });
-
-        // Precio: stock → historial → ficha
-        var precioUnit = r.precio||0;
-        var stockItemP = (st.stock||[]).find(function(s){
-          var sn=(s.nombre||'').toLowerCase();
-          return sn.indexOf(nomBuscar)!==-1||nomBuscar.indexOf(sn)!==-1;
-        });
-        if (stockItemP) {
-          var p2 = parseFloat(stockItemP.precio_metro)||parseFloat(stockItemP.precio_ars)||parseFloat(stockItemP.precio_unit)||0;
-          if (p2>0) precioUnit = p2;
-        }
-        if (pedidoHist) {
-          (pedidoHist.itemsData||[]).forEach(function(item){
-            var itn=(item.nombre||item.articulo||'').toLowerCase();
-            if (itn.indexOf(nomBuscar)!==-1||nomBuscar.indexOf(itn)!==-1) {
-              var p3 = parseFloat(item.precio_unit||item.precio||item.precio_ars)||0;
-              if (p3>0) precioUnit = p3;
-            }
-          });
-        }
-        var compra = r.faltante>0 ? '$'+fmt(r.faltante*precioUnit) : '—';
-
-        var pedidoBadge = '';
-        if (pedidoInfo) {
-          pedidoBadge = '<span style="font-size:10px;background:rgba(42,106,58,.12);color:#2a6a3a;border-radius:10px;padding:2px 7px;font-weight:700;">✓ N°'+pedidoInfo.nro+'</span>';
-        } else if (pedidoHist) {
-          var fechaStr = pedidoHist.fecha_ent ? '📦 '+pedidoHist.fecha_ent : '';
-          pedidoBadge = '<span style="font-size:10px;background:rgba(90,58,138,.1);color:#5a3a8a;border-radius:10px;padding:2px 7px;font-weight:700;">N°'+pedidoHist.nro+(fechaStr?' · '+fechaStr:'')+'</span>';
-        }
-        var articulos = (r.modelos||[]);
-        var artUnicos = articulos.filter(function(a,i){ return articulos.indexOf(a)===i; });
-        var trStyle = comprado ? 'background:rgba(42,106,58,.06);opacity:.75;' : (r.ok?'':(pedidoInfo?'background:rgba(42,106,58,.04);':'background:rgba(192,98,42,.05);'));
-        // Para filas × talle: mostrar nombre base + badge de talle
-        var talleMatch = r.nombre.match(/\(([^)]+)\)$/);
-        var nombreMostrar, talleBadge='';
-        if (talleMatch) {
-          nombreMostrar = r._nomBase;
-          talleBadge = ' <span style="font-size:10px;background:rgba(90,42,160,.12);color:#5a2a8a;border-radius:6px;padding:2px 7px;font-weight:700;">'+esc(talleMatch[1])+'</span>';
-        } else {
-          nombreMostrar = r.nombre;
-        }
-        return '<tr style="'+trStyle+'">'+
-          '<td style="text-align:center;width:32px;">'+
-            (r.faltante>0||comprado?
-              '<input type="checkbox" '+(comprado?'checked':'')+' data-plankey="'+ri+'" onchange="togglePlanCompraIdx(this,'+ri+')" style="width:16px;height:16px;cursor:pointer;accent-color:#3a6a2a;">':
-              '')+
-          '</td>'+
-          '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+
-            esc(nombreMostrar)+talleBadge+
-            (r.colorStock?' <span style="font-size:11px;color:var(--t2);font-weight:400;">· '+esc(r.colorStock)+'</span>':'')+
-            ' '+pedidoBadge+
-            (comprado&&fechaCompra?'<br><span style="font-size:10px;color:#3a6a2a;font-weight:400;">✓ comprado '+fechaCompra+'</span>':'')+
-          '</td>'+
-          '<td style="font-size:11px;color:var(--t2);">'+artUnicos.map(esc).join('<br>')+'</td>'+
-          '<td style="font-size:12px;color:var(--t2);">'+(r.color&&r.color!=='General'?'<b>'+esc(r.color)+'</b>':'<span style="color:var(--t3);">—</span>')+'</td>'+
-          '<td style="font-size:11px;color:var(--t2);">'+esc(r.proveedor)+'</td>'+
-          '<td>'+(r.necesarioDetalle
-            ? '<span style="font-weight:600;">'+r.necesario+' '+esc(r.unidad)+'</span><br><span style="font-size:10px;color:var(--t2);">'+esc(r.necesarioDetalle)+'</span>'
-            : r.necesario+' '+esc(r.unidad))+
-          '</td>'+
-          '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
-          '<td style="font-weight:700;color:'+(r.faltante>0?(pedidoInfo?'#2a6a3a':'#8b2e22'):'#3a6a2a')+'">'+(r.faltante>0?(pedidoInfo?'✓ Pedido':''+r.faltante+' '+esc(r.unidad)):'✓ OK')+'</td>'+
-          '<td style="font-weight:600;">'+(pedidoInfo?'—':compra)+'</td>'+
-        '</tr>';
-      }).join('')+
-      '</tbody></table></div>';
-  }
+  if (el) renderPlanTabla();
 
   // ── VISTA 2: Por proveedor ──
   var elProv = document.getElementById('plan-tabla-prov');
@@ -6753,6 +6688,62 @@ function togglePlanCompra(planKey) {
   }
   SB.from('mwk_config').upsert({id:1, plan_compras: st.planCompras}).catch(function(){});
   explotarConsumos();
+}
+
+function renderPlanTabla() {
+  var rows = window._planRows||[];
+  if (!rows.length) return;
+  var el = document.getElementById('plan-tabla');
+  if (!el) return;
+  var unidadesTotal = window._planMeta ? window._planMeta.unidades : 0;
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'+
+      kpiSmall(Math.round(unidadesTotal),'Unidades totales')+
+      kpiSmall(rows.filter(function(r){return !r.ok;}).length,'Materiales faltantes',rows.some(function(r){return !r.ok;})?'#c0622a':'#3a6a2a')+
+    '</div>'+
+    '<div style="overflow-x:auto;"><table class="dash-table">'+
+    '<thead><tr><th></th><th>Material</th><th>Artículo</th><th>Variante</th><th>Proveedor</th><th>Necesario</th><th>En stock</th><th>Faltante</th><th>$ Compra</th></tr></thead><tbody>'+
+    rows.map(function(r, ri){
+      var planKey = (r._nomBase||r.nombre).toLowerCase()+'|'+(r.color&&r.color!=='General'?r.color.toLowerCase():'');
+      var compraInfo = (st.planCompras||{})[planKey];
+      var comprado = compraInfo && compraInfo.comprado;
+      var fechaCompra = compraInfo ? (compraInfo.fecha||'') : '';
+      var pedidoInfo = r._pedidoInfo || (st.planPedidos||{})[planKey];
+      var pedidoHist = r._pedidoHist;
+      var precioUnit = r._precioUnit || r.precio || 0;
+      var compra = r.faltante>0 ? '$'+fmt(r.faltante*precioUnit) : '—';
+      var pedidoBadge = '';
+      if (pedidoInfo) {
+        pedidoBadge = '<span style="font-size:10px;background:rgba(42,106,58,.12);color:#2a6a3a;border-radius:10px;padding:2px 7px;font-weight:700;">✓ N°'+pedidoInfo.nro+'</span>';
+      } else if (pedidoHist) {
+        var fechaStr = pedidoHist.fecha_ent ? '📦 '+pedidoHist.fecha_ent : '';
+        pedidoBadge = '<span style="font-size:10px;background:rgba(90,58,138,.1);color:#5a3a8a;border-radius:10px;padding:2px 7px;font-weight:700;">N°'+pedidoHist.nro+(fechaStr?' · '+fechaStr:'')+'</span>';
+      }
+      var trStyle = comprado ? 'background:rgba(42,106,58,.06);opacity:.75;' : (r.ok?'':(pedidoInfo?'background:rgba(42,106,58,.04);':'background:rgba(192,98,42,.05);'));
+      var talleMatch = r.nombre.match(/\(([^)]+)\)$/);
+      var nombreMostrar = talleMatch ? r._nomBase : r.nombre;
+      var talleBadge = talleMatch ? ' <span style="font-size:10px;background:rgba(90,42,160,.12);color:#5a2a8a;border-radius:6px;padding:2px 7px;font-weight:700;">'+esc(talleMatch[1])+'</span>' : '';
+      var articulos = (r.modelos||[]).filter(function(a,i,arr){ return arr.indexOf(a)===i; });
+      return '<tr style="'+trStyle+'">'+
+        '<td style="text-align:center;width:32px;">'+
+        (r.faltante>0||comprado?'<input type="checkbox" '+(comprado?'checked':'')+' onchange="togglePlanCompra(\''+planKey.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" style="width:16px;height:16px;cursor:pointer;accent-color:#3a6a2a;">':'')+
+        '</td>'+
+        '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+
+          esc(nombreMostrar)+talleBadge+
+          (r.colorStock?' <span style="font-size:11px;color:var(--t2);font-weight:400;">· '+esc(r.colorStock)+'</span>':'')+
+          ' '+pedidoBadge+
+          (comprado&&fechaCompra?'<br><span style="font-size:10px;color:#3a6a2a;font-weight:400;">✓ comprado '+fechaCompra+'</span>':'')+
+        '</td>'+
+        '<td style="font-size:11px;color:var(--t2);">'+articulos.map(esc).join('<br>')+'</td>'+
+        '<td style="font-size:12px;color:var(--t2);">'+(r.color&&r.color!=='General'?'<b>'+esc(r.color)+'</b>':'<span style="color:var(--t3);">—</span>')+'</td>'+
+        '<td style="font-size:11px;color:var(--t2);">'+esc(r.proveedor||'—')+'</td>'+
+        '<td>'+(r.necesarioDetalle?'<span style="font-weight:600;">'+r.necesario+' '+esc(r.unidad)+'</span><br><span style="font-size:10px;color:var(--t2);">'+esc(r.necesarioDetalle)+'</span>':r.necesario+' '+esc(r.unidad))+'</td>'+
+        '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
+        '<td style="font-weight:700;color:'+(r.faltante>0?(pedidoInfo?'#2a6a3a':'#8b2e22'):'#3a6a2a')+'">'+(r.faltante>0?(pedidoInfo?'✓ Pedido':r.faltante+' '+esc(r.unidad)):'✓ OK')+'</td>'+
+        '<td style="font-weight:600;">'+(pedidoInfo?'—':compra)+'</td>'+
+      '</tr>';
+    }).join('')+
+    '</tbody></table></div>';
 }
 
 function exportarPlanificacion() {
