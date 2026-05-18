@@ -6110,46 +6110,40 @@ function explotarConsumos() {
     };
   });
 
-  // Agrupar filas con el mismo nombre base + color (avíos × talle del mismo avío)
-  // El stock se comparte entre los talles — comparar el total necesario contra el stock una vez
+  // Filas con sufijo de talle (S), (M), etc.: NO colapsar — mostrar expandido
+  // Filas sin sufijo (cierres, telas, avíos normales): colapsar si tienen el mismo nombre base
   var gruposBase = {};
   rows.forEach(function(r){
-    var gk = r._nomBase.toLowerCase() + '|' + (r.color||'').toLowerCase();
+    if (/\([A-Za-z0-9]+\)$/.test(r.nombre.trim())) return; // tiene sufijo talle → no agrupar
+    var gk = r._nomBase.toLowerCase()+'|'+(r.color||'').toLowerCase();
     if (!gruposBase[gk]) gruposBase[gk] = {necesario:0, stock:r.stock, rows:[]};
     gruposBase[gk].necesario += r.necesario;
     gruposBase[gk].rows.push(r);
   });
-  // Colapsar filas del mismo grupo en una sola fila
+
   var rowsColapsadas = [];
   var gruposVisto = {};
   rows.forEach(function(r){
-    var gk = r._nomBase.toLowerCase() + '|' + (r.color||'').toLowerCase();
-    if (gruposBase[gk] && gruposBase[gk].rows.length > 1) {
-      // Es un grupo con múltiples talles — mostrar una sola fila con nombre base
+    var tieneSufijo = /\([A-Za-z0-9]+\)$/.test(r.nombre.trim());
+    if (tieneSufijo) {
+      // Expandido: faltante individual (stock compartido se calcula por grupo base)
+      r.faltante = Math.max(0, Math.round((r.necesario - r.stock)*100)/100);
+      r.ok = r.faltante === 0;
+      rowsColapsadas.push(r);
+      return;
+    }
+    var gk = r._nomBase.toLowerCase()+'|'+(r.color||'').toLowerCase();
+    var g = gruposBase[gk];
+    if (g && g.rows.length > 1) {
       if (!gruposVisto[gk]) {
         gruposVisto[gk] = true;
-        var g = gruposBase[gk];
         var faltante = Math.max(0, Math.round((g.necesario - g.stock)*100)/100);
-        rowsColapsadas.push({
-          nombre: r._nomBase,
-          color: r.color,
-          unidad: r.unidad,
-          precio: r.precio,
-          proveedor: r.proveedor,
-          necesario: Math.round(g.necesario*100)/100,
-          stock: g.stock,
-          faltante: faltante,
-          ok: faltante === 0,
-          modelos: r.modelos,
-          _nomBase: r._nomBase
-        });
+        var todosModelos = g.rows.reduce(function(a,row){ return a.concat(row.modelos||[]); },[]).filter(function(m,i,arr){ return arr.indexOf(m)===i; });
+        rowsColapsadas.push({nombre:r._nomBase, color:r.color, unidad:r.unidad, precio:r.precio, proveedor:r.proveedor, necesario:Math.round(g.necesario*100)/100, stock:g.stock, faltante:faltante, ok:faltante===0, modelos:todosModelos, _nomBase:r._nomBase});
       }
     } else {
-      // Fila individual — mostrar tal cual
-      var g2 = gruposBase[gk];
-      var faltante2 = Math.max(0, Math.round((g2.necesario - g2.stock)*100)/100);
-      r.faltante = faltante2;
-      r.ok = faltante2 === 0;
+      var faltante2 = Math.max(0, Math.round(((g?g.necesario:r.necesario) - (g?g.stock:r.stock))*100)/100);
+      r.faltante = faltante2; r.ok = faltante2===0;
       rowsColapsadas.push(r);
     }
   });
