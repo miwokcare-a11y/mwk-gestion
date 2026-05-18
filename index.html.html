@@ -6235,10 +6235,10 @@ function explotarConsumos() {
       rowsColapsadas.push(r);
     }
   });
-  // Agrupar filas × talle (con sufijo) en una sola fila con desglose
+  // Agrupar filas × talle (con sufijo) en una sola fila con desglose por talle
   var rowsFinales = [];
   var talleGrupos = {};
-  rows.forEach(function(r){
+  rowsColapsadas.forEach(function(r){
     if (/\([A-Za-z0-9]+\)$/.test(r.nombre.trim())) {
       var base = r._nomBase.toLowerCase();
       if (!talleGrupos[base]) talleGrupos[base] = [];
@@ -6250,11 +6250,12 @@ function explotarConsumos() {
   Object.keys(talleGrupos).forEach(function(base){
     var grupo = talleGrupos[base];
     var totalNec = grupo.reduce(function(s,r){ return s+r.necesario; },0);
-    var totalStock = grupo[0].stock;
-    var faltante = Math.max(0, Math.round((totalNec - totalStock)*100)/100);
+    var totalStock = grupo.reduce(function(s,r){ return s+r.stock; },0); // sumar stock de cada talle
+    var totalFaltante = grupo.reduce(function(s,r){ return s+(r.faltante||0); },0);
     var desglose = grupo.map(function(r){
       var t = (r.nombre.match(/\(([^)]+)\)$/) || [])[1]||'';
-      return t+': '+r.necesario;
+      var stockStr = r.stock>0 ? ' ✓'+Math.round(r.stock) : '';
+      return t+': '+r.necesario+stockStr;
     }).join(' · ');
     var todosModelos = grupo.reduce(function(a,r){ return a.concat(r.modelos||[]); },[]).filter(function(m,i,arr){ return arr.indexOf(m)===i; });
     rowsFinales.push({
@@ -6266,8 +6267,8 @@ function explotarConsumos() {
       necesario: Math.round(totalNec*100)/100,
       necesarioDetalle: desglose,
       stock: totalStock,
-      faltante: faltante,
-      ok: faltante===0,
+      faltante: Math.round(totalFaltante*100)/100,
+      ok: totalFaltante===0,
       modelos: todosModelos,
       _nomBase: grupo[0]._nomBase
     });
