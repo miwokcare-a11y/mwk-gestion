@@ -6078,8 +6078,19 @@ function explotarConsumos() {
              (sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='');
     }) || (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(nom)!==-1; });
     var stockAct = 0;
-    if (stockItem) stockAct = unidad==='kg'?(parseFloat(stockItem.kg)||0):(parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0);
-    var necesario = Math.round(mat.necesario*100)/100;
+    if (stockItem) {
+      if (unidad==='kg') {
+        stockAct = parseFloat(stockItem.kg)||0;
+      } else {
+        // Intentar todos los campos posibles donde puede estar el stock
+        stockAct = parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||parseFloat(stockItem.metros)||0;
+      }
+    }
+    if (!stockItem) {
+      console.warn('[STOCK] No encontrado:', nom, '| color:', col, '| stock nombres:', (st.stock||[]).slice(0,5).map(function(s){return s.nombre;}));
+    } else {
+      console.log('[STOCK] Encontrado:', stockItem.nombre, '| stock_mts:', stockItem.stock_mts, '| cantidad:', stockItem.cantidad, '| stockAct:', stockAct);
+    }
     // Guardar stockAct en el consumo para agrupar después
     mat._stockAct = stockAct;
     mat._stockItem = !!stockItem;
