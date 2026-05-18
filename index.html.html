@@ -6100,13 +6100,27 @@ function explotarConsumos() {
         return sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
       });
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
-      var colorStock = (stockItem&&(stockItem.color||stockItem.color_diseno))||'';
-      // Telas: agrupar por nombre + color real del stock (no por variante de prenda)
-      // Avíos: agrupar por nombre solo
+      // Solo mostrar color si el nombre de la tela en la ficha lo incluye explícitamente
+      // o si hay un único item en stock con ese nombre (no ambiguo)
+      var stockItemsMatch = (st.stock||[]).filter(function(s){
+        var sn = (s.nombre||'').toLowerCase();
+        return sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
+      });
+      // Si hay más de un match posible, no asumir el color — solo usar el que matchea con el nombre exacto
+      var colorStock = '';
+      if (stockItemsMatch.length === 1) {
+        colorStock = (stockItemsMatch[0].color||stockItemsMatch[0].color_diseno)||'';
+      } else if (stockItem) {
+        // Solo mostrar color si está en el nombre de la tela en la ficha
+        var nomTela = nom.toLowerCase();
+        var scTest = (stockItem.color||stockItem.color_diseno||'').toLowerCase();
+        if (scTest && nomTela.indexOf(scTest)!==-1) colorStock = stockItem.color||stockItem.color_diseno||'';
+      }
       var key;
       if (esTela) {
-        var colStockKey = colorStock ? colorStock.toLowerCase() : (col==='General'||col===''?'general':col.toLowerCase());
-        key = nom.toLowerCase()+'|'+colStockKey;
+        // Consolidar telas por nombre + color del stock (si hay uno único) o solo nombre
+        var colStockKey = (stockItemsMatch.length === 1 && colorStock) ? colorStock.toLowerCase() : '';
+        key = nom.toLowerCase() + (colStockKey ? '|'+colStockKey : '');
       } else if (esPorTalle) {
         key = nom.toLowerCase();
       } else {
@@ -7018,7 +7032,9 @@ function renderNfTelas() {
             '</div>';
           opt.onmousedown=function(e){
             e.preventDefault();
-            mat.nombre=s.nombre;
+            // Guardar nombre completo incluyendo color si existe
+            var colorParaNombre = s.color||s.color_diseno||'';
+            mat.nombre = s.nombre + (colorParaNombre ? ' ' + colorParaNombre : '');
             var p=pm||pa;
             if(p>0) mat.precio=p;
             mat.unidad=s.unidad||'m';
@@ -7128,13 +7144,17 @@ function renderInsumoRow(insumo, onDelete) {
       opt.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(26,36,51,.06);font-size:13px;';
       var pm=parseFloat(s.precio_metro)||0, pa=parseFloat(s.precio_ars)||0;
       var precio=pm||pa;
-      opt.innerHTML='<b>'+esc(s.nombre)+'</b>'+(precio>0?' <span style="color:#2a4a8a;font-weight:600;">$'+fmt(precio)+'</span>':'');
+      var colorAvio = s.color||s.color_diseno||'';
+      opt.innerHTML='<b>'+esc(s.nombre)+'</b>'+
+        (colorAvio?' <span style="font-size:10px;background:rgba(196,134,106,.15);border-radius:4px;padding:1px 6px;color:var(--ac2);font-weight:600;">'+esc(colorAvio)+'</span>':'')+
+        (precio>0?' <span style="color:#2a4a8a;font-weight:600;">$'+fmt(precio)+'</span>':'');
       opt.onmousedown=function(e){
         e.preventDefault();
-        insumo.nombre=s.nombre; insumo.unidad=s.unidad||'m';
+        var colorParaNombre = s.color||s.color_diseno||'';
+        insumo.nombre = s.nombre + (colorParaNombre ? ' ' + colorParaNombre : '');
+        insumo.unidad=s.unidad||'u';
         var p2=pm||pa; if(p2>0) insumo.precio=p2;
         sug.style.display='none';
-        // Re-render el padre
         if(row.parentNode) { var clone=row.cloneNode(false); row.parentNode.replaceChild(clone,row); }
         if(typeof onDelete==='function') onDelete('refresh');
       };
