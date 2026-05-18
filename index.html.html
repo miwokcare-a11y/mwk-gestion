@@ -6155,7 +6155,6 @@ function explotarConsumos() {
     var stockItem = (st.stock||[]).find(function(s){
       var sn=(s.nombre||'').toLowerCase();
       if (sn.indexOf(nom)===-1 && nom.indexOf(sn)===-1) return false;
-      // Si el avío tiene sufijo de talle, buscar ese talle en el campo color del stock
       if (talleStr) {
         var sc = (s.color||s.color_diseno||'').toLowerCase();
         return sc.indexOf(talleStr)!==-1;
@@ -6164,11 +6163,21 @@ function explotarConsumos() {
       var sc2=(s.color||s.color_diseno||'').toLowerCase();
       return sc2.indexOf(col)!==-1||col.indexOf(sc2)!==-1||sc2==='';
     });
-    // Solo usar fallback sin talle si NO es un avío × talle
-    if (!stockItem && !talleStr) {
+    // Para avíos × talle sin stock específico por talle: buscar stock compartido
+    var stockCompartido = false;
+    if (!stockItem && talleStr) {
       stockItem = (st.stock||[]).find(function(s){
         var sn=(s.nombre||'').toLowerCase();
-        return sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1;
+        var sc=(s.color||s.color_diseno||'').toLowerCase();
+        // Solo usar si el color NO indica un talle específico
+        return (sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1) && sc.indexOf('talle')===-1;
+      });
+      if (stockItem) stockCompartido = true;
+    }
+    // Fallback general (solo para avíos sin talle)
+    if (!stockItem && !talleStr) {
+      stockItem = (st.stock||[]).find(function(s){
+        return (s.nombre||'').toLowerCase().indexOf(nom)!==-1||nom.indexOf((s.nombre||'').toLowerCase())!==-1;
       });
     }
     var stockAct = 0;
@@ -6195,9 +6204,11 @@ function explotarConsumos() {
     // Guardar stockAct en el consumo para agrupar después
     mat._stockAct = stockAct;
     mat._stockItem = !!stockItem;
+    mat._stockCompartido = stockCompartido;
     return {
       nombre:mat.nombre, color:mat.color, unidad:unidad, precio:mat.precio, proveedor:mat.proveedor,
       necesario:necesario, stock:stockAct, modelos:mat.modelos,
+      stockCompartido: stockCompartido,
       _nomBase: mat.nombre.replace(/\s*\([^)]+\)\s*$/, '').trim()
     };
   });
@@ -6215,6 +6226,28 @@ function explotarConsumos() {
 
   var rowsColapsadas = [];
   var gruposVisto = {};
+  // Para stock compartido: distribuir el stock entre los talles del grupo
+  var stockCompartidoGrupos = {};
+  rows.forEach(function(r){
+    if (r.stockCompartido) {
+      var base = r._nomBase.toLowerCase();
+      if (!stockCompartidoGrupos[base]) stockCompartidoGrupos[base] = {totalNec:0, stock:r.stock, rows:[]};
+      stockCompartidoGrupos[base].totalNec += r.necesario;
+      stockCompartidoGrupos[base].rows.push(r);
+    }
+  });
+  // Repartir el stock compartido proporcionalmente
+  Object.keys(stockCompartidoGrupos).forEach(function(base){
+    var g = stockCompartidoGrupos[base];
+    var stockRestante = g.stock;
+    g.rows.forEach(function(r){
+      var stockEste = Math.min(r.necesario, stockRestante);
+      stockRestante = Math.max(0, stockRestante - stockEste);
+      r.stock = stockEste;
+      r.faltante = Math.max(0, Math.round((r.necesario - stockEste)*100)/100);
+      r.ok = r.faltante === 0;
+    });
+  });
   rows.forEach(function(r){
     var tieneSufijo = /\([A-Za-z0-9]+\)$/.test(r.nombre.trim());
     if (tieneSufijo) {
