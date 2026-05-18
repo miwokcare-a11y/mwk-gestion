@@ -6085,23 +6085,33 @@ function explotarConsumos() {
       if (!(m.nombre||'').trim()) return;
       var nom = m.nombre.trim();
       var col = (color||'General').trim();
-      // Normalizar: tratar '' y 'General' como equivalentes
-      var colNorm = (col === 'General' || col === '') ? 'general' : col.toLowerCase();
-      var key;
-      if (esTela) {
-        key = nom.toLowerCase()+'|'+colNorm;
-      } else if (esPorTalle) {
-        key = nom.toLowerCase();
-      } else {
-        key = nom.toLowerCase();
-      }
       var stockNom = nom.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
       var stockItem = (st.stock||[]).find(function(s){
+        var sn = (s.nombre||'').toLowerCase();
+        if (!(sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1)) return false;
+        // Si la tela tiene color en la ficha, preferir el match de color
+        if (esTela && col && col !== 'General') {
+          var sc = (s.color||s.color_diseno||'').toLowerCase();
+          return sc.indexOf(col.toLowerCase())!==-1 || col.toLowerCase().indexOf(sc)!==-1;
+        }
+        return true;
+      }) || (st.stock||[]).find(function(s){
         var sn = (s.nombre||'').toLowerCase();
         return sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
       });
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
       var colorStock = (stockItem&&(stockItem.color||stockItem.color_diseno))||'';
+      // Telas: agrupar por nombre + color real del stock (no por variante de prenda)
+      // Avíos: agrupar por nombre solo
+      var key;
+      if (esTela) {
+        var colStockKey = colorStock ? colorStock.toLowerCase() : (col==='General'||col===''?'general':col.toLowerCase());
+        key = nom.toLowerCase()+'|'+colStockKey;
+      } else if (esPorTalle) {
+        key = nom.toLowerCase();
+      } else {
+        key = nom.toLowerCase();
+      }
       if (!consumos[key]) consumos[key] = {
         nombre:nom, color: esTela ? col : 'General', colorStock: colorStock, unidad:m.unidad||'u',
         precio:parseFloat(m.precio)||0, proveedor:prov, necesario:0, modelos:[],
