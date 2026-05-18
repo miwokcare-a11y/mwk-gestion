@@ -6163,10 +6163,14 @@ function explotarConsumos() {
       if (col==='general') return true;
       var sc2=(s.color||s.color_diseno||'').toLowerCase();
       return sc2.indexOf(col)!==-1||col.indexOf(sc2)!==-1||sc2==='';
-    }) || (st.stock||[]).find(function(s){
-      var sn=(s.nombre||'').toLowerCase();
-      return sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1;
     });
+    // Solo usar fallback sin talle si NO es un avío × talle
+    if (!stockItem && !talleStr) {
+      stockItem = (st.stock||[]).find(function(s){
+        var sn=(s.nombre||'').toLowerCase();
+        return sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1;
+      });
+    }
     var stockAct = 0;
     if (stockItem) {
       if (unidad==='kg') {
