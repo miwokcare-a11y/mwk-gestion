@@ -6192,7 +6192,8 @@ function explotarConsumos() {
         if (!mts) {
           var kg = parseFloat(stockItem.kg)||0;
           var rinde = parseFloat(stockItem.rinde)||0;
-          mts = (kg && rinde) ? kg * rinde : kg;
+          // Si hay rinde, convertir. Si no hay rinde, usar kg como metros (rinde ≈ 1)
+          mts = kg ? (rinde ? kg * rinde : kg) : 0;
         }
         stockAct = mts;
       }
