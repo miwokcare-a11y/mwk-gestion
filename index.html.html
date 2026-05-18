@@ -1102,7 +1102,7 @@ select.fi{appearance:none;
             </select>
           </div>
           <div class="frow">
-            <input class="fi" type="text" id="nf-ref" placeholder="Referencia / código (opcional)">
+            <input class="fi" type="text" id="nf-ref" placeholder="Grupo / Cápsula (ej: Básicos, Edición limitada...)">
           </div>
         </div>
       </div>
@@ -1162,13 +1162,23 @@ select.fi{appearance:none;
   </div>
   <div style="margin-top:12px;">
     <div class="sp" style="margin-bottom:10px;">
-      <div class="flbl" style="margin-bottom:6px;">Temporada a planificar</div>
-      <select class="fi" id="plan-temp" style="width:100%;" onchange="renderPlanFichas()">
-        <option value="">Todas</option>
-        <option>Verano 2025</option><option>Invierno 2025</option>
-        <option>Verano 2026</option><option>Invierno 2026</option>
-        <option>Verano 2027</option><option>Invierno 2027</option>
-      </select>
+      <div class="frow" style="gap:10px;">
+        <div style="flex:1;">
+          <div class="flbl" style="margin-bottom:6px;">Temporada</div>
+          <select class="fi" id="plan-temp" style="width:100%;" onchange="renderPlanFichas()">
+            <option value="">Todas</option>
+            <option>Verano 2025</option><option>Invierno 2025</option>
+            <option>Verano 2026</option><option>Invierno 2026</option>
+            <option>Verano 2027</option><option>Invierno 2027</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <div class="flbl" style="margin-bottom:6px;">Grupo / Cápsula</div>
+          <select class="fi" id="plan-grupo" style="width:100%;" onchange="renderPlanFichas()">
+            <option value="">Todos</option>
+          </select>
+        </div>
+      </div>
     </div>
     <div class="sp" style="margin-bottom:10px;">
       <div class="sl" style="margin-bottom:8px;">Unidades a producir por modelo</div>
@@ -5992,8 +6002,34 @@ function renderPlanFichas() {
   if (!el) return;
   var temp = document.getElementById('plan-temp');
   var tempVal = temp ? temp.value : '';
+  var grupoSel = document.getElementById('plan-grupo');
+  var grupoVal = grupoSel ? grupoSel.value : '';
+
+  // Poblar grupos disponibles según temporada
+  var grupos = [];
+  (st.fichas||[]).forEach(function(f){
+    if (tempVal && f.temporada !== tempVal) return;
+    var g = (f.referencia||'').trim();
+    if (g && grupos.indexOf(g) === -1) grupos.push(g);
+  });
+  grupos.sort();
+  if (grupoSel) {
+    var prevVal = grupoSel.value;
+    grupoSel.innerHTML = '<option value="">Todos</option>';
+    grupos.forEach(function(g){
+      var o = document.createElement('option');
+      o.value = g; o.textContent = g;
+      if (g === prevVal) o.selected = true;
+      grupoSel.appendChild(o);
+    });
+    if (!grupos.includes(prevVal)) grupoSel.value = '';
+    grupoVal = grupoSel.value;
+  }
+
   var lista = (st.fichas||[]).filter(function(f){
-    return !tempVal || f.temporada === tempVal;
+    if (tempVal && f.temporada !== tempVal) return false;
+    if (grupoVal && (f.referencia||'').trim() !== grupoVal) return false;
+    return true;
   });
   if (!lista.length) {
     el.innerHTML = '<div class="empty"><div class="ei">📋</div>No hay fichas para esta temporada.<br>Creá fichas primero.</div>';
@@ -6062,7 +6098,9 @@ function explotarConsumos() {
   var fichas = st.fichas||[];
   // Filtrar por temporada si está seleccionada
   var temp = (document.getElementById('plan-temp')||{}).value||'';
+  var grupo = (document.getElementById('plan-grupo')||{}).value||'';
   var fichasFiltradas = temp ? fichas.filter(function(f){return f.temporada===temp;}) : fichas;
+  if (grupo) fichasFiltradas = fichasFiltradas.filter(function(f){ return (f.referencia||'').trim()===grupo; });
   // Filtrar solo las fichas marcadas (incluidas)
   fichasFiltradas = fichasFiltradas.filter(function(f){ return planUnidades[f.id]!==0; });
 
