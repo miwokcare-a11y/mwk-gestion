@@ -6147,7 +6147,44 @@ function explotarConsumos() {
       rowsColapsadas.push(r);
     }
   });
-  rows = rowsColapsadas.sort(function(a,b){
+  // Agrupar filas × talle (con sufijo) en una sola fila con desglose
+  var rowsFinales = [];
+  var talleGrupos = {};
+  rows.forEach(function(r){
+    if (/\([A-Za-z0-9]+\)$/.test(r.nombre.trim())) {
+      var base = r._nomBase.toLowerCase();
+      if (!talleGrupos[base]) talleGrupos[base] = [];
+      talleGrupos[base].push(r);
+    } else {
+      rowsFinales.push(r);
+    }
+  });
+  Object.keys(talleGrupos).forEach(function(base){
+    var grupo = talleGrupos[base];
+    var totalNec = grupo.reduce(function(s,r){ return s+r.necesario; },0);
+    var totalStock = grupo[0].stock;
+    var faltante = Math.max(0, Math.round((totalNec - totalStock)*100)/100);
+    var desglose = grupo.map(function(r){
+      var t = (r.nombre.match(/\(([^)]+)\)$/) || [])[1]||'';
+      return t+': '+r.necesario;
+    }).join(' · ');
+    var todosModelos = grupo.reduce(function(a,r){ return a.concat(r.modelos||[]); },[]).filter(function(m,i,arr){ return arr.indexOf(m)===i; });
+    rowsFinales.push({
+      nombre: grupo[0]._nomBase,
+      color: grupo[0].color,
+      unidad: grupo[0].unidad,
+      precio: grupo[0].precio,
+      proveedor: grupo[0].proveedor,
+      necesario: Math.round(totalNec*100)/100,
+      necesarioDetalle: desglose,
+      stock: totalStock,
+      faltante: faltante,
+      ok: faltante===0,
+      modelos: todosModelos,
+      _nomBase: grupo[0]._nomBase
+    });
+  });
+  rows = rowsFinales.sort(function(a,b){
     var n=a._nomBase.localeCompare(b._nomBase);
     return n!==0?n:(a.color||'').localeCompare(b.color||'');
   });
@@ -6194,7 +6231,10 @@ function explotarConsumos() {
           '<td style="font-size:11px;color:var(--t2);">'+artUnicos.map(esc).join('<br>')+'</td>'+
           '<td style="font-size:12px;color:var(--t2);">'+(r.color&&r.color!=='General'?esc(r.color):'—')+'</td>'+
           '<td style="font-size:11px;color:var(--t2);">'+esc(r.proveedor)+'</td>'+
-          '<td>'+r.necesario+' '+esc(r.unidad)+'</td>'+
+          '<td>'+(r.necesarioDetalle
+            ? '<span style="font-weight:600;">'+r.necesario+' '+esc(r.unidad)+'</span><br><span style="font-size:10px;color:var(--t2);">'+esc(r.necesarioDetalle)+'</span>'
+            : r.necesario+' '+esc(r.unidad))+
+          '</td>'+
           '<td style="color:'+(r.ok?'#3a6a2a':'#c0622a')+';">'+r.stock+' '+esc(r.unidad)+'</td>'+
           '<td style="font-weight:700;color:'+(r.faltante>0?(pedidoInfo?'#2a6a3a':'#8b2e22'):'#3a6a2a')+'">'+(r.faltante>0?(pedidoInfo?'✓ Pedido':''+r.faltante+' '+esc(r.unidad)):'✓ OK')+'</td>'+
           '<td style="font-weight:600;">'+(pedidoInfo?'—':compra)+'</td>'+
