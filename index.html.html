@@ -7089,8 +7089,18 @@ function renderInsumoRow(insumo, onDelete) {
   function updateSug() {
     var q=(nomInp.value||'').toLowerCase().trim();
     if(q.length<2){sug.style.display='none';sug.innerHTML='';return;}
-    var src=(st.catalogo&&st.catalogo.length)?st.catalogo:(st.stock||[]);
-    var matches=src.filter(function(s){return (s.nombre||'').toLowerCase().indexOf(q)!==-1;}).slice(0,6);
+    var visto={}, matches=[];
+    (st.stock||[]).concat(st.catalogo||[]).forEach(function(s){
+      var key=(s.nombre||'').toLowerCase()+'|'+(s.color||s.color_diseno||'').toLowerCase();
+      if(visto[key]) return;
+      if((s.nombre||'').toLowerCase().indexOf(q)!==-1||
+         String(s.hoja||'').toLowerCase().indexOf(q)!==-1||
+         (s.color_diseno||'').toLowerCase().indexOf(q)!==-1||
+         (s.proveedor||'').toLowerCase().indexOf(q)!==-1){
+        visto[key]=true; matches.push(s);
+      }
+    });
+    matches=matches.slice(0,20);
     if(!matches.length){sug.style.display='none';return;}
     sug.innerHTML='';
     matches.forEach(function(s){
