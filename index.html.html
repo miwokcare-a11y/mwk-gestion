@@ -6235,43 +6235,10 @@ function explotarConsumos() {
       rowsColapsadas.push(r);
     }
   });
-  // Agrupar filas × talle (con sufijo) en una sola fila con desglose por talle
+  // Avíos × talle: una fila por talle, clara y directa
   var rowsFinales = [];
-  var talleGrupos = {};
   rowsColapsadas.forEach(function(r){
-    if (/\([A-Za-z0-9]+\)$/.test(r.nombre.trim())) {
-      var base = r._nomBase.toLowerCase();
-      if (!talleGrupos[base]) talleGrupos[base] = [];
-      talleGrupos[base].push(r);
-    } else {
-      rowsFinales.push(r);
-    }
-  });
-  Object.keys(talleGrupos).forEach(function(base){
-    var grupo = talleGrupos[base];
-    var totalNec = grupo.reduce(function(s,r){ return s+r.necesario; },0);
-    var totalStock = grupo.reduce(function(s,r){ return s+r.stock; },0); // sumar stock de cada talle
-    var totalFaltante = grupo.reduce(function(s,r){ return s+(r.faltante||0); },0);
-    var desglose = grupo.map(function(r){
-      var t = (r.nombre.match(/\(([^)]+)\)$/) || [])[1]||'';
-      var stockStr = r.stock>0 ? ' ✓'+Math.round(r.stock) : '';
-      return t+': '+r.necesario+stockStr;
-    }).join(' · ');
-    var todosModelos = grupo.reduce(function(a,r){ return a.concat(r.modelos||[]); },[]).filter(function(m,i,arr){ return arr.indexOf(m)===i; });
-    rowsFinales.push({
-      nombre: grupo[0]._nomBase,
-      color: grupo[0].color,
-      unidad: grupo[0].unidad,
-      precio: grupo[0].precio,
-      proveedor: grupo[0].proveedor,
-      necesario: Math.round(totalNec*100)/100,
-      necesarioDetalle: desglose,
-      stock: totalStock,
-      faltante: Math.round(totalFaltante*100)/100,
-      ok: totalFaltante===0,
-      modelos: todosModelos,
-      _nomBase: grupo[0]._nomBase
-    });
+    rowsFinales.push(r);
   });
   rows = rowsFinales.sort(function(a,b){
     var n=a._nomBase.localeCompare(b._nomBase);
@@ -6308,13 +6275,22 @@ function explotarConsumos() {
         var articulos = (r.modelos||[]);
         var artUnicos = articulos.filter(function(a,i){ return articulos.indexOf(a)===i; });
         var trStyle = comprado ? 'background:rgba(42,106,58,.06);opacity:.75;' : (r.ok?'':(pedidoInfo?'background:rgba(42,106,58,.04);':'background:rgba(192,98,42,.05);'));
+        // Para filas × talle: mostrar nombre base + badge de talle
+        var talleMatch = r.nombre.match(/\(([^)]+)\)$/);
+        var nombreMostrar, talleBadge='';
+        if (talleMatch) {
+          nombreMostrar = r._nomBase;
+          talleBadge = ' <span style="font-size:10px;background:rgba(90,42,160,.12);color:#5a2a8a;border-radius:6px;padding:2px 7px;font-weight:700;">'+esc(talleMatch[1])+'</span>';
+        } else {
+          nombreMostrar = r.nombre;
+        }
         return '<tr style="'+trStyle+'">'+
           '<td style="text-align:center;width:32px;">'+
             (r.faltante>0||comprado?
               '<input type="checkbox" '+(comprado?'checked':'')+' data-plankey="'+ri+'" onchange="togglePlanCompraIdx(this,'+ri+')" style="width:16px;height:16px;cursor:pointer;accent-color:#3a6a2a;">':
               '')+
           '</td>'+
-          '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+esc(r.nombre)+' '+pedidoBadge+
+          '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+esc(nombreMostrar)+talleBadge+' '+pedidoBadge+
             (comprado&&fechaCompra?'<br><span style="font-size:10px;color:#3a6a2a;font-weight:400;">✓ comprado '+fechaCompra+'</span>':'')+
           '</td>'+
           '<td style="font-size:11px;color:var(--t2);">'+artUnicos.map(esc).join('<br>')+'</td>'+
