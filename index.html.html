@@ -6147,16 +6147,26 @@ function explotarConsumos() {
   var rows = Object.keys(consumos).map(function(key){
     var mat = consumos[key];
     var unidad = mat.unidad||'u';
-    // Quitar sufijo " (talle)" para buscar en stock
+    // Extraer sufijo de talle si existe: "Cierre (XS)" → nom="cierre", talleStr="xs"
+    var talleMatch = mat.nombre.match(/\(([^)]+)\)\s*$/);
+    var talleStr = talleMatch ? talleMatch[1].toLowerCase() : null;
     var nom = mat.nombre.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
     var col = (mat.color||'').toLowerCase();
     var stockItem = (st.stock||[]).find(function(s){
       var sn=(s.nombre||'').toLowerCase();
-      if (col==='general') return sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1;
-      var sc=(s.color||s.color_diseno||'').toLowerCase();
-      return (sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1) &&
-             (sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='');
-    }) || (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(nom)!==-1; });
+      if (sn.indexOf(nom)===-1 && nom.indexOf(sn)===-1) return false;
+      // Si el avío tiene sufijo de talle, buscar ese talle en el campo color del stock
+      if (talleStr) {
+        var sc = (s.color||s.color_diseno||'').toLowerCase();
+        return sc.indexOf(talleStr)!==-1;
+      }
+      if (col==='general') return true;
+      var sc2=(s.color||s.color_diseno||'').toLowerCase();
+      return sc2.indexOf(col)!==-1||col.indexOf(sc2)!==-1||sc2==='';
+    }) || (st.stock||[]).find(function(s){
+      var sn=(s.nombre||'').toLowerCase();
+      return sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1;
+    });
     var stockAct = 0;
     if (stockItem) {
       if (unidad==='kg') {
