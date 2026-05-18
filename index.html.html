@@ -6242,10 +6242,12 @@ function explotarConsumos() {
   // Repartir el stock compartido proporcionalmente
   Object.keys(stockCompartidoGrupos).forEach(function(base){
     var g = stockCompartidoGrupos[base];
+    var stockOriginal = g.stock; // guardar stock real antes de distribuir
     var stockRestante = g.stock;
     g.rows.forEach(function(r){
       var stockEste = Math.min(r.necesario, stockRestante);
       stockRestante = Math.max(0, stockRestante - stockEste);
+      r.stockOriginal = stockOriginal; // stock real del artículo
       r.stock = stockEste;
       r.faltante = Math.max(0, Math.round((r.necesario - stockEste)*100)/100);
       r.ok = r.faltante === 0;
@@ -6291,7 +6293,10 @@ function explotarConsumos() {
     var grupo = talleGrupos[base];
     var totalNec = grupo.reduce(function(s,r){ return s+r.necesario; },0);
     var totalFaltante = grupo.reduce(function(s,r){ return s+(r.faltante||0); },0);
-    var totalStockReal = grupo.reduce(function(s,r){ return s+r.stock; },0);
+    // Para stock: si es compartido usar el original, si es por talle sumar los reales
+    var totalStockReal = grupo[0].stockOriginal != null
+      ? grupo[0].stockOriginal  // stock compartido: mostrar el stock real del artículo
+      : grupo.reduce(function(s,r){ return s+r.stock; },0); // stock por talle: sumar
     var desglose = grupo.map(function(r){
       var t=(r.nombre.match(/\(([^)]+)\)$/)||[])[1]||'';
       var falta = r.faltante > 0 ? ' ⚠'+r.faltante : ' ✓';
