@@ -6082,8 +6082,14 @@ function explotarConsumos() {
       if (unidad==='kg') {
         stockAct = parseFloat(stockItem.kg)||0;
       } else {
-        // Intentar todos los campos posibles donde puede estar el stock
-        stockAct = parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||parseFloat(stockItem.metros)||0;
+        var mts = parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0;
+        if (!mts) {
+          // Convertir kg a metros usando rinde
+          var kg = parseFloat(stockItem.kg)||0;
+          var rinde = parseFloat(stockItem.rinde)||0;
+          mts = (kg && rinde) ? kg * rinde : kg;
+        }
+        stockAct = mts;
       }
     }
     var necesario = Math.round(mat.necesario*100)/100;
