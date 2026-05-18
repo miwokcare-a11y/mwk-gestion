@@ -5921,12 +5921,20 @@ function explotarConsumos() {
     unidadesTotal += totalUnd;
     costoTotal += costoFicha(f) * totalUnd;
 
-    // Acumular por nombre + color de variante
-    function acumular(m, color, cant) {
+    // Acumular: telas por nombre+color, avíos normales por nombre, avíos × talle por nombre+talle
+    function acumular(m, color, cant, esTela, esPorTalle) {
       if (!(m.nombre||'').trim()) return;
       var nom = m.nombre.trim();
       var col = (color||'General').trim();
-      var key = nom.toLowerCase()+'|'+col.toLowerCase();
+      var key;
+      if (esTela) {
+        key = nom.toLowerCase()+'|'+col.toLowerCase();
+      } else if (esPorTalle) {
+        // Mantener el sufijo del talle para ver el detalle por talle
+        key = nom.toLowerCase(); // nom ya incluye " (S)", " (M)", etc.
+      } else {
+        key = nom.toLowerCase();
+      }
       var stockNom = nom.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
       var stockItem = (st.stock||[]).find(function(s){
         var sn = (s.nombre||'').toLowerCase();
@@ -5934,13 +5942,14 @@ function explotarConsumos() {
       });
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
       if (!consumos[key]) consumos[key] = {
-        nombre:nom, color:col, unidad:m.unidad||'u',
-        precio:parseFloat(m.precio)||0, proveedor:prov, necesario:0, modelos:[]
+        nombre:nom, color: esTela ? col : 'General', unidad:m.unidad||'u',
+        precio:parseFloat(m.precio)||0, proveedor:prov, necesario:0, modelos:[],
+        esPorTalle: !!esPorTalle
       };
       consumos[key].necesario += cant;
       if (!consumos[key].precio && m.precio) consumos[key].precio = parseFloat(m.precio)||0;
       if (consumos[key].proveedor==='—' && prov!=='—') consumos[key].proveedor = prov;
-      var entry = f.nombre+': '+Math.round(cant*100)/100+' '+(m.unidad||'u');
+      var entry = f.nombre+(col&&col!=='General'?' ('+col+')':'')+': '+Math.round(cant*100)/100+' '+(m.unidad||'u');
       if (consumos[key].modelos.indexOf(entry)===-1) consumos[key].modelos.push(entry);
     }
 
@@ -5952,10 +5961,10 @@ function explotarConsumos() {
       // colTotal: usar total guardado, o calcular de talles, o usar el total general de la ficha
       var colTotal = col.total || totalTalles(col.talles||{}) || totalUnd;
 
-      // Telas: buscar en stock solo por nombre (sin color de variante)
+      // Telas: agrupar por nombre+color
       (col.telas||[]).forEach(function(m){
         var cant = (parseFloat(m.cantidad)||0) * colTotal;
-        acumular(m, 'General', cant);
+        acumular(m, col.color, cant, true);
       });
 
       // Avíos de esta variante (con soporte por_talle y talles_avio)
@@ -5966,7 +5975,7 @@ function explotarConsumos() {
       // Avíos × prenda: normal
       aviosNormales.forEach(function(a){
         var cant = (parseFloat(a.cantidad)||0) * colTotal;
-        acumular(a, col.color, cant);
+        acumular(a, col.color, cant, false);
       });
 
       // Avíos × talle: repartir colTotal según talles cubiertos por cada avío
@@ -5983,7 +5992,7 @@ function explotarConsumos() {
               if (!unds) return;
               var cant = (parseFloat(a.cantidad)||0) * unds;
               var aConT = Object.assign({}, a, {nombre: a.nombre + ' (' + t + ')'});
-              acumular(aConT, col.color, cant);
+              acumular(aConT, col.color, cant, false, true);
             });
           });
         } else {
@@ -5999,7 +6008,7 @@ function explotarConsumos() {
               ? (tallesEste.length || 1) / (totalTallesCubiertos || 1)
               : 1 / aviosPorTalle.length;
             var cantTotal = (parseFloat(a.cantidad)||0) * Math.round(colTotal * proporcion);
-            acumular(a, col.color, cantTotal);
+            acumular(a, col.color, cantTotal, false, true);
           });
         }
       }
@@ -6011,10 +6020,10 @@ function explotarConsumos() {
         if (colores.length) {
           colores.forEach(function(col){
             var cant = (parseFloat(m.cantidad)||0) * (col.total||totalTalles(col.talles||{}));
-            acumular(m, col.color, cant);
+            acumular(m, col.color, cant, true);
           });
         } else {
-          acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
+          acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd, true);
         }
       });
     }
@@ -6030,7 +6039,7 @@ function explotarConsumos() {
                 if (!undsEseTalle) return;
                 var cant = (parseFloat(m.cantidad)||0) * undsEseTalle;
                 var mConTalle = Object.assign({}, m, {nombre: m.nombre + ' (' + t + ')'});
-                acumular(mConTalle, col.color, cant);
+                acumular(mConTalle, col.color, cant, false, true);
               });
             });
           } else {
@@ -6039,17 +6048,17 @@ function explotarConsumos() {
               if (!undsEseTalle) return;
               var cant = (parseFloat(m.cantidad)||0) * undsEseTalle;
               var mConTalle = Object.assign({}, m, {nombre: m.nombre + ' (' + t + ')'});
-              acumular(mConTalle, 'General', cant);
+              acumular(mConTalle, 'General', cant, false, true);
             });
           }
         } else {
           if (colores.length) {
             colores.forEach(function(col){
               var cant = (parseFloat(m.cantidad)||0) * (col.total||totalTalles(col.talles||{}));
-              acumular(m, col.color, cant);
+              acumular(m, col.color, cant, false);
             });
           } else {
-            acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd);
+            acumular(m, 'General', (parseFloat(m.cantidad)||0) * totalUnd, false);
           }
         }
       });
