@@ -5928,27 +5928,30 @@ function explotarConsumos() {
     unidadesTotal += totalUnd;
     costoTotal += costoFicha(f) * totalUnd;
 
-    // Acumular por nombre + color
+    // Acumular por nombre solamente — el color de variante va en modelos como contexto
     function acumular(m, color, cant) {
       if (!(m.nombre||'').trim()) return;
       var nom = m.nombre.trim();
       var col = (color||'General').trim();
-      var key = nom.toLowerCase()+'|'+(col.toLowerCase());
-      // Para buscar en stock, quitar el sufijo " (talle)" si lo tiene
+      // Agrupar SOLO por nombre (sin color) para que el mismo material de distintas variantes/fichas sume
+      var key = nom.toLowerCase();
       var stockNom = nom.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
       var stockItem = (st.stock||[]).find(function(s){
-        return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1 &&
-               ((s.color||'').toLowerCase().indexOf(col.toLowerCase())!==-1 || col==='General');
-      }) || (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1; });
+        var sn = (s.nombre||'').toLowerCase();
+        return sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
+      });
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
       if (!consumos[key]) consumos[key] = {
-        nombre:nom, color:col, unidad:m.unidad||'u',
+        nombre:nom, color:'General', unidad:m.unidad||'u',
         precio:parseFloat(m.precio)||0, proveedor:prov, necesario:0, modelos:[]
       };
       consumos[key].necesario += cant;
       if (!consumos[key].precio && m.precio) consumos[key].precio = parseFloat(m.precio)||0;
       if (consumos[key].proveedor==='—' && prov!=='—') consumos[key].proveedor = prov;
-      consumos[key].modelos.push(f.nombre+' ('+Math.round(cant*100)/100+' '+(m.unidad||'u')+')');
+      // Registrar artículo + variante para saber para qué se compra
+      var artLabel = f.nombre + (col&&col!=='General'?' ('+col+')':'');
+      var entry = artLabel+': '+Math.round(cant*100)/100+' '+(m.unidad||'u');
+      if (consumos[key].modelos.indexOf(entry)===-1) consumos[key].modelos.push(entry);
     }
 
     var colores = (f.colores||[]).filter(function(c){ return (c.total||0)>0 || totalTalles(c.talles||{})>0 || (c.avios||[]).length>0 || (c.telas||[]).length>0; });
@@ -6183,7 +6186,7 @@ function explotarConsumos() {
         var pedidoBadge = pedidoInfo
           ? '<span style="font-size:10px;background:rgba(42,106,58,.12);color:#2a6a3a;border-radius:10px;padding:2px 7px;font-weight:700;">✓ N°'+pedidoInfo.nro+'</span>'
           : '';
-        var articulos = (r.modelos||[]).map(function(m){ return m.replace(/\s*\(.*\)\s*$/, '').trim(); });
+        var articulos = (r.modelos||[]);
         var artUnicos = articulos.filter(function(a,i){ return articulos.indexOf(a)===i; });
         var trStyle = comprado ? 'background:rgba(42,106,58,.06);opacity:.75;' : (r.ok?'':(pedidoInfo?'background:rgba(42,106,58,.04);':'background:rgba(192,98,42,.05);'));
         return '<tr style="'+trStyle+'">'+
