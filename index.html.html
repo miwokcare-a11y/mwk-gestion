@@ -6123,37 +6123,22 @@ function explotarConsumos() {
       if (!(m.nombre||'').trim()) return;
       var nom = m.nombre.trim();
       var col = (color||'General').trim();
-      var stockNom = nom.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
-      var stockItem = (st.stock||[]).find(function(s){
-        var sn = (s.nombre||'').toLowerCase();
-        if (!(sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1)) return false;
-        // Si la tela tiene color en la ficha, preferir el match de color
-        if (esTela && col && col !== 'General') {
-          var sc = (s.color||s.color_diseno||'').toLowerCase();
-          return sc.indexOf(col.toLowerCase())!==-1 || col.toLowerCase().indexOf(sc)!==-1;
-        }
-        return true;
-      }) || (st.stock||[]).find(function(s){
-        var sn = (s.nombre||'').toLowerCase();
-        return sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
-      });
-      var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
-      // Solo mostrar color si el nombre de la tela en la ficha lo incluye explícitamente
-      // o si hay un único item en stock con ese nombre (no ambiguo)
+      var stockNom = nom.toLowerCase(); // usar nombre completo para mejor match
       var stockItemsMatch = (st.stock||[]).filter(function(s){
         var sn = (s.nombre||'').toLowerCase();
-        return sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
+        return sn === stockNom || sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
       });
-      // Si hay más de un match posible, no asumir el color — solo usar el que matchea con el nombre exacto
+      // Preferir match exacto o más específico
+      var stockItem = stockItemsMatch.find(function(s){ return (s.nombre||'').toLowerCase() === stockNom; })
+        || stockItemsMatch.find(function(s){ return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1; })
+        || (stockItemsMatch.length === 1 ? stockItemsMatch[0] : null);
+      var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
+      // Color del stock: solo si hay match único o el nombre coincide exactamente
       var colorStock = '';
-      if (stockItemsMatch.length === 1) {
-        colorStock = (stockItemsMatch[0].color||stockItemsMatch[0].color_diseno)||'';
-      } else if (stockItem) {
-        // Solo mostrar color si está en el nombre de la tela en la ficha
-        var nomTela = nom.toLowerCase();
-        var scTest = (stockItem.color||stockItem.color_diseno||'').toLowerCase();
-        if (scTest && nomTela.indexOf(scTest)!==-1) colorStock = stockItem.color||stockItem.color_diseno||'';
+      if (stockItem && (stockItemsMatch.length === 1 || (stockItem.nombre||'').toLowerCase() === stockNom)) {
+        colorStock = (stockItem.color||stockItem.color_diseno)||'';
       }
+        // Solo mostrar color si está en el nombre de la tela en la ficha
       var key;
       if (esTela) {
         // Consolidar telas por nombre + color del stock (si hay uno único) o solo nombre
