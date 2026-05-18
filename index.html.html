@@ -6123,15 +6123,17 @@ function explotarConsumos() {
       if (!(m.nombre||'').trim()) return;
       var nom = m.nombre.trim();
       var col = (color||'General').trim();
-      var stockNom = nom.toLowerCase(); // usar nombre completo para mejor match
+      var stockNom = nom.toLowerCase().trim();
       var stockItemsMatch = (st.stock||[]).filter(function(s){
-        var sn = (s.nombre||'').toLowerCase();
+        var sn = (s.nombre||'').toLowerCase().trim();
         return sn === stockNom || sn.indexOf(stockNom)!==-1 || stockNom.indexOf(sn)!==-1;
       });
-      // Preferir match exacto o más específico
-      var stockItem = stockItemsMatch.find(function(s){ return (s.nombre||'').toLowerCase() === stockNom; })
-        || stockItemsMatch.find(function(s){ return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1; })
-        || (stockItemsMatch.length === 1 ? stockItemsMatch[0] : null);
+      // Preferir match exacto, luego el que contiene el nombre completo
+      var stockItem = stockItemsMatch.find(function(s){ 
+          return (s.nombre||'').toLowerCase().trim() === stockNom; 
+        }) || stockItemsMatch.find(function(s){ 
+          return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1; 
+        }) || stockItemsMatch[0] || null;
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
       // Color del stock: solo si hay match único o el nombre coincide exactamente
       var colorStock = '';
