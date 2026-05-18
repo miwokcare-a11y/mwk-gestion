@@ -2938,15 +2938,34 @@ function renderCronograma() {
       html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
       html += '<div>';
       html += '<div style="font-size:14px;font-weight:700;">'+esc(f.nombre)+'</div>';
-      html += '<div style="font-size:11px;color:var(--t2);">'+(m.totalUnidades||0)+' u · '+(f.temporada||'')+'</div>';
+      // Mostrar variante si existe
+      var varColor = (f.colores&&f.colores.length&&f.colores[0].color&&f.colores[0].color!=='General') ? f.colores[0].color : '';
+      html += '<div style="font-size:11px;color:var(--t2);">'+(m.totalUnidades||0)+' u · '+(f.temporada||'')+(varColor?' · <b>'+esc(varColor)+'</b>':'')+'</div>';
       html += '</div>';
+      // Badge de estado
       if (diasParaCorte !== null) {
         var dc = diasParaCorte;
         var dcColor = dc<=0?'#8b2010':dc<=7?'#8b5a14':'#5a3a8a';
         html += '<div style="text-align:right;"><div style="font-size:20px;font-weight:800;color:'+dcColor+';">'+(dc<=0?'HOY':dc)+'</div>';
         html += '<div style="font-size:10px;color:var(--t3);">'+(dc<=0?'días vencido':'días para corte')+'</div></div>';
       } else if (isDisp) {
-        html += '<div style="font-size:12px;font-weight:700;color:#2a6a3a;background:rgba(42,106,58,.1);padding:4px 10px;border-radius:20px;">✓ CORTAR</div>';
+        // Verificar si hay avíos faltantes
+        var aviosFaltantes = [];
+        var planRows = window._planRows||[];
+        planRows.forEach(function(pr){
+          if (!pr.ok && pr.faltante>0) {
+            var enEsteFicha = (pr.modelos||[]).some(function(mod){ return mod.toLowerCase().indexOf(f.nombre.toLowerCase())!==-1; });
+            if (enEsteFicha) aviosFaltantes.push(pr.nombre);
+          }
+        });
+        if (aviosFaltantes.length) {
+          html += '<div style="text-align:right;">';
+          html += '<div style="font-size:11px;font-weight:700;color:#c0622a;background:rgba(192,98,42,.1);padding:4px 10px;border-radius:20px;">⚠ FALTA MATERIAL</div>';
+          html += '<div style="font-size:9px;color:#c0622a;margin-top:3px;">'+aviosFaltantes.slice(0,2).map(esc).join(', ')+(aviosFaltantes.length>2?' +'+( aviosFaltantes.length-2)+' más':'')+'</div>';
+          html += '</div>';
+        } else {
+          html += '<div style="font-size:12px;font-weight:700;color:#2a6a3a;background:rgba(42,106,58,.1);padding:4px 10px;border-radius:20px;">✓ CORTAR</div>';
+        }
       }
       html += '</div>';
 
@@ -5698,7 +5717,7 @@ function duplicarFicha(i) {
 
   initFichaForm();
 
-  document.getElementById('nf-nombre').value = f.nombre + ' — copia';
+  document.getElementById('nf-nombre').value = f.nombre;
   document.getElementById('nf-temp').value   = f.temporada||'';
   document.getElementById('nf-ref').value    = f.referencia||'';
   
