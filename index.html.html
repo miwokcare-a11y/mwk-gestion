@@ -897,11 +897,15 @@ select.fi{appearance:none;
         </div>
         <div class="frow">
           <input class="fi" type="text" inputmode="decimal" id="snp-kg" placeholder="KG">
-          <input class="fi" type="text" inputmode="decimal" id="snp-ancho" placeholder="Ancho (m)">
+          <input class="fi" type="text" inputmode="decimal" id="snp-cant" placeholder="Cantidad (u)">
         </div>
         <div class="frow">
+          <input class="fi" type="text" inputmode="decimal" id="snp-ancho" placeholder="Ancho (m)">
           <input class="fi" type="text" inputmode="decimal" id="snp-rinde" placeholder="Rinde">
+        </div>
+        <div class="frow">
           <input class="fi" type="text" inputmode="decimal" id="snp-min" placeholder="Stock mínimo (alerta)">
+          <div></div>
         </div>
         <div class="frow">
           <select class="fi" id="snp-cat">
@@ -4440,16 +4444,23 @@ function eliminarStock(idx) {
 function agregarStock() {
   var nom = (document.getElementById('snp-nom').value||'').trim();
   if (!nom) { toast('Ingresá el artículo'); return; }
-  var mts = parseFloat(document.getElementById('snp-mts').value)||0;
+  var mts   = parseFloat(document.getElementById('snp-mts').value)||0;
+  var kg    = parseFloat(document.getElementById('snp-kg').value)||0;
+  var cant  = parseFloat(document.getElementById('snp-cant').value)||0;
+  var unidSel = (document.getElementById('snp-unidad')?document.getElementById('snp-unidad').value:'m')||'m';
+  // cantidad principal según unidad
+  var cantPrincipal = unidSel==='kg' ? kg : unidSel==='u'||unidSel==='rollo'||unidSel==='par' ? cant : mts;
   var data = {
     nombre: nom,
     color: (document.getElementById('snp-color').value||'').trim(),
     proveedor: (document.getElementById('snp-prov').value||'').trim(),
     hoja: document.getElementById('snp-hoja').value||'',
     stock_mts: mts,
-    kg: parseFloat(document.getElementById('snp-kg').value)||0,
+    kg: kg,
+    cantidad: cant||mts||kg,
     ancho: parseFloat(document.getElementById('snp-ancho').value)||0,
-    unidad_compra: (document.getElementById('snp-unidad')?document.getElementById('snp-unidad').value:'m')||'m',
+    unidad: unidSel,
+    unidad_compra: unidSel,
     moneda:       (document.getElementById('snp-moneda')||{value:'ARS'}).value||'ARS',
     precio_unit:  parseFloat((document.getElementById('snp-precio')||{value:'0'}).value)||0,
     precio_ars:   parseFloat(((document.getElementById('snp-ars')||{value:'0'}).value||'0').replace(/[^0-9,.]/g,'').replace(',','.'))||0,
@@ -4457,17 +4468,15 @@ function agregarStock() {
     rinde: parseFloat(document.getElementById('snp-rinde').value)||0,
     stock_minimo: parseFloat(document.getElementById('snp-min').value)||0,
     categoria: document.getElementById('snp-cat').value||'Tela',
-    observaciones: (document.getElementById('snp-obs').value||'').trim(),
-    cantidad: mts,
-    unidad: 'm'
+    observaciones: (document.getElementById('snp-obs').value||'').trim()
   };
   SB.from('mwk_stock').insert(data).then(function(res){
     var row = Array.isArray(res)?res[0]:res;
     if (row&&row.id){ if(!st.stock)st.stock=[]; st.stock.push(row); }
-    ['snp-nom','snp-color','snp-prov','snp-hoja','snp-mts','snp-kg','snp-ancho','snp-rinde','snp-min','snp-obs'].forEach(function(id){
+    ['snp-nom','snp-color','snp-prov','snp-hoja','snp-mts','snp-kg','snp-cant','snp-ancho','snp-rinde','snp-min','snp-obs'].forEach(function(id){
       var el=document.getElementById(id); if(el)el.value='';
     });
-    renderStock(); toast('✅ Tela agregada al stock');
+    renderStock(); toast('✅ '+data.categoria+' agregado al stock');
   }).catch(function(e){ toast('Error: '+(e.message||e)); });
 }
 
