@@ -1084,7 +1084,7 @@ select.fi{appearance:none;
           <div class="ficha-step-num">1</div>
           <div>
             <div class="ficha-step-title">Datos del modelo</div>
-            <div class="ficha-step-sub">Nombre, temporada y mano de obra</div>
+            <div class="ficha-step-sub">Nombre y temporada</div>
           </div>
         </div>
         <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
@@ -1099,10 +1099,6 @@ select.fi{appearance:none;
           </div>
           <div class="frow">
             <input class="fi" type="text" id="nf-ref" placeholder="Referencia / código (opcional)">
-            <div>
-              <div class="flbl" style="margin-bottom:4px;">Mano de obra ($)</div>
-              <input class="fi" type="number" id="nf-mo" placeholder="0" min="0" step="any">
-            </div>
           </div>
         </div>
       </div>
@@ -4847,8 +4843,8 @@ function generarPDFCostos(fichas) {
     // Totales
     CY += 4;
     rf(16,CY,178,28,'#F2EDE4');
-    var costoMats = costoFicha(f)-(parseFloat(f.mo)||0);
-    var costoMO   = parseFloat(f.mo)||0;
+    var costoMats = costoFicha(f);
+    var costoMO   = 0;
     var costoTotal = costoFicha(f);
     tx('Materiales',20,CY+10,3,'#6B6158');
     tx('$'+fmt(costoMats),80,CY+10,4,'#2C2416',undefined,true);
@@ -5370,7 +5366,7 @@ function guardarFicha() {
     nombre: nombre,
     temporada: document.getElementById('nf-temp').value||'',
     referencia: (document.getElementById('nf-ref').value||'').trim(),
-    mo: parseFloat(document.getElementById('nf-mo').value)||0,
+    mo: 0,
     telas: [],       // telas ahora van dentro de colores[0].telas
     materiales: [],  // avíos ahora van dentro de colores[0].avios
     colores: coloresData,
@@ -5382,7 +5378,7 @@ function guardarFicha() {
     document.getElementById('nf-nombre').value='';
     document.getElementById('nf-temp').value='';
     document.getElementById('nf-ref').value='';
-    document.getElementById('nf-mo').value='';
+    
     var cv = document.getElementById('nf-color-variante');
     if (cv) cv.value = '';
     nfMats=[]; nfTelas=[]; nfTalles={}; nfColores=[];
@@ -5444,7 +5440,7 @@ function costoFicha(f) {
       costVar += (ct+ca)*peso;
     });
   }
-  return costTelas + costMats + costVar + (parseFloat(f.mo)||0);
+  return costTelas + costMats + costVar;
 }
 
 function calcCostoAvios(avios) {
@@ -5477,8 +5473,7 @@ function costoFichaPorColor(f) {
   colores.forEach(function(c){
     var ct=(c.telas||[]).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
     var ca=calcCostoAvios(c.avios||[]);
-    result[c.color||'—'] = costComun + ct + ca;
-  });
+    result[c.color||'—'] = costComun + ct + ca;  });
   if (!colores.length) result['—'] = costComun;
   return result;
 }
@@ -5653,9 +5648,7 @@ function verFicha(i) {
     (!telas.length&&!avios.length?'<tr><td colspan="5" style="text-align:center;color:var(--t3);">Sin insumos cargados</td></tr>':'')+
     '</tbody></table>'+
     '<div style="display:flex;gap:16px;padding:12px;background:var(--sa);border-radius:var(--r);margin-bottom:14px;">'+
-      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Materiales</div><div style="font-size:16px;font-weight:700;">$'+fmt(costo-(f.mo||0))+'</div></div>'+
-      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Mano de obra</div><div style="font-size:16px;font-weight:700;">$'+fmt(f.mo||0)+'</div></div>'+
-      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Costo total</div><div style="font-size:18px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div></div>'+
+      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Costo materiales</div><div style="font-size:18px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div></div>'+
     '</div>'+
     ((f.colores && f.colores.length) ?
       '<div class="sl" style="margin-bottom:8px;">Curva de talles</div>'+
@@ -5708,7 +5701,7 @@ function duplicarFicha(i) {
   document.getElementById('nf-nombre').value = f.nombre + ' — copia';
   document.getElementById('nf-temp').value   = f.temporada||'';
   document.getElementById('nf-ref').value    = f.referencia||'';
-  document.getElementById('nf-mo').value     = f.mo||'';
+  
 
   var primerColD = (f.colores&&f.colores.length) ? f.colores[0] : null;
 
@@ -5775,7 +5768,7 @@ function editarFicha(i) {
   document.getElementById('nf-nombre').value = f.nombre||'';
   document.getElementById('nf-temp').value   = f.temporada||'';
   document.getElementById('nf-ref').value    = f.referencia||'';
-  document.getElementById('nf-mo').value     = f.mo||'';
+  
 
   // Cargar avíos — desde colores[0].avios (nuevo) o materiales (legacy)
   var primerCol = (f.colores&&f.colores.length) ? f.colores[0] : null;
@@ -5928,13 +5921,12 @@ function explotarConsumos() {
     unidadesTotal += totalUnd;
     costoTotal += costoFicha(f) * totalUnd;
 
-    // Acumular por nombre solamente — el color de variante va en modelos como contexto
+    // Acumular por nombre + color de variante
     function acumular(m, color, cant) {
       if (!(m.nombre||'').trim()) return;
       var nom = m.nombre.trim();
       var col = (color||'General').trim();
-      // Agrupar SOLO por nombre (sin color) para que el mismo material de distintas variantes/fichas sume
-      var key = nom.toLowerCase();
+      var key = nom.toLowerCase()+'|'+col.toLowerCase();
       var stockNom = nom.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
       var stockItem = (st.stock||[]).find(function(s){
         var sn = (s.nombre||'').toLowerCase();
@@ -5942,15 +5934,13 @@ function explotarConsumos() {
       });
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
       if (!consumos[key]) consumos[key] = {
-        nombre:nom, color:'General', unidad:m.unidad||'u',
+        nombre:nom, color:col, unidad:m.unidad||'u',
         precio:parseFloat(m.precio)||0, proveedor:prov, necesario:0, modelos:[]
       };
       consumos[key].necesario += cant;
       if (!consumos[key].precio && m.precio) consumos[key].precio = parseFloat(m.precio)||0;
       if (consumos[key].proveedor==='—' && prov!=='—') consumos[key].proveedor = prov;
-      // Registrar artículo + variante para saber para qué se compra
-      var artLabel = f.nombre + (col&&col!=='General'?' ('+col+')':'');
-      var entry = artLabel+': '+Math.round(cant*100)/100+' '+(m.unidad||'u');
+      var entry = f.nombre+': '+Math.round(cant*100)/100+' '+(m.unidad||'u');
       if (consumos[key].modelos.indexOf(entry)===-1) consumos[key].modelos.push(entry);
     }
 
