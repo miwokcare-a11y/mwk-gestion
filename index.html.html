@@ -5959,10 +5959,10 @@ function explotarConsumos() {
       // colTotal: usar total guardado, o calcular de talles, o usar el total general de la ficha
       var colTotal = col.total || totalTalles(col.talles||{}) || totalUnd;
 
-      // Telas de esta variante
+      // Telas: buscar en stock solo por nombre (sin color de variante)
       (col.telas||[]).forEach(function(m){
         var cant = (parseFloat(m.cantidad)||0) * colTotal;
-        acumular(m, col.color, cant);
+        acumular(m, 'General', cant);
       });
 
       // Avíos de esta variante (con soporte por_talle y talles_avio)
@@ -6072,9 +6072,10 @@ function explotarConsumos() {
     var col = (mat.color||'').toLowerCase();
     var stockItem = (st.stock||[]).find(function(s){
       var sn=(s.nombre||'').toLowerCase();
+      if (col==='general') return sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1;
       var sc=(s.color||s.color_diseno||'').toLowerCase();
       return (sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1) &&
-             (col==='general'||col===''||sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='');
+             (sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='');
     }) || (st.stock||[]).find(function(s){ return (s.nombre||'').toLowerCase().indexOf(nom)!==-1; });
     var stockAct = 0;
     if (stockItem) stockAct = unidad==='kg'?(parseFloat(stockItem.kg)||0):(parseFloat(stockItem.stock_mts)||parseFloat(stockItem.cantidad)||0);
