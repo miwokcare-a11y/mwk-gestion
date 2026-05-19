@@ -6143,6 +6143,7 @@ function explotarConsumos() {
           return (s.nombre||'').toLowerCase().indexOf(stockNom)!==-1; 
         }) || stockItemsMatch[0] || null;
       var prov = (stockItem&&stockItem.proveedor) || m.proveedor || '—';
+      if (stockNom.indexOf('ribb')!==-1) console.log('[RIBB]', stockNom, '→ matches:', stockItemsMatch.length, stockItemsMatch.map(function(s){return s.nombre+'|'+s.color;}), '→ picked:', stockItem?(stockItem.nombre+'|'+stockItem.color+' prov:'+stockItem.proveedor):'NULL');
       // Color del stock: solo si hay match único o el nombre coincide exactamente
       var colorStock = '';
       if (stockItem && (stockItemsMatch.length === 1 || (stockItem.nombre||'').toLowerCase() === stockNom)) {
@@ -6726,7 +6727,7 @@ function renderPlanTabla() {
         '</td>'+
         '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+
           esc(nombreMostrar)+talleBadge+
-          (r.colorStock?' <span style="font-size:11px;color:var(--t2);font-weight:400;">· '+esc(r.colorStock)+'</span>':'')+
+          (r.colorStock && nom.toLowerCase().indexOf(r.colorStock.toLowerCase())===-1 ?' <span style="font-size:11px;color:var(--t2);font-weight:400;">· '+esc(r.colorStock)+'</span>':'')+
           ' '+pedidoBadge+
           (comprado&&fechaCompra?'<br><span style="font-size:10px;color:#3a6a2a;font-weight:400;">✓ comprado '+fechaCompra+'</span>':'')+
         '</td>'+
