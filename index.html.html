@@ -6296,18 +6296,23 @@ function explotarConsumos() {
     var talleStr = talleMatch ? talleMatch[1].toLowerCase() : null;
     var nom = mat.nombre.replace(/\s*\([^)]+\)\s*$/, '').trim().toLowerCase();
     var col = (mat.color||'').toLowerCase();
+    // Buscar en stock: primero match exacto nombre+color, luego parcial
     var stockItem = (st.stock||[]).find(function(s){
       var sn=(s.nombre||'').toLowerCase().trim();
       var sc=(s.color||s.color_diseno||'').toLowerCase().trim();
       var snFull = sc ? sn+' '+sc : sn;
-      // Primero intentar match nombre+color combinado
-      if (snFull === nom || nom === snFull) return true;
+      return snFull === nom;
+    }) || (st.stock||[]).find(function(s){
+      var sn=(s.nombre||'').toLowerCase().trim();
+      var sc=(s.color||s.color_diseno||'').toLowerCase().trim();
+      var snFull = sc ? sn+' '+sc : sn;
+      if (talleStr) {
+        return (sn.indexOf(nom)!==-1||nom.indexOf(sn)!==-1) &&
+               (sc === 'talle '+talleStr || sc === talleStr ||
+               !!(sc.match(new RegExp('(?:^|\\s)'+talleStr.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$'))));
+      }
       if (snFull.indexOf(nom)!==-1 || nom.indexOf(snFull)!==-1) return true;
       if (sn.indexOf(nom)===-1 && nom.indexOf(sn)===-1) return false;
-      if (talleStr) {
-        return sc === 'talle '+talleStr || sc === talleStr ||
-               !!(sc.match(new RegExp('(?:^|\\s)'+talleStr.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'$')));
-      }
       if (col==='general') return true;
       return sc.indexOf(col)!==-1||col.indexOf(sc)!==-1||sc==='';
     });
