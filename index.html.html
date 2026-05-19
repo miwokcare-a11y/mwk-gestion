@@ -6727,7 +6727,7 @@ function renderPlanTabla() {
         '</td>'+
         '<td style="font-weight:600;'+(comprado?'text-decoration:line-through;color:var(--t3);':'')+'">'+
           esc(nombreMostrar)+talleBadge+
-          (r.colorStock && nom.toLowerCase().indexOf(r.colorStock.toLowerCase())===-1 ?' <span style="font-size:11px;color:var(--t2);font-weight:400;">· '+esc(r.colorStock)+'</span>':'')+
+          (r.colorStock && nombreMostrar.toLowerCase().indexOf(r.colorStock.toLowerCase())===-1 ?' <span style="font-size:11px;color:var(--t2);font-weight:400;">· '+esc(r.colorStock)+'</span>':'')+
           ' '+pedidoBadge+
           (comprado&&fechaCompra?'<br><span style="font-size:10px;color:#3a6a2a;font-weight:400;">✓ comprado '+fechaCompra+'</span>':'')+
         '</td>'+
