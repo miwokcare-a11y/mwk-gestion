@@ -5552,14 +5552,15 @@ function renderFichasLista() {
   }
 
   // Aplicar filtros
-  var fTemp   = (selTemp ? selTemp.value : '').toLowerCase();
-  var fFam    = (selFam  ? selFam.value  : '').toLowerCase();
-  var fArt    = ((document.getElementById('flt-art')||{}).value||'').toLowerCase().trim();
+  var fTemp = (selTemp ? selTemp.value : '');
+  var fFam  = (selFam  ? selFam.value  : '');
+  var fArt  = ((document.getElementById('flt-art')||{}).value||'').toLowerCase().trim();
   var filtrada = lista.filter(function(f){
-    if (fTemp && (f.temporada||'').toLowerCase() !== fTemp) return false;
-    if (fFam  && (f.familia||'').toLowerCase()   !== fFam)  return false;
+    if (fTemp && (f.temporada||'').trim() !== fTemp.trim()) return false;
+    if (fFam  && (f.familia||'').trim()   !== fFam.trim())  return false;
     if (fArt  && (f.nombre||'').toLowerCase().indexOf(fArt)===-1 &&
-                 (f.referencia||'').toLowerCase().indexOf(fArt)===-1) return false;
+                 (f.referencia||'').toLowerCase().indexOf(fArt)===-1 &&
+                 (f.familia||'').toLowerCase().indexOf(fArt)===-1) return false;
     return true;
   });
 
@@ -5594,6 +5595,7 @@ function renderFichasLista() {
           '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">'+
             '<button class="adj-btn" onclick="verFicha('+i+')" title="Ver detalle">👁</button>'+
             '<button class="adj-btn" onclick="editarFicha('+i+')" title="Editar">✎</button>'+
+            '<button class="adj-btn" style="color:#5a7a3a;" onclick="duplicarFicha('+i+')" title="Duplicar ficha">⧉</button>'+
             '<button class="adj-btn" style="color:var(--cobalt,#6A8090);" onclick="pdfReporteCostos('+i+')" title="Reporte PDF">⬇</button>'+
             '<button class="adj-btn" style="color:#2a6a3a;" onclick="diagFicha('+i+')" title="Diagnóstico precios">🔍</button>'+
             '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarFicha('+i+')" title="Eliminar">×</button>'+
@@ -5656,6 +5658,22 @@ function verFicha(i) {
 
 function cerrarFichaModal() {
   document.getElementById('ficha-modal').style.display = 'none';
+}
+
+function duplicarFicha(i) {
+  var f = (st.fichas||[])[i];
+  if (!f) return;
+  // Deep copy
+  var copia = JSON.parse(JSON.stringify(f));
+  delete copia.id;
+  copia.nombre = copia.nombre + ' (copia)';
+  copia.created_at = undefined;
+  SB.from('mwk_fichas').insert(copia).then(function(res) {
+    var nueva = res && res[0] ? res[0] : Object.assign({}, copia, {id: Date.now()});
+    st.fichas.push(nueva);
+    renderFichasLista();
+    toast('✅ Ficha duplicada: '+nueva.nombre);
+  }).catch(function(e) { toast('Error al duplicar: '+(e.message||e)); });
 }
 
 function eliminarFicha(i) {
