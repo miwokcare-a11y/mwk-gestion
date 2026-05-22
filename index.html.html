@@ -4809,7 +4809,25 @@ function generarPDFCostos(fichas) {
     ctx.fillStyle=col||'#2C2416'; ctx.textAlign=align||'left';
     ctx.fillText(String(str||''),p(x),p(y)); ctx.textAlign='left';
   }
+  // Texto con truncado automático
+  function txClip(str,x,y,sz,col,maxW,bold){
+    ctx.font=(bold?'700 ':'400 ')+p(sz)+'px Arial,sans-serif';
+    ctx.fillStyle=col||'#2C2416';
+    var s=String(str||'');
+    while(s.length>4 && ctx.measureText(s).width > p(maxW)) s=s.slice(0,-1);
+    if(s!==String(str||'')) s=s.slice(0,-1)+'…';
+    ctx.fillText(s,p(x),p(y));
+  }
   function ln(x1,y1,x2,y2,col){ ctx.strokeStyle=col||'#E8E0D4'; ctx.lineWidth=p(0.3); ctx.beginPath(); ctx.moveTo(p(x1),p(y1)); ctx.lineTo(p(x2),p(y2)); ctx.stroke(); }
+  // Fila de insumo con nombre truncado
+  function filaInsumo(nom,cant,unid,precio,tot,indent){
+    var ix = indent||18;
+    txClip(nom, ix, CY+4, 3.2, '#2C2416', 85);
+    tx(cant+' '+(unid||'u'), 106, CY+4, 3.2, '#6B6158');
+    tx('$'+fmt(precio)+'/'+unid, 132, CY+4, 3.2, '#6B6158');
+    tx('$'+fmt(tot), 194, CY+4, 3.2, '#2C2416', 'right', true);
+    CY += 8;
+  }
 
   var pages = [];
 
@@ -4825,108 +4843,80 @@ function generarPDFCostos(fichas) {
     tx(new Date().toLocaleDateString('es-AR'),210-16,26,3.5,'rgba(255,255,255,.5)','right');
 
     var CY = 48;
+    var fam = f.familia||f.referencia||'';
     // Modelo
     tx(esc(f.nombre),16,CY+8,7,'#2C2416',undefined,true);
-    if (f.referencia||f.temporada) tx((f.referencia||'')+' · '+(f.temporada||''),16,CY+17,3.5,'#A89E94');
-    CY += 26;
-    ln(16,CY,194,CY);
-    CY += 8;
+    var subtit = [f.temporada, fam, getColorFicha(f)].filter(Boolean).join(' · ');
+    if (subtit) tx(subtit,16,CY+18,3.5,'#A89E94');
+    CY += 30;
+    ln(16,CY,194,CY); CY += 8;
 
-    // Telas
-    var telas = f.telas||[];
+    // Determinar estructura: nueva (f.telas/f.materiales) o vieja (colores[0].avios)
+    var tieneTelasNuevas = (f.telas||[]).length > 0;
+    var tieneMatsNuevas  = (f.materiales||[]).length > 0;
+    var telas, avios;
+    if (tieneTelasNuevas || tieneMatsNuevas) {
+      telas = f.telas||[];
+      avios = f.materiales||[];
+    } else {
+      var c0 = (f.colores||[])[0]||{};
+      telas = getColTelas(c0, fam);
+      avios = getColAvios(c0, fam);
+    }
+
+    // TELAS
     if (telas.length) {
-      tx('🧵 TELAS',16,CY+4,3,'#6A8090',undefined,true);
-      CY += 10;
+      tx('TELAS',16,CY+4,3,'#6A8090',undefined,true);
+      CY += 8;
       telas.forEach(function(m){
-        var tot = (parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0);
-        tx(esc(m.nombre||'—'),18,CY+4,3.5,'#2C2416');
-        tx(m.cantidad+' '+(m.unidad||'m'),110,CY+4,3.5,'#6B6158');
-        tx('$'+fmt(m.precio||0)+'/'+( m.unidad||'m'),145,CY+4,3.5,'#6B6158');
-        tx('$'+fmt(tot),194,CY+4,3.5,'#2C2416','right',true);
-        CY += 9;
+        filaInsumo(esc(m.nombre||'—'), m.cantidad, m.unidad||'m', m.precio||0,
+          (parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0));
       });
-      ln(16,CY,194,CY); CY+=6;
+      ln(16,CY,194,CY); CY += 6;
     }
 
-    // Avíos generales
-    var mats = f.materiales||[];
-    if (mats.length) {
-      tx('🔩 AVÍOS GENERALES',16,CY+4,3,'#6A8090',undefined,true);
-      CY += 10;
-      mats.forEach(function(m){
-        var tot = (parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0);
-        tx(esc(m.nombre||'—'),18,CY+4,3.5,'#2C2416');
-        tx(m.cantidad+' '+(m.unidad||'u'),110,CY+4,3.5,'#6B6158');
-        tx('$'+fmt(m.precio||0)+'/u',145,CY+4,3.5,'#6B6158');
-        tx('$'+fmt(tot),194,CY+4,3.5,'#2C2416','right',true);
-        CY += 9;
+    // AVIOS
+    if (avios.length) {
+      tx('AVIOS',16,CY+4,3,'#6A8090',undefined,true);
+      CY += 8;
+      avios.forEach(function(m){
+        filaInsumo(esc(m.nombre||'—'), m.cantidad, m.unidad||'u', m.precio||0,
+          (parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0));
       });
-      ln(16,CY,194,CY); CY+=6;
+      ln(16,CY,194,CY); CY += 6;
     }
 
-    // Variantes de color
-    var colores = f.colores||[];
-    if (colores.length) {
-      tx('🎨 POR VARIANTE',16,CY+4,3,'#6A8090',undefined,true);
-      CY += 10;
-      colores.forEach(function(col){
-        var hasTelas = (col.telas||[]).length > 0;
-        var hasAvios = (col.avios||[]).length > 0;
-        if (!hasTelas && !hasAvios) return;
-
-        // Encabezado del color
-        rf(16,CY-1,178,8,'#F2EDE4');
-        tx(esc((col.color||'—').toUpperCase()),18,CY+5,3.5,'#C4866A',undefined,true);
-        // Curva de talles resumida
-        var curva = col.talles ? Object.keys(col.talles).filter(function(t){ return col.talles[t]>0; }).map(function(t){ return t+':'+col.talles[t]; }).join('  ') : '';
-        if (curva) tx(curva, 90, CY+5, 2.8, '#6B6158');
-        tx('Total: '+(col.total||0)+' u', 194, CY+5, 2.8, '#6B6158', 'right');
-        CY += 9;
-
-        // Telas de este color
-        if (hasTelas) {
-          tx('Telas', 20, CY+4, 2.8, '#6A8090', undefined, true);
-          CY += 7;
-          (col.telas||[]).forEach(function(t){
-            var tot = (parseFloat(t.cantidad)||0)*(parseFloat(t.precio)||0);
-            tx(esc(t.nombre||'—'),22,CY+4,3.2,'#2C2416');
-            tx((t.cantidad||0)+' '+(t.unidad||'m'),110,CY+4,3.2,'#6B6158');
-            tx('$'+fmt(t.precio||0)+'/'+(t.unidad||'m'),145,CY+4,3.2,'#6B6158');
-            tx('$'+fmt(tot),194,CY+4,3.2,'#2C2416','right');
-            CY += 7;
-          });
-        }
-
-        // Avíos de este color
-        if (hasAvios) {
-          tx('Avíos', 20, CY+4, 2.8, '#6A8090', undefined, true);
-          CY += 7;
-          (col.avios||[]).forEach(function(a){
-            var tot = (parseFloat(a.cantidad)||0)*(parseFloat(a.precio)||0);
-            tx(esc(a.nombre||'—'),22,CY+4,3.2,'#2C2416');
-            tx((a.cantidad||0)+' '+(a.unidad||'u'),110,CY+4,3.2,'#6B6158');
-            tx('$'+fmt(a.precio||0),145,CY+4,3.2,'#6B6158');
-            tx('$'+fmt(tot),194,CY+4,3.2,'#2C2416','right');
-            CY += 7;
-          });
-        }
-        CY += 3;
+    // CURVA DE TALLES
+    var talles = (f.talles && Object.keys(f.talles).length) ? f.talles : ((f.colores||[])[0]||{}).talles||{};
+    var tallActivos = TALLES_TODOS.filter(function(t){ return (talles[t]||0) > 0; });
+    if (tallActivos.length) {
+      tx('CURVA DE TALLES',16,CY+4,3,'#6A8090',undefined,true);
+      CY += 9;
+      var colW = 15, cols = tallActivos.length, startX = 18;
+      tallActivos.forEach(function(t,ti){
+        var bx = startX + ti*colW;
+        rf(bx, CY, colW-1, 12, '#F2EDE4');
+        tx(t, bx+(colW-1)/2, CY+4.5, 2.8, '#6B6158', 'center');
+        tx(String(talles[t]), bx+(colW-1)/2, CY+10, 3.5, '#2C2416', 'center', true);
       });
-      ln(16,CY,194,CY); CY+=6;
+      CY += 14;
+      tx('Total: '+totalTalles(talles)+' unidades', 18, CY+4, 3, '#6B6158');
+      CY += 8;
+      ln(16,CY,194,CY); CY += 6;
     }
 
-    // Totales
+    // RESUMEN
     CY += 4;
-    rf(16,CY,178,28,'#F2EDE4');
-    var costoMats = costoFicha(f)-(parseFloat(f.mo)||0);
-    var costoMO   = parseFloat(f.mo)||0;
+    var costTelas = telas.reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0); },0);
+    var costAvios = avios.reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0); },0);
     var costoTotal = costoFicha(f);
-    tx('Materiales',20,CY+10,3,'#6B6158');
-    tx('$'+fmt(costoMats),80,CY+10,4,'#2C2416',undefined,true);
-    tx('Mano de obra',100,CY+10,3,'#6B6158');
-    tx('$'+fmt(costoMO),148,CY+10,4,'#2C2416',undefined,true);
-    tx('COSTO TOTAL',20,CY+22,3,'#A89E94');
-    tx('$'+fmt(costoTotal),194,CY+22,5,'#C4866A','right',true);
+    rf(16,CY,178,30,'#F2EDE4');
+    tx('Telas', 20, CY+9, 3, '#6B6158');
+    tx('$'+fmt(costTelas), 55, CY+9, 4, '#2C2416', undefined, true);
+    tx('Avios', 95, CY+9, 3, '#6B6158');
+    tx('$'+fmt(costAvios), 120, CY+9, 4, '#2C2416', undefined, true);
+    tx('COSTO TOTAL', 20, CY+22, 3, '#A89E94');
+    tx('$'+fmt(costoTotal), 194, CY+22, 6, '#C4866A', 'right', true);
 
     // Footer
     ln(16,285,194,285,'#E8E0D4');
