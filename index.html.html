@@ -5420,14 +5420,16 @@ function guardarFicha() {
 
   // EDICIÓN
   if (window._editingFichaId) {
-    SB.from('mwk_fichas').update(data, {id: window._editingFichaId}).then(function(){
+    console.log('Guardando ficha id:', window._editingFichaId, 'data:', JSON.stringify(data).slice(0,200));
+    SB.from('mwk_fichas').update(data, {id: window._editingFichaId}).then(function(res){
+      console.log('Respuesta update:', res);
       var idx = window._editingFichaIdx;
       if (idx !== null && idx !== undefined) Object.assign(st.fichas[idx], data);
       resetForm();
       renderFichasLista();
       renderFichasCount();
       toast('✅ Ficha actualizada');
-    }).catch(function(e){toast('Error: '+(e.message||e));});
+    }).catch(function(e){ console.error('Error update:', e); toast('Error: '+(e.message||e)); });
     return;
   }
 
@@ -5695,28 +5697,23 @@ function verFicha(i) {
     '<table class="dash-table" style="margin-bottom:14px;"><thead><tr><th>Material</th><th>Cant.</th><th>Unid.</th><th>$ unit.</th><th>$ total</th></tr></thead><tbody>'+
     avios.map(filaInsumo).join('')+'</tbody></table>' : '')+
     '<div style="display:flex;gap:16px;padding:12px;background:var(--sa);border-radius:var(--r);margin-bottom:14px;">'+
-      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Materiales</div><div style="font-size:16px;font-weight:700;">$'+fmt(costo-(f.mo||0))+'</div></div>'+
-      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Mano de obra</div><div style="font-size:16px;font-weight:700;">$'+fmt(f.mo||0)+'</div></div>'+
+      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Telas</div><div style="font-size:16px;font-weight:700;">$'+fmt(telas.reduce(function(s,m){return s+(parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0);},0))+'</div></div>'+
+      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Avíos</div><div style="font-size:16px;font-weight:700;">$'+fmt(avios.reduce(function(s,m){return s+(parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0);},0))+'</div></div>'+
       '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Costo total</div><div style="font-size:18px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div></div>'+
     '</div>'+
-    ((f.colores && f.colores.length) ?
-      '<div class="sl" style="margin-bottom:8px;">Curva de talles por color</div>'+
-      f.colores.map(function(col){
-        var activos = TALLES_TODOS.filter(function(t){return (col.talles||{})[t]>0;});
-        if (!activos.length) return '';
-        return '<div style="margin-bottom:12px;">'+
-          '<div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;">'+esc(col.color||'—')+'</div>'+
-          '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+
-          activos.map(function(t){
-            return '<div style="background:var(--sa);border-radius:var(--r);padding:5px 10px;text-align:center;min-width:44px;">'+
-              '<div style="font-size:10px;color:var(--t3);">'+t+'</div>'+
-              '<div style="font-size:15px;font-weight:700;">'+(col.talles[t]||0)+'</div>'+
-            '</div>';
-          }).join('')+
-          '</div>'+
-          '<div style="font-size:11px;color:var(--t2);margin-top:4px;">Total: '+totalTalles(col.talles||{})+' u</div>'+
-        '</div>';
-      }).join('\r\n') : '');
+    (function(){
+      var talles = (f.talles && Object.keys(f.talles).length) ? f.talles : ((f.colores||[])[0]||{}).talles||{};
+      var activos = TALLES_TODOS.filter(function(t){ return (talles[t]||0) > 0; });
+      if (!activos.length) return '';
+      return '<div class="sl" style="margin-bottom:8px;">Curva de talles</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">'+
+        activos.map(function(t){
+          return '<div style="background:var(--sa);border-radius:var(--r);padding:5px 10px;text-align:center;min-width:44px;">'+
+            '<div style="font-size:10px;color:var(--t3);">'+t+'</div>'+
+            '<div style="font-size:15px;font-weight:700;">'+talles[t]+'</div></div>';
+        }).join('')+
+        '</div><div style="font-size:11px;color:var(--t2);">Total: '+totalTalles(talles)+' u</div>';
+    }());
   document.getElementById('ficha-modal').style.display = 'flex';
 }
 
