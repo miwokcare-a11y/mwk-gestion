@@ -5476,22 +5476,17 @@ function precioMat(m) {
 }
 
 function costoFicha(f) {
-  // Telas comunes (mismo consumo para todos los colores)
+  var fam = f.familia||f.referencia||'';
+  // Telas y avíos directos (estructura nueva)
   var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
-  // Avíos generales (sin variante)
   var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
-  var totalUnd  = (f.colores||[]).reduce(function(s,c){ return s+(c.total||0); },0);
+  // Insumos en variantes (estructura vieja: todo en colores[0].avios)
   var costVar = 0;
-  if (totalUnd > 0) {
-    (f.colores||[]).forEach(function(c){
-      var peso=(c.total||0)/totalUnd;
-      // Telas propias de este color (con migración automática)
-      var ct=getColTelas(c,f.familia||f.referencia).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
-      // Avíos de este color (con migración automática)
-      var ca=getColAvios(c,f.familia||f.referencia).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
-      costVar += (ct+ca)*peso;
-    });
-  }
+  (f.colores||[]).forEach(function(c){
+    var ct = getColTelas(c,fam).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
+    var ca = getColAvios(c,fam).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+    costVar += ct + ca;
+  });
   return costTelas + costMats + costVar + (parseFloat(f.mo)||0);
 }
 
@@ -5641,7 +5636,7 @@ function renderFichasLista() {
         '</div>'+
         '<div style="text-align:right;flex-shrink:0;">'+
           (costo>0?'<div style="font-size:20px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div>'+
-          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">costo promedio</div>':'<div style="font-size:12px;color:#c0622a;font-weight:600;">Sin precios</div>')+
+          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">costo</div>':'<div style="font-size:12px;color:#c0622a;font-weight:600;">Sin precios</div>')+
           '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">'+
             '<button class="adj-btn" onclick="verFicha('+i+')" title="Ver detalle">👁</button>'+
             '<button class="adj-btn" onclick="editarFicha('+i+')" title="Editar">✎</button>'+
