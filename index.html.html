@@ -1067,6 +1067,19 @@ select.fi{appearance:none;
   </div>
   <div style="margin-top:12px;">
 
+    <!-- FILTROS -->
+    <div class="sp" style="margin-bottom:10px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select class="fi" id="flt-temp" style="flex:1;min-width:120px;height:34px;font-size:12px;" onchange="renderFichasLista()">
+          <option value="">Todas las temporadas</option>
+        </select>
+        <select class="fi" id="flt-familia" style="flex:1;min-width:120px;height:34px;font-size:12px;" onchange="renderFichasLista()">
+          <option value="">Todos los grupos</option>
+        </select>
+        <input class="fi" id="flt-art" type="text" placeholder="🔍 Buscar artículo..." style="flex:2;min-width:160px;height:34px;font-size:12px;" oninput="renderFichasLista()">
+      </div>
+    </div>
+
     <!-- LISTA DE FICHAS -->
     <div class="sp" style="margin-bottom:16px;" id="fichas-lista"></div>
 
@@ -1099,6 +1112,9 @@ select.fi{appearance:none;
           </div>
           <div class="frow">
             <input class="fi" type="text" id="nf-ref" placeholder="Referencia / código (opcional)">
+            <input class="fi" type="text" id="nf-familia" placeholder="Grupo / familia (ej: Camperas, Calzas)">
+          </div>
+          <div class="frow">
             <div>
               <div class="flbl" style="margin-bottom:4px;">Mano de obra ($)</div>
               <input class="fi" type="number" id="nf-mo" placeholder="0" min="0" step="any">
@@ -5516,11 +5532,45 @@ function renderFichasLista() {
   var el = document.getElementById('fichas-lista');
   if (!el) return;
   var lista = st.fichas||[];
-  if (!lista.length) {
-    el.innerHTML='<div class="empty"><div class="ei">📋</div>Sin fichas creadas.<br>Creá tu primera ficha abajo.</div>';
+
+  // Poblar selects de filtro
+  var selTemp = document.getElementById('flt-temp');
+  var selFam  = document.getElementById('flt-familia');
+  if (selTemp && selFam) {
+    var curTemp = selTemp.value, curFam = selFam.value;
+    var temps = [], fams = [];
+    lista.forEach(function(f){
+      if (f.temporada && temps.indexOf(f.temporada)===-1) temps.push(f.temporada);
+      if (f.familia   && fams.indexOf(f.familia)===-1)   fams.push(f.familia);
+    });
+    temps.sort(); fams.sort();
+    selTemp.innerHTML = '<option value="">Todas las temporadas</option>' +
+      temps.map(function(t){ return '<option value="'+esc(t)+'"'+(t===curTemp?' selected':'')+'>'+esc(t)+'</option>'; }).join('');
+    selFam.innerHTML  = '<option value="">Todos los grupos</option>' +
+      fams.map(function(f){ return '<option value="'+esc(f)+'"'+(f===curFam?' selected':'')+'>'+esc(f)+'</option>'; }).join('');
+    selTemp.value = curTemp; selFam.value = curFam;
+  }
+
+  // Aplicar filtros
+  var fTemp   = (selTemp ? selTemp.value : '').toLowerCase();
+  var fFam    = (selFam  ? selFam.value  : '').toLowerCase();
+  var fArt    = ((document.getElementById('flt-art')||{}).value||'').toLowerCase().trim();
+  var filtrada = lista.filter(function(f){
+    if (fTemp && (f.temporada||'').toLowerCase() !== fTemp) return false;
+    if (fFam  && (f.familia||'').toLowerCase()   !== fFam)  return false;
+    if (fArt  && (f.nombre||'').toLowerCase().indexOf(fArt)===-1 &&
+                 (f.referencia||'').toLowerCase().indexOf(fArt)===-1) return false;
+    return true;
+  });
+
+  if (!filtrada.length) {
+    el.innerHTML = lista.length
+      ? '<div class="empty"><div class="ei">🔍</div>Sin resultados para ese filtro.</div>'
+      : '<div class="empty"><div class="ei">📋</div>Sin fichas creadas.<br>Creá tu primera ficha abajo.</div>';
     return;
   }
-  el.innerHTML = lista.map(function(f,i){
+  el.innerHTML = filtrada.map(function(f){
+    var i = lista.indexOf(f);
     var costo = costoFicha(f);
     var costoPorColor = costoFichaPorColor(f);
     var nColores = (f.colores||[]).filter(function(c){return c.color;}).length;
@@ -5626,6 +5676,7 @@ function editarFicha(i) {
   document.getElementById('nf-nombre').value = f.nombre||'';
   document.getElementById('nf-temp').value   = f.temporada||'';
   document.getElementById('nf-ref').value    = f.referencia||'';
+  var nfFamEl = document.getElementById('nf-familia'); if(nfFamEl) nfFamEl.value = f.familia||'';
   document.getElementById('nf-mo').value     = f.mo||'';
   // Cargar materiales
   nfMats = (f.materiales||[]).map(function(m){
