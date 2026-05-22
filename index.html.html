@@ -5417,11 +5417,26 @@ function guardarFicha() {
   }).catch(function(e){toast('Error: '+(e.message||e));});
 }
 
+var TELA_KW = ['flex','jersey','ribb','tela','lycra','tul','crepe','saten','polar','french','interlock','denim','gabardina','viscosa','acetato','lana','neoprene','forro','entretela','bies','elast'];
+function esTelaItem(item) {
+  if ((item.unidad||'m') === 'm') return true;
+  var n = (item.nombre||'').toLowerCase();
+  return TELA_KW.some(function(k){ return n.indexOf(k) !== -1; });
+}
+function getColTelas(col) {
+  if ((col.telas||[]).length > 0) return col.telas;
+  // Migrar desde avios si no tiene telas separadas
+  return (col.avios||[]).filter(esTelaItem);
+}
+function getColAvios(col) {
+  if ((col.telas||[]).length > 0) return col.avios||[];
+  // Migrar desde avios si no tiene telas separadas
+  return (col.avios||[]).filter(function(a){ return !esTelaItem(a); });
+}
+
 function precioMat(m) {
-  // Si tiene precio guardado, usarlo
   var p = parseFloat(m.precio)||0;
   if (p > 0) return p;
-  // Si no, buscar en stock/catalogo/historial
   return getPrecioFromHistorial(m.nombre||'');
 }
 
@@ -5435,10 +5450,10 @@ function costoFicha(f) {
   if (totalUnd > 0) {
     (f.colores||[]).forEach(function(c){
       var peso=(c.total||0)/totalUnd;
-      // Telas propias de este color
-      var ct=(c.telas||[]).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
-      // Avíos de este color
-      var ca=(c.avios||[]).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+      // Telas propias de este color (con migración automática)
+      var ct=getColTelas(c).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
+      // Avíos de este color (con migración automática)
+      var ca=getColAvios(c).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
       costVar += (ct+ca)*peso;
     });
   }
@@ -5453,8 +5468,8 @@ function costoFichaPorColor(f) {
                 + (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0)
                 + (parseFloat(f.mo)||0);
   colores.forEach(function(c){
-    var ct=(c.telas||[]).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
-    var ca=(c.avios||[]).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+    var ct=getColTelas(c).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
+    var ca=getColAvios(c).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
     result[c.color||'—'] = costComun + ct + ca;
   });
   if (!colores.length) result['—'] = costComun;
@@ -5704,9 +5719,34 @@ function editarFicha(i) {
   nfTelas = (f.telas||[]).map(function(m){
     return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
   });
+  // Palabras clave que identifican telas
+  var TELA_KEYWORDS = ['flex','jersey','ribb','tela','lycra','tul','crepe','saten','polar','french','interlock','hilo','denim','gabardina','viscosa','acetato','lana','neoprene','forro','entretela','bies','elast','cinta'];
+  function esTela(item) {
+    if ((item.unidad||'m') === 'm') return true;
+    var n = (item.nombre||'').toLowerCase();
+    return TELA_KEYWORDS.some(function(k){ return n.indexOf(k) !== -1; });
+  }
+
   nfColores = (f.colores||[]).map(function(c){
-    return {color:c.color||'', talles:Object.assign({},c.talles||{}),
-      avios:(c.avios||[]).map(function(a){return Object.assign({},a);})};
+    var aviosViejos = (c.avios||[]);
+    var telasGuardadas = (c.telas||[]);
+    // Si ya tiene telas separadas, usarlas; si no, migrar desde avios
+    var telas, avios;
+    if (telasGuardadas.length > 0) {
+      telas = telasGuardadas.map(function(t){ return Object.assign({},t); });
+      avios = aviosViejos.map(function(a){ return Object.assign({},a); });
+    } else {
+      // Migrar: separar telas de avíos automáticamente
+      telas = aviosViejos.filter(esTela).map(function(t){ return Object.assign({},t); });
+      avios = aviosViejos.filter(function(a){ return !esTela(a); }).map(function(a){ return Object.assign({},a); });
+    }
+    return {
+      color:  c.color||'',
+      talles: Object.assign({}, c.talles||{}),
+      total:  c.total||0,
+      telas:  telas,
+      avios:  avios
+    };
   });
   renderNfTelas();
   renderNfMats();
