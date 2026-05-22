@@ -5356,7 +5356,8 @@ function guardarFicha() {
   // Validar que haya al menos una tela O un material
   var hayTelas = nfTelas.some(function(m){return (m.nombre||'').trim();});
   var hayMats  = nfMats.some(function(m){return (m.nombre||'').trim();});
-  if (!hayTelas && !hayMats) {
+  var hayColoresViejos = nfColores.some(function(c){ return (c.avios||[]).length > 0; });
+  if (!hayTelas && !hayMats && !hayColoresViejos) {
     toast('Agregá al menos una tela o avío'); return;
   }
   // Auto-completar precios desde stock antes de guardar
@@ -5387,10 +5388,11 @@ function guardarFicha() {
   var totalUnd = totalDirecto || coloresData.reduce(function(s,c){return s+c.total;},0);
   var data = {
     nombre:    nombre,
+    color:     (document.getElementById('nf-color')||{value:''}).value.trim(),
     temporada: document.getElementById('nf-temp').value||'',
     referencia:'',
     familia:   (document.getElementById('nf-familia')||{value:''}).value.trim(),
-    mo:        parseFloat(document.getElementById('nf-mo').value)||0,
+    mo:        0,
     telas:     telasData,
     materiales:matsData,
     colores:   coloresData,
@@ -5621,12 +5623,8 @@ function renderFichasLista() {
   el.innerHTML = filtrada.map(function(f){
     var i = lista.indexOf(f);
     var costo = costoFicha(f);
-    var costoPorColor = costoFichaPorColor(f);
     var nColores = (f.colores||[]).filter(function(c){return c.color;}).length;
-    var colorChips = Object.keys(costoPorColor).map(function(col){
-      return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--sa);border:1px solid rgba(26,36,51,.1);border-radius:20px;padding:3px 10px;font-size:11px;margin:2px;">'+
-        esc(col)+' <b style="color:var(--bk);">$'+fmt(costoPorColor[col])+'</b></span>';
-    }).join('');
+    var colorChips = '';
     var nInsumos = (f.telas||[]).length + (f.materiales||[]).length +
       (f.colores||[]).reduce(function(s,c){ return s+(c.telas||[]).length+(c.avios||[]).length; },0);
     return '<div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:13px 14px;margin-bottom:9px;">'+
