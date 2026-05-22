@@ -5663,18 +5663,37 @@ function renderFichasCount() {
 function verFicha(i) {
   var f = (st.fichas||[])[i];
   if (!f) return;
+  var fam = f.familia||f.referencia||'';
   var costo = costoFicha(f);
-  var mats = f.materiales||[];
+  // Determinar qué telas y avíos mostrar (nueva o vieja estructura)
+  var tieneTelasNuevas = (f.telas||[]).length > 0;
+  var tieneMatsNuevas  = (f.materiales||[]).length > 0;
+  var telas, avios;
+  if (tieneTelasNuevas || tieneMatsNuevas) {
+    telas = f.telas||[];
+    avios = f.materiales||[];
+  } else {
+    var c0 = (f.colores||[])[0]||{};
+    telas = getColTelas(c0, fam);
+    avios = getColAvios(c0, fam);
+  }
+  var allInsumos = telas.concat(avios);
+
+  function filaInsumo(m) {
+    return '<tr><td>'+esc(m.nombre)+'</td><td>'+m.cantidad+'</td><td>'+esc(m.unidad)+'</td><td>$'+fmt(m.precio)+'</td><td style="font-weight:600;">$'+fmt((parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0))+'</td></tr>';
+  }
+
   var el = document.getElementById('ficha-modal-content');
   var tit = document.getElementById('ficha-modal-title');
-  if (tit) tit.textContent = f.nombre;
+  if (tit) tit.textContent = f.nombre + (getColorFicha(f) ? ' — '+getColorFicha(f) : '');
   if (el) el.innerHTML =
-    '<div style="font-size:12px;color:var(--t2);margin-bottom:14px;">'+(f.referencia?f.referencia+' · ':'')+esc(f.temporada||'—')+'</div>'+
+    '<div style="font-size:12px;color:var(--t2);margin-bottom:14px;">'+esc(f.temporada||'—')+(fam?' · '+esc(fam):'')+'</div>'+
+    (telas.length ? '<div style="font-size:11px;font-weight:700;color:#6A8090;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">🧵 Telas</div>'+
+    '<table class="dash-table" style="margin-bottom:12px;"><thead><tr><th>Material</th><th>Cant.</th><th>Unid.</th><th>$ unit.</th><th>$ total</th></tr></thead><tbody>'+
+    telas.map(filaInsumo).join('')+'</tbody></table>' : '')+
+    (avios.length ? '<div style="font-size:11px;font-weight:700;color:#6A8090;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">🔩 Avíos</div>'+
     '<table class="dash-table" style="margin-bottom:14px;"><thead><tr><th>Material</th><th>Cant.</th><th>Unid.</th><th>$ unit.</th><th>$ total</th></tr></thead><tbody>'+
-    mats.map(function(m){
-      return '<tr><td>'+esc(m.nombre)+'</td><td>'+m.cantidad+'</td><td>'+esc(m.unidad)+'</td><td>$'+fmt(m.precio)+'</td><td style="font-weight:600;">$'+fmt((m.cantidad||0)*(m.precio||0))+'</td></tr>';
-    }).join('')+
-    '</tbody></table>'+
+    avios.map(filaInsumo).join('')+'</tbody></table>' : '')+
     '<div style="display:flex;gap:16px;padding:12px;background:var(--sa);border-radius:var(--r);margin-bottom:14px;">'+
       '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Materiales</div><div style="font-size:16px;font-weight:700;">$'+fmt(costo-(f.mo||0))+'</div></div>'+
       '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Mano de obra</div><div style="font-size:16px;font-weight:700;">$'+fmt(f.mo||0)+'</div></div>'+
