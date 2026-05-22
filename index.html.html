@@ -1063,7 +1063,8 @@ select.fi{appearance:none;
   <div class="tb">
     <button class="bk" onclick="ir('s-home')">Inicio</button>
     <h1>Consumos y costos</h1>
-    <button onclick="pdfReporteGeneral()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">⬇ Reporte</button>
+    <button onclick="pdfReporteGeneral()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">⬇ PDF</button>
+    <button onclick="abrirExportExcel()" style="background:#1a6a2a;border:none;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:#fff;white-space:nowrap;">📊 Excel</button>
   </div>
   <div style="margin-top:12px;">
 
@@ -1097,13 +1098,16 @@ select.fi{appearance:none;
           <div class="ficha-step-num">1</div>
           <div>
             <div class="ficha-step-title">Datos del modelo</div>
-            <div class="ficha-step-sub">Nombre, temporada y mano de obra</div>
+            <div class="ficha-step-sub">Nombre, temporada y grupo de tela</div>
           </div>
         </div>
         <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
           <div class="frow">
             <input class="fi" type="text" id="nf-nombre" placeholder="Nombre del modelo (ej: Campera Renata)">
-            <select class="fi" id="nf-temp">
+            <input class="fi" type="text" id="nf-color" placeholder="Color (ej: Negro, Gris Melange)">
+          </div>
+          <div class="frow">
+            <select class="fi" id="nf-temp" style="flex:1;">
               <option value="">Temporada...</option>
               <option>Verano 2025</option><option>Invierno 2025</option>
               <option>Verano 2026</option><option>Invierno 2026</option>
@@ -1111,60 +1115,56 @@ select.fi{appearance:none;
             </select>
           </div>
           <div class="frow">
-            <input class="fi" type="text" id="nf-ref" placeholder="Referencia / código (opcional)">
-            <input class="fi" type="text" id="nf-familia" placeholder="Grupo / familia (ej: Camperas, Calzas)">
+            <input class="fi" type="text" id="nf-familia" placeholder="Grupo de tela (ej: COMFORT/FIFTY FLEX, JERSEY)">
           </div>
-          <div class="frow">
-            <div>
-              <div class="flbl" style="margin-bottom:4px;">Mano de obra ($)</div>
-              <input class="fi" type="number" id="nf-mo" placeholder="0" min="0" step="any">
-            </div>
-          </div>
+          <!-- campos ocultos para compatibilidad -->
+          <input type="hidden" id="nf-ref" value="">
+          <input type="hidden" id="nf-mo" value="0">
         </div>
       </div>
 
-      <!-- PASO 2: Telas e insumos comunes -->
+      <!-- PASO 2: Telas -->
       <div class="sp" style="margin-bottom:10px;">
         <div class="ficha-step-header">
           <div class="ficha-step-num">2</div>
           <div>
-            <div class="ficha-step-title">🧵 Telas e insumos comunes</div>
-            <div class="ficha-step-sub">Mismo consumo para TODOS los colores — el precio se busca automáticamente en stock</div>
+            <div class="ficha-step-title">🧵 Telas</div>
+            <div class="ficha-step-sub">El precio se busca automáticamente en stock</div>
           </div>
         </div>
         <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
           <div id="nf-telas"></div>
-          <button class="addlink" onclick="addTelaFicha()">+ Agregar tela / insumo común</button>
+          <button class="addlink" onclick="addTelaFicha()">+ Agregar tela</button>
         </div>
       </div>
 
-      <!-- PASO 3: Variantes de color -->
+      <!-- PASO 3: Avíos -->
       <div class="sp" style="margin-bottom:10px;">
         <div class="ficha-step-header">
           <div class="ficha-step-num">3</div>
           <div>
-            <div class="ficha-step-title">🎨 Variantes de color</div>
-            <div class="ficha-step-sub">Cada color tiene su curva de talles y avíos específicos (cierre, hilo, etiqueta, etc.)</div>
+            <div class="ficha-step-title">🔩 Avíos</div>
+            <div class="ficha-step-sub">Cierre, hilo, etiqueta, bolsa, etc.</div>
           </div>
         </div>
         <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-          <div id="nf-colores"></div>
-          <button class="addlink" onclick="addColorFicha()">+ Agregar variante de color</button>
+          <div id="nf-mats"></div>
+          <button class="addlink" onclick="addMatFicha()">+ Agregar avío</button>
         </div>
       </div>
 
-      <!-- AVÍOS GENERALES (colapsable, para casos especiales) -->
+      <!-- PASO 4: Curva de talles -->
       <div class="sp" style="margin-bottom:10px;">
-        <div style="background:var(--sa);border:1px solid rgba(26,36,51,.08);border-radius:var(--r);padding:12px 14px;">
-          <button onclick="toggleAviosGlobales()" style="background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;color:var(--t2);display:flex;align-items:center;gap:8px;padding:0;width:100%;text-align:left;">
-            <span id="avios-glob-icon">▶</span>
-            <span>🔩 Avíos generales (sin variante de color)</span>
-          </button>
-          <div id="nf-mats-wrap" style="display:none;margin-top:12px;">
-            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Avíos que no varían por color — aplican igual a todas las variantes</div>
-            <div id="nf-mats"></div>
-            <button class="addlink" onclick="addMatFicha()">+ Agregar avío general</button>
+        <div class="ficha-step-header">
+          <div class="ficha-step-num">4</div>
+          <div>
+            <div class="ficha-step-title">📐 Curva de talles</div>
+            <div class="ficha-step-sub">Unidades por talle para este artículo</div>
           </div>
+        </div>
+        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
+          <div id="nf-talles-directo"></div>
+          <div id="nf-total-directo" style="font-size:13px;font-weight:600;color:#3a6a2a;margin-top:8px;"></div>
         </div>
       </div>
 
@@ -1173,6 +1173,10 @@ select.fi{appearance:none;
         <button class="btn bmail" id="btn-guardar-ficha" onclick="guardarFicha()">💾 Guardar ficha</button>
         <button class="btn bcpy" style="margin-top:8px;" onclick="cancelarFicha()">Cancelar</button>
       </div>
+
+      <!-- campos ocultos para compatibilidad -->
+      <div id="nf-colores" style="display:none;"></div>
+      <div id="nf-mats-wrap" style="display:none;"></div>
 
     </div><!-- /ficha-form-wrap -->
   </div>
@@ -1783,7 +1787,21 @@ function inicializar() {
       if(Array.isArray(cat)) { st.catalogo=cat; renderCatCount(); populateCatDatalist(); }
     }).catch(function(){});
     SB.from('mwk_fichas').select('*').then(function(fichas){
-      if(Array.isArray(fichas)) { st.fichas = fichas; renderFichasCount(); }
+      if(Array.isArray(fichas)) {
+        st.fichas = fichas;
+        renderFichasCount();
+        // Migrar color desde colores[0].color al campo f.color
+        fichas.forEach(function(f){
+          if (!(f.color||'').trim()) {
+            var c0 = (f.colores||[])[0];
+            var colorMigrado = (c0 && (c0.color||'').trim()) ? c0.color.trim() : '';
+            if (colorMigrado && f.id) {
+              f.color = colorMigrado;
+              SB.from('mwk_fichas').update({color: colorMigrado}, {id: f.id}).catch(function(){});
+            }
+          }
+        });
+      }
     }).catch(function(){});
     var cfgRow = cfg && cfg[0];
     st.nextNro    = cfgRow ? (cfgRow.next_nro||1) : 1;
@@ -5363,21 +5381,26 @@ function guardarFicha() {
     });
     return {color:c.color.trim(), talles:c.talles, total:totalTalles(c.talles), avios:avios, telas:telas};
   });
-  var totalUnd = coloresData.reduce(function(s,c){return s+c.total;},0);
+  // Curva de talles directa (sin variantes)
+  var tallesDirecto = window.nfTallesDirecto || {};
+  var totalDirecto  = totalTalles(tallesDirecto);
+  var totalUnd = totalDirecto || coloresData.reduce(function(s,c){return s+c.total;},0);
   var data = {
-    nombre: nombre,
+    nombre:    nombre,
     temporada: document.getElementById('nf-temp').value||'',
-    referencia: (document.getElementById('nf-ref').value||'').trim(),
-    mo: parseFloat(document.getElementById('nf-mo').value)||0,
-    telas: telasData,
-    materiales: matsData,
-    colores: coloresData,
-    talles: coloresData.length ? coloresData[0].talles : {},
+    referencia:'',
+    familia:   (document.getElementById('nf-familia')||{value:''}).value.trim(),
+    mo:        parseFloat(document.getElementById('nf-mo').value)||0,
+    telas:     telasData,
+    materiales:matsData,
+    colores:   coloresData,
+    talles:    tallesDirecto,
     total_unidades: totalUnd
   };
 
   function resetForm() {
     document.getElementById('nf-nombre').value='';
+    var nfCEl = document.getElementById('nf-color'); if(nfCEl) nfCEl.value='';
     document.getElementById('nf-temp').value='';
     document.getElementById('nf-ref').value='';
     document.getElementById('nf-mo').value='';
@@ -5432,6 +5455,15 @@ function getColAvios(col) {
   if ((col.telas||[]).length > 0) return col.avios||[];
   // Migrar desde avios si no tiene telas separadas
   return (col.avios||[]).filter(function(a){ return !esTelaItem(a); });
+}
+
+function getColorFicha(f) {
+  // Campo nuevo
+  if ((f.color||'').trim()) return f.color.trim();
+  // Fallback: primer color de variantes (estructura vieja)
+  var c0 = (f.colores||[])[0];
+  if (c0 && (c0.color||'').trim()) return c0.color.trim();
+  return '';
 }
 
 function precioMat(m) {
@@ -5599,8 +5631,8 @@ function renderFichasLista() {
     return '<div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:13px 14px;margin-bottom:9px;">'+
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
         '<div style="flex:1;min-width:0;">'+
-          '<div style="font-size:15px;font-weight:700;">'+esc(f.nombre)+'</div>'+
-          '<div style="font-size:11px;color:var(--t2);margin-top:2px;">'+(f.referencia?esc(f.referencia)+' · ':'')+esc(f.temporada||'—')+'</div>'+
+          '<div style="font-size:15px;font-weight:700;">'+esc(f.nombre)+(getColorFicha(f)?' <span style="font-size:12px;font-weight:400;color:var(--t2);">— '+esc(getColorFicha(f))+'</span>':'')+'</div>'+
+          '<div style="font-size:11px;color:var(--t2);margin-top:2px;">'+esc(f.temporada||'—')+(f.familia?' · '+esc(f.familia):'')+'</div>'+
           '<div style="font-size:11px;color:var(--t2);margin-top:3px;">'+nInsumos+' insumo'+(nInsumos!==1?'s':'')+' · '+nColores+' color'+(nColores!==1?'es':'')+'</div>'+
           (colorChips?'<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:2px;">'+colorChips+'</div>':'')+
         '</div>'+
@@ -5666,8 +5698,7 @@ function verFicha(i) {
           '</div>'+
           '<div style="font-size:11px;color:var(--t2);margin-top:4px;">Total: '+totalTalles(col.talles||{})+' u</div>'+
         '</div>';
-      }).join('')
-    : '');
+      }).join('\r\n') : '');
   document.getElementById('ficha-modal').style.display = 'flex';
 }
 
@@ -5707,9 +5738,14 @@ function editarFicha(i) {
   if (!f) return;
   // Cargar datos en el formulario de nueva ficha
   document.getElementById('nf-nombre').value = f.nombre||'';
+  var nfColorEl = document.getElementById('nf-color'); if(nfColorEl) nfColorEl.value = f.color||'';
   document.getElementById('nf-temp').value   = f.temporada||'';
-  document.getElementById('nf-ref').value    = f.referencia||'';
-  var nfFamEl = document.getElementById('nf-familia'); if(nfFamEl) nfFamEl.value = f.familia||'';
+  var nfFamEl = document.getElementById('nf-familia');
+  if(nfFamEl) nfFamEl.value = f.familia || f.referencia || '';
+  var nfRefEl = document.getElementById('nf-ref');
+  if(nfRefEl) nfRefEl.value = '';
+  // Cargar curva de talles directa
+  window.nfTallesDirecto = Object.assign({}, f.talles||{});
   document.getElementById('nf-mo').value     = f.mo||'';
   // Cargar materiales
   nfMats = (f.materiales||[]).map(function(m){
@@ -5751,6 +5787,7 @@ function editarFicha(i) {
   renderNfTelas();
   renderNfMats();
   renderNfColores();
+  renderTallesDirecto();
   // Marcar que estamos editando
   window._editingFichaIdx = i;
   window._editingFichaId  = f.id;
@@ -6316,9 +6353,23 @@ function toggleAviosGlobales() {
   icon.textContent = open ? '▼' : '▶';
 }
 
+function renderTallesDirecto() {
+  var el = document.getElementById('nf-talles-directo');
+  var totEl = document.getElementById('nf-total-directo');
+  if (!el) return;
+  if (!window.nfTallesDirecto) window.nfTallesDirecto = {};
+  renderTallesGrid(el, window.nfTallesDirecto, function(){
+    var tot = totalTalles(window.nfTallesDirecto);
+    if (totEl) totEl.textContent = tot > 0 ? '✓ Total: '+tot+' unidades' : '';
+  });
+  var tot = totalTalles(window.nfTallesDirecto);
+  if (totEl) totEl.textContent = tot > 0 ? '✓ Total: '+tot+' unidades' : '';
+}
+
 function initFichaForm() {
-  nfTalles = {}; nfTelas = []; nfColores = [];
-  renderNfTelas(); renderNfColores();
+  nfTalles = {}; nfTelas = []; nfColores = []; nfMats = [];
+  window.nfTallesDirecto = {};
+  renderNfTelas(); renderNfMats(); renderNfColores(); renderTallesDirecto();
 }
 
 function addColorFicha() {
@@ -8062,6 +8113,87 @@ function buildPDFMultipage(canvases,imgW,imgH,fname){
   }
 }
 
+
+// ════════════════════════════════════════════════════
+// EXPORT EXCEL FICHAS
+// ════════════════════════════════════════════════════
+function abrirExportExcel() {
+  var modal = document.getElementById('excel-fichas-modal');
+  var selT  = document.getElementById('excel-flt-temp');
+  var selF  = document.getElementById('excel-flt-familia');
+  var fichas = st.fichas||[];
+  var temps = [], fams = [];
+  fichas.forEach(function(f){
+    if (f.temporada && temps.indexOf(f.temporada)===-1) temps.push(f.temporada);
+    if (f.familia   && fams.indexOf(f.familia)===-1)   fams.push(f.familia);
+  });
+  temps.sort(); fams.sort();
+  selT.innerHTML = '<option value="">Todas</option>' + temps.map(function(t){ return '<option>'+esc(t)+'</option>'; }).join('');
+  selF.innerHTML = '<option value="">Todos</option>'  + fams.map(function(f){  return '<option>'+esc(f)+'</option>'; }).join('');
+  modal.style.display = 'flex';
+}
+
+function cerrarExcelModal() {
+  document.getElementById('excel-fichas-modal').style.display = 'none';
+}
+
+function exportarExcelFichas() {
+  var fTemp = document.getElementById('excel-flt-temp').value;
+  var fFam  = document.getElementById('excel-flt-familia').value;
+  var fichas = (st.fichas||[]).filter(function(f){
+    if (fTemp && (f.temporada||'') !== fTemp) return false;
+    if (fFam  && (f.familia||'')   !== fFam)  return false;
+    return true;
+  });
+
+  if (!fichas.length) { toast('Sin fichas para exportar con esos filtros'); return; }
+
+  // Construir CSV
+  var ORDEN_TALLES = ['XS','S','M','L','XL','XXL','XXXL','00','0','1','2','3','4','5','6','7','8','9','10','11','12','13','14'];
+  var rows = [['Artículo','Color','Temporada','Grupo de tela','Rango de talles','Costo x prenda ($)']];
+  fichas.forEach(function(f){
+    var costo = costoFicha(f);
+    var talles = f.talles || {};
+    var claves = Object.keys(talles).filter(function(t){ return (talles[t]||0) > 0; });
+    // Ordenar por orden conocido, luego alfabético
+    claves.sort(function(a,b){
+      var ia = ORDEN_TALLES.indexOf(a.toUpperCase());
+      var ib = ORDEN_TALLES.indexOf(b.toUpperCase());
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    var rango = claves.length > 1 ? claves[0]+'-'+claves[claves.length-1] : (claves[0]||'—');
+    rows.push([
+      f.nombre||'',
+      getColorFicha(f),
+      f.temporada||'',
+      f.familia||'',
+      rango,
+      costo.toFixed(2).replace('.',',')
+    ]);
+  });
+
+  // Generar CSV con BOM para que Excel lo abra bien
+  var csv = '﻿' + rows.map(function(r){
+    return r.map(function(c){
+      var s = String(c||'');
+      if (s.indexOf(',')!==-1 || s.indexOf('"')!==-1) s = '"'+s.replace(/"/g,'""')+'"';
+      return s;
+    }).join(';');  // punto y coma para Excel en español
+  }).join('\r\n')  // Descargar
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  var fecha = new Date().toISOString().slice(0,10);
+  var nombre = 'costos'+(fTemp?'-'+fTemp:'')+(fFam?'-'+fFam:'')+'-'+fecha+'.csv';
+  a.href = url; a.download = nombre; a.click();
+  URL.revokeObjectURL(url);
+  cerrarExcelModal();
+  toast('✅ Excel descargado — '+fichas.length+' fichas');
+}
+
 // ════════════════════════════════════════════════════════════════
 // ARRANQUE
 // ════════════════════════════════════════════════════════════════
@@ -8069,5 +8201,26 @@ function buildPDFMultipage(canvases,imgW,imgH,fname){
 SB.headers = buildHeaders(SUPABASE_KEY);
 inicializar();
 </script>
+
+<!-- MODAL EXPORT EXCEL FICHAS -->
+<div id="excel-fichas-modal" style="display:none;position:fixed;inset:0;background:rgba(26,36,51,.55);z-index:200;align-items:center;justify-content:center;">
+  <div style="background:var(--cr);border-radius:var(--rl);padding:24px;width:90%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.18);">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;">📊 Exportar costos a Excel</div>
+    <div style="margin-bottom:12px;">
+      <div class="flbl" style="margin-bottom:4px;">Temporada</div>
+      <select class="fi" id="excel-flt-temp" style="width:100%;">
+        <option value="">Todas</option>
+      </select>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div class="flbl" style="margin-bottom:4px;">Grupo de tela</div>
+      <select class="fi" id="excel-flt-familia" style="width:100%;">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <button class="btn bmail" onclick="exportarExcelFichas()" style="width:100%;margin-bottom:8px;">⬇ Descargar Excel</button>
+    <button class="btn bcpy" onclick="cerrarExcelModal()" style="width:100%;">Cancelar</button>
+  </div>
+</div>
 </body>
 </html>
