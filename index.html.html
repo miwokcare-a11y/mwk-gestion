@@ -5440,21 +5440,24 @@ function guardarFicha() {
   }).catch(function(e){toast('Error: '+(e.message||e));});
 }
 
-var TELA_KW = ['flex','jersey','ribb','tela','lycra','tul','crepe','saten','polar','french','interlock','denim','gabardina','viscosa','acetato','lana','neoprene','forro','entretela','bies','elast'];
-function esTelaItem(item) {
-  if ((item.unidad||'m') === 'm') return true;
-  var n = (item.nombre||'').toLowerCase();
-  return TELA_KW.some(function(k){ return n.indexOf(k) !== -1; });
+function esTelaItem(item, familia) {
+  var nombre = (item.nombre||'').toLowerCase();
+  var fam = (familia||'').toLowerCase();
+  if (fam) {
+    var palabras = fam.split(/[\s\/,\-]+/).filter(function(p){ return p.length >= 3; });
+    if (palabras.some(function(p){ return nombre.indexOf(p) !== -1; })) return true;
+  }
+  if ((item.unidad||'u') !== 'm') return false;
+  var avioKeywords = ['cierre','elast','bies','cinta','hilo','boton','broche','etiqueta','bolsa','tira','velcro','cordon','aguja','gancho','mosq','cremall'];
+  return !avioKeywords.some(function(k){ return nombre.indexOf(k) !== -1; });
 }
-function getColTelas(col) {
+function getColTelas(col, familia) {
   if ((col.telas||[]).length > 0) return col.telas;
-  // Migrar desde avios si no tiene telas separadas
-  return (col.avios||[]).filter(esTelaItem);
+  return (col.avios||[]).filter(function(a){ return esTelaItem(a, familia); });
 }
-function getColAvios(col) {
+function getColAvios(col, familia) {
   if ((col.telas||[]).length > 0) return col.avios||[];
-  // Migrar desde avios si no tiene telas separadas
-  return (col.avios||[]).filter(function(a){ return !esTelaItem(a); });
+  return (col.avios||[]).filter(function(a){ return !esTelaItem(a, familia); });
 }
 
 function getColorFicha(f) {
@@ -5483,9 +5486,9 @@ function costoFicha(f) {
     (f.colores||[]).forEach(function(c){
       var peso=(c.total||0)/totalUnd;
       // Telas propias de este color (con migración automática)
-      var ct=getColTelas(c).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
+      var ct=getColTelas(c,f.familia||f.referencia).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
       // Avíos de este color (con migración automática)
-      var ca=getColAvios(c).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+      var ca=getColAvios(c,f.familia||f.referencia).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
       costVar += (ct+ca)*peso;
     });
   }
@@ -5500,8 +5503,8 @@ function costoFichaPorColor(f) {
                 + (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0)
                 + (parseFloat(f.mo)||0);
   colores.forEach(function(c){
-    var ct=getColTelas(c).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
-    var ca=getColAvios(c).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
+    var ct=getColTelas(c,f.familia||f.referencia).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
+    var ca=getColAvios(c,f.familia||f.referencia).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
     result[c.color||'—'] = costComun + ct + ca;
   });
   if (!colores.length) result['—'] = costComun;
@@ -5750,11 +5753,19 @@ function editarFicha(i) {
   // ── Migración estructura vieja → nueva ──────────────────────
   // En la estructura vieja todo estaba en colores[0].avios mezclado
   var c0avios = ((f.colores||[])[0] || {}).avios || [];
-  var TELA_KW2 = ['flex','jersey','ribb','tela','lycra','tul','crepe','saten','polar','french','interlock','denim','gabardina','viscosa','acetato','lana','neoprene','forro','entretela','bies','elast','cinta'];
   function esTela2(item) {
-    if ((item.unidad||'m') === 'm') return true;
-    var n = (item.nombre||'').toLowerCase();
-    return TELA_KW2.some(function(k){ return n.indexOf(k) !== -1; });
+    // Si tiene grupo de tela, usarlo como referencia
+    var familia = (f.familia||f.referencia||'').toLowerCase();
+    var nombre  = (item.nombre||'').toLowerCase();
+    if (familia) {
+      // Dividir grupo en palabras y ver si alguna aparece en el nombre del item
+      var palabras = familia.split(/[\s\/,\-]+/).filter(function(p){ return p.length >= 3; });
+      if (palabras.some(function(p){ return nombre.indexOf(p) !== -1; })) return true;
+    }
+    // Fallback: unidad m Y no parece avío típico
+    if ((item.unidad||'u') !== 'm') return false;
+    var avioKeywords = ['cierre','elast','bies','cinta','hilo','boton','broche','etiqueta','bolsa','tira','velcro','cordon','aguja','gancho','mosq','cremall'];
+    return !avioKeywords.some(function(k){ return nombre.indexOf(k) !== -1; });
   }
 
   // Telas: primero f.telas, luego migrar desde colores[0].avios
@@ -5775,11 +5786,8 @@ function editarFicha(i) {
     nfMats = [];
   }
   // Palabras clave que identifican telas
-  var TELA_KEYWORDS = ['flex','jersey','ribb','tela','lycra','tul','crepe','saten','polar','french','interlock','hilo','denim','gabardina','viscosa','acetato','lana','neoprene','forro','entretela','bies','elast','cinta'];
   function esTela(item) {
-    if ((item.unidad||'m') === 'm') return true;
-    var n = (item.nombre||'').toLowerCase();
-    return TELA_KEYWORDS.some(function(k){ return n.indexOf(k) !== -1; });
+    return esTelaItem(item, f.familia||f.referencia||'');
   }
 
   nfColores = (f.colores||[]).map(function(c){
