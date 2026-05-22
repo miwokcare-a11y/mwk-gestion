@@ -5477,17 +5477,20 @@ function precioMat(m) {
 
 function costoFicha(f) {
   var fam = f.familia||f.referencia||'';
-  // Telas y avíos directos (estructura nueva)
-  var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
-  var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
-  // Insumos en variantes (estructura vieja: todo en colores[0].avios)
-  var costVar = 0;
-  (f.colores||[]).forEach(function(c){
-    var ct = getColTelas(c,fam).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
-    var ca = getColAvios(c,fam).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
-    costVar += ct + ca;
-  });
-  return costTelas + costMats + costVar + (parseFloat(f.mo)||0);
+  var tieneTelasNuevas = (f.telas||[]).length > 0;
+  var tieneMatsNuevas  = (f.materiales||[]).length > 0;
+
+  if (tieneTelasNuevas || tieneMatsNuevas) {
+    // Estructura nueva: usar f.telas y f.materiales, ignorar colores
+    var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
+    var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
+    return costTelas + costMats + (parseFloat(f.mo)||0);
+  } else {
+    // Estructura vieja: todo está en colores[0].avios
+    var c0 = (f.colores||[])[0] || {};
+    var avios = c0.avios || [];
+    return avios.reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0) + (parseFloat(f.mo)||0);
+  }
 }
 
 function costoFichaPorColor(f) {
