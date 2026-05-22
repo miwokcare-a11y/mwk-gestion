@@ -5747,14 +5747,33 @@ function editarFicha(i) {
   // Cargar curva de talles directa
   window.nfTallesDirecto = Object.assign({}, f.talles||{});
   document.getElementById('nf-mo').value     = f.mo||'';
-  // Cargar materiales
-  nfMats = (f.materiales||[]).map(function(m){
-    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
-  });
-  // Cargar colores
-  nfTelas = (f.telas||[]).map(function(m){
-    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
-  });
+  // ── Migración estructura vieja → nueva ──────────────────────
+  // En la estructura vieja todo estaba en colores[0].avios mezclado
+  var c0avios = ((f.colores||[])[0] || {}).avios || [];
+  var TELA_KW2 = ['flex','jersey','ribb','tela','lycra','tul','crepe','saten','polar','french','interlock','denim','gabardina','viscosa','acetato','lana','neoprene','forro','entretela','bies','elast','cinta'];
+  function esTela2(item) {
+    if ((item.unidad||'m') === 'm') return true;
+    var n = (item.nombre||'').toLowerCase();
+    return TELA_KW2.some(function(k){ return n.indexOf(k) !== -1; });
+  }
+
+  // Telas: primero f.telas, luego migrar desde colores[0].avios
+  if ((f.telas||[]).length > 0) {
+    nfTelas = f.telas.map(function(m){ return Object.assign({},m); });
+  } else if (c0avios.length > 0) {
+    nfTelas = c0avios.filter(esTela2).map(function(m){ return Object.assign({},m); });
+  } else {
+    nfTelas = [];
+  }
+
+  // Avíos: primero f.materiales, luego migrar desde colores[0].avios
+  if ((f.materiales||[]).length > 0) {
+    nfMats = f.materiales.map(function(m){ return Object.assign({},m); });
+  } else if (c0avios.length > 0) {
+    nfMats = c0avios.filter(function(a){ return !esTela2(a); }).map(function(m){ return Object.assign({},m); });
+  } else {
+    nfMats = [];
+  }
   // Palabras clave que identifican telas
   var TELA_KEYWORDS = ['flex','jersey','ribb','tela','lycra','tul','crepe','saten','polar','french','interlock','hilo','denim','gabardina','viscosa','acetato','lana','neoprene','forro','entretela','bies','elast','cinta'];
   function esTela(item) {
