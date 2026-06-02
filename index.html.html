@@ -57,12 +57,13 @@
   --dg:#A85040;
   --r:14px;--rl:20px;--rx:30px;
 }
-html,body{height:100%;
+html,body{height:100%;overflow:hidden;
   font-family:'DM Sans',-apple-system,sans-serif;
   background:var(--sa);color:var(--tx);font-size:15px;line-height:1.6;
   -webkit-tap-highlight-color:transparent;}
-#app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;}
-.scr{display:none;flex:1;flex-direction:column;padding-bottom:32px;}
+#app{max-width:480px;margin:0 auto;height:100%;display:flex;flex-direction:column;position:relative;}
+.scr{display:none;flex-direction:column;padding-bottom:32px;
+  position:absolute;inset:0;overflow-y:auto;background:var(--sa);}
 .scr.on{display:flex;}
 .tb{display:flex;align-items:center;gap:10px;padding:13px 18px 11px;
   border-bottom:1.5px solid var(--s2);position:sticky;top:0;
@@ -460,14 +461,18 @@ select.fi{appearance:none;
   #content-desktop {
     flex: 1;
     min-width: 0;
-    overflow-y: auto;
-    min-height: 100vh;
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
   }
 
   /* Pantallas individuales */
   .scr {
     padding-bottom: 48px;
     max-width: 100%;
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
   }
 
   /* Toolbar */
@@ -1685,7 +1690,7 @@ function recargarDatos() {
     if (activa) {
       var id = activa.id;
       if (id==='s-home')renderHome();
-      if (id==='s-historial'){renderHistorial(); window.scrollTo(0,0);}
+      if (id==='s-historial'){renderHistorial();}
       if (id==='s-catalogo')renderCatLista();
       if (id==='s-proveedores')renderProvLista();
     }
@@ -1759,13 +1764,12 @@ function snav(key) {
 }
 
 function ir(id){
-  window.scrollTo(0,0);
   document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
   document.getElementById(id).classList.add('on');
   window.scrollTo(0,0);
   if(id==='s-pedido'){renderGrid();renderRows();renderPsel();actualizarNro();actualizarCnt();loadCotiz();}
   if(id==='s-proveedores')renderProvLista();
-  if(id==='s-historial'){renderHistorial(); window.scrollTo(0,0);}
+  if(id==='s-historial'){renderHistorial();}
   if(id==='s-home')renderHome();
   if(id==='s-dashboard')renderDashboard();
   if(id==='s-stock')renderStock();
