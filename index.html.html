@@ -1685,7 +1685,7 @@ function recargarDatos() {
     if (activa) {
       var id = activa.id;
       if (id==='s-home')renderHome();
-      if (id==='s-historial')renderHistorial();
+      if (id==='s-historial'){renderHistorial(); window.scrollTo(0,0);}
       if (id==='s-catalogo')renderCatLista();
       if (id==='s-proveedores')renderProvLista();
     }
@@ -1759,12 +1759,13 @@ function snav(key) {
 }
 
 function ir(id){
+  window.scrollTo(0,0);
   document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
   document.getElementById(id).classList.add('on');
   window.scrollTo(0,0);
   if(id==='s-pedido'){renderGrid();renderRows();renderPsel();actualizarNro();actualizarCnt();loadCotiz();}
   if(id==='s-proveedores')renderProvLista();
-  if(id==='s-historial')renderHistorial();
+  if(id==='s-historial'){renderHistorial(); window.scrollTo(0,0);}
   if(id==='s-home')renderHome();
   if(id==='s-dashboard')renderDashboard();
   if(id==='s-stock')renderStock();
