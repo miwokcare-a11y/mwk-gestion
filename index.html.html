@@ -564,12 +564,7 @@ select.fi{appearance:none;
     <span class="sni">↩</span> Devoluciones
   </div>
   <div class="sidebar-nav-group">Producción</div>
-  <div class="sidebar-nav-item" id="snav-fichas" onclick="ir('s-fichas');snav('fichas')">
-    <span class="sni">📋</span> Consumos y costos
-  </div>
-  <div class="sidebar-nav-item" id="snav-planificacion" onclick="ir('s-planificacion');snav('planificacion')">
-    <span class="sni">📐</span> Planificación
-  </div>
+
   <div class="sidebar-nav-item" id="snav-produccion" onclick="ir('s-produccion');snav('produccion')">
     <span class="sni">✂</span> Producción
   </div>
@@ -625,20 +620,14 @@ select.fi{appearance:none;
       <div class="ct">Devoluciones</div>
       <div class="cs" id="dev-count">Sin registros</div>
     </div>
-    <div class="card" onclick="ir('s-fichas')">
-      <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></span>
-      <div class="ct">Consumos y costos</div>
-      <div class="cs" id="fichas-count">Costos por modelo</div>
+    <div class="cs" id="fichas-count">Costos por modelo</div>
     </div>
     <div class="card" onclick="ir('s-produccion')">
       <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg></span>
       <div class="ct">Producción</div>
       <div class="cs" id="prod-count">Movimientos de stock</div>
     </div>
-    <div class="card" onclick="ir('s-planificacion')" style="grid-column:1/-1;">
-      <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></span>
-      <div class="ct">Planificación</div>
-      <div class="cs">Explosión de consumos y orden de compra</div>
+    <div class="cs">Explosión de consumos y orden de compra</div>
     </div>
     <div class="card" onclick="ir('s-dashboard')" style="grid-column:1/-1;">
       <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></span>
@@ -1059,201 +1048,7 @@ select.fi{appearance:none;
 </div>
 
 <!-- FICHAS DE PRENDAS -->
-<div id="s-fichas" class="scr">
-  <div class="tb">
-    <button class="bk" onclick="ir('s-home')">Inicio</button>
-    <h1>Consumos y costos</h1>
-    <button onclick="pdfReporteGeneral()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">⬇ PDF</button>
-    <button onclick="abrirExportExcel()" style="background:#1a6a2a;border:none;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:#fff;white-space:nowrap;">📊 Excel</button>
-  </div>
-  <div style="margin-top:12px;">
 
-    <!-- FILTROS -->
-    <div class="sp" style="margin-bottom:10px;">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <select class="fi" id="flt-temp" style="flex:1;min-width:120px;height:34px;font-size:12px;" onchange="renderFichasLista()">
-          <option value="">Todas las temporadas</option>
-        </select>
-        <select class="fi" id="flt-familia" style="flex:1;min-width:120px;height:34px;font-size:12px;" onchange="renderFichasLista()">
-          <option value="">Todos los grupos</option>
-        </select>
-        <input class="fi" id="flt-art" type="text" placeholder="🔍 Buscar artículo..." style="flex:2;min-width:160px;height:34px;font-size:12px;" oninput="renderFichasLista()">
-      </div>
-    </div>
-
-    <!-- LISTA DE FICHAS -->
-    <div class="sp" style="margin-bottom:16px;" id="fichas-lista"></div>
-
-    <!-- BOTÓN NUEVA FICHA -->
-    <div class="sp" style="margin-bottom:12px;">
-      <button class="btn bmail" onclick="toggleNuevaFicha()" id="btn-nueva-ficha">+ Nueva ficha de costos</button>
-    </div>
-
-    <!-- FORMULARIO NUEVA FICHA (colapsable) -->
-    <div id="ficha-form-wrap" style="display:none;">
-
-      <!-- PASO 1: Datos del modelo -->
-      <div class="sp" style="margin-bottom:10px;">
-        <div class="ficha-step-header">
-          <div class="ficha-step-num">1</div>
-          <div>
-            <div class="ficha-step-title">Datos del modelo</div>
-            <div class="ficha-step-sub">Nombre, temporada y grupo de tela</div>
-          </div>
-        </div>
-        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-          <div class="frow">
-            <input class="fi" type="text" id="nf-nombre" placeholder="Nombre del modelo (ej: Campera Renata)">
-            <input class="fi" type="text" id="nf-color" placeholder="Color (ej: Negro, Gris Melange)">
-          </div>
-          <div class="frow">
-            <select class="fi" id="nf-temp" style="flex:1;">
-              <option value="">Temporada...</option>
-              <option>Verano 2025</option><option>Invierno 2025</option>
-              <option>Verano 2026</option><option>Invierno 2026</option>
-              <option>Verano 2027</option><option>Invierno 2027</option>
-            </select>
-          </div>
-          <div class="frow">
-            <input class="fi" type="text" id="nf-familia" placeholder="Grupo de tela (ej: COMFORT/FIFTY FLEX, JERSEY)">
-          </div>
-          <!-- campos ocultos para compatibilidad -->
-          <input type="hidden" id="nf-ref" value="">
-          <input type="hidden" id="nf-mo" value="0">
-        </div>
-      </div>
-
-      <!-- PASO 2: Telas -->
-      <div class="sp" style="margin-bottom:10px;">
-        <div class="ficha-step-header">
-          <div class="ficha-step-num">2</div>
-          <div>
-            <div class="ficha-step-title">🧵 Telas</div>
-            <div class="ficha-step-sub">El precio se busca automáticamente en stock</div>
-          </div>
-        </div>
-        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-          <div id="nf-telas"></div>
-          <button class="addlink" onclick="addTelaFicha()">+ Agregar tela</button>
-        </div>
-      </div>
-
-      <!-- PASO 3: Avíos -->
-      <div class="sp" style="margin-bottom:10px;">
-        <div class="ficha-step-header">
-          <div class="ficha-step-num">3</div>
-          <div>
-            <div class="ficha-step-title">🔩 Avíos</div>
-            <div class="ficha-step-sub">Cierre, hilo, etiqueta, bolsa, etc.</div>
-          </div>
-        </div>
-        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-          <div id="nf-mats"></div>
-          <button class="addlink" onclick="addMatFicha()">+ Agregar avío</button>
-        </div>
-      </div>
-
-      <!-- PASO 4: Curva de talles -->
-      <div class="sp" style="margin-bottom:10px;">
-        <div class="ficha-step-header">
-          <div class="ficha-step-num">4</div>
-          <div>
-            <div class="ficha-step-title">📐 Curva de talles</div>
-            <div class="ficha-step-sub">Unidades por talle para este artículo</div>
-          </div>
-        </div>
-        <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-          <div id="nf-talles-directo"></div>
-          <div id="nf-total-directo" style="font-size:13px;font-weight:600;color:#3a6a2a;margin-top:8px;"></div>
-        </div>
-      </div>
-
-      <!-- GUARDAR -->
-      <div class="sp" style="margin-bottom:24px;">
-        <button class="btn bmail" id="btn-guardar-ficha" onclick="guardarFicha()">💾 Guardar ficha</button>
-        <button class="btn bcpy" style="margin-top:8px;" onclick="cancelarFicha()">Cancelar</button>
-      </div>
-
-      <!-- campos ocultos para compatibilidad -->
-      <div id="nf-colores" style="display:none;"></div>
-      <div id="nf-mats-wrap" style="display:none;"></div>
-
-    </div><!-- /ficha-form-wrap -->
-  </div>
-</div>
-
-<!-- PLANIFICACIÓN -->
-<div id="s-planificacion" class="scr">
-  <div class="tb">
-    <button class="bk" onclick="ir('s-home')">Inicio</button>
-    <h1>Planificación</h1>
-  </div>
-  <div style="margin-top:12px;">
-    <div class="sp" style="margin-bottom:10px;">
-      <div class="flbl" style="margin-bottom:6px;">Temporada a planificar</div>
-      <select class="fi" id="plan-temp" style="width:100%;" onchange="renderPlanFichas()">
-        <option value="">Todas</option>
-        <option>Verano 2025</option><option>Invierno 2025</option>
-        <option>Verano 2026</option><option>Invierno 2026</option>
-        <option>Verano 2027</option><option>Invierno 2027</option>
-      </select>
-    </div>
-    <div class="sp" style="margin-bottom:10px;">
-      <div class="sl" style="margin-bottom:8px;">Unidades a producir por modelo</div>
-      <div id="plan-fichas"></div>
-    </div>
-    <div class="sp" style="margin-bottom:10px;">
-      <button class="btn bmail" onclick="explotarConsumos()">📐 Calcular consumos y stock faltante</button>
-    </div>
-    <div class="sp" id="plan-resultado" style="display:none;">
-      <!-- Tabs -->
-      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-        <button class="plan-tab active" onclick="planTab('total')" id="ptab-total">📋 Por material</button>
-        <button class="plan-tab" onclick="planTab('prov')" id="ptab-prov">🏭 Por proveedor</button>
-        <button class="plan-tab" onclick="planTab('modelo')" id="ptab-modelo">👕 Por modelo</button>
-        <button class="plan-tab" onclick="planTab('cortes')" id="ptab-cortes">✂ Cortes por talle</button>
-        <button class="plan-tab" onclick="planTab('crono')" id="ptab-crono">📅 Cronograma de corte</button>
-      </div>
-
-      <div id="plan-view-total">
-        <div id="plan-tabla"></div>
-      </div>
-      <div id="plan-view-prov" style="display:none;">
-        <div id="plan-tabla-prov"></div>
-      </div>
-      <div id="plan-view-modelo" style="display:none;">
-        <div id="plan-tabla-modelo"></div>
-      </div>
-      <div id="plan-view-cortes" style="display:none;">
-        <div class="sl" style="margin-bottom:8px;">Tabla de cortes por talle</div>
-        <div id="plan-cortes" style="overflow-x:auto;"></div>
-        <div id="plan-kg-color" style="display:none;"></div>
-      </div>
-
-      <div id="plan-view-crono" style="display:none;">
-        <div id="plan-crono-content"></div>
-      </div>
-
-      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-        <button class="btn bpdf" onclick="exportarPlanificacion()">⬇ CSV</button>
-        <button class="btn bcpy" onclick="generarPedidoDesdePlan()">✦ Nota de pedido</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL FICHA -->
-<div id="ficha-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(255,255,255,.5);align-items:flex-end;justify-content:center;">
-  <div class="modal-box" style="max-height:85vh;overflow-y:auto;">
-    <div class="modal-title">
-      <span id="ficha-modal-title">Ficha</span>
-      <button class="modal-close" onclick="cerrarFichaModal()">×</button>
-    </div>
-    <div id="ficha-modal-content"></div>
-  </div>
-</div>
-
-<!-- PRODUCCIÓN — historial de movimientos -->
 <div id="s-produccion" class="scr">
   <div class="tb">
     <button class="bk" onclick="ir('s-home')">Inicio</button>
@@ -1950,8 +1745,6 @@ function ir(id){
   if(id==='s-dashboard')renderDashboard();
   if(id==='s-stock')renderStock();
   if(id==='s-devoluciones')renderDevoluciones();
-  if(id==='s-fichas'){actualizarPreciosFichas();renderFichasLista();nfMats=nfMats||[];nfColores=nfColores||[];renderNfMats();initFichaForm();}
-  if(id==='s-planificacion')renderPlanFichas();
   if(id==='s-produccion')renderProduccion();
 }
 
@@ -4819,6 +4612,7 @@ function generarPDFCostos(fichas) {
     ctx.fillText(s,p(x),p(y));
   }
   function ln(x1,y1,x2,y2,col){ ctx.strokeStyle=col||'#E8E0D4'; ctx.lineWidth=p(0.3); ctx.beginPath(); ctx.moveTo(p(x1),p(y1)); ctx.lineTo(p(x2),p(y2)); ctx.stroke(); }
+  var CY = 0; // declarado aquí para que filaInsumo lo pueda usar
   // Fila de insumo con nombre truncado
   function filaInsumo(nom,cant,unid,precio,tot,indent){
     var ix = indent||18;
@@ -4842,7 +4636,7 @@ function generarPDFCostos(fichas) {
     tx('CONSUMOS Y COSTOS',210-16,16,4.5,'rgba(255,255,255,.7)','right');
     tx(new Date().toLocaleDateString('es-AR'),210-16,26,3.5,'rgba(255,255,255,.5)','right');
 
-    var CY = 48;
+    CY = 48;
     var fam = f.familia||f.referencia||'';
     // Modelo
     tx(esc(f.nombre),16,CY+8,7,'#2C2416',undefined,true);
