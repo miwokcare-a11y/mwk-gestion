@@ -834,32 +834,30 @@ select.fi{appearance:none;
 
 <!-- HISTORIAL -->
 <div id="s-historial" class="scr">
-  <!-- Toolbar + filtros sticky -->
-  <div style="position:sticky;top:0;z-index:10;background:var(--cr);border-bottom:1.5px solid var(--s2);">
-    <div class="tb" style="border-bottom:none;padding-bottom:8px;">
+  <!-- Toolbar + filtros sticky unificado -->
+  <div class="tb" style="flex-direction:column;align-items:stretch;gap:6px;padding-bottom:10px;">
+    <div style="display:flex;align-items:center;gap:10px;">
       <button class="bk" onclick="ir('s-home')">Inicio</button>
-      <h1>Historial de notas</h1>
-      <button onclick="limpiarFiltrosHist()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:5px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">✕ Limpiar</button>
+      <h1 style="flex:1;">Historial de notas</h1>
+      <button onclick="limpiarFiltrosHist()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">✕ Limpiar</button>
     </div>
-    <div style="padding:0 16px 10px;display:flex;flex-direction:column;gap:6px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <select class="fi" id="hflt-prov" style="height:32px;font-size:12px;" onchange="renderHistorial()">
-          <option value="">Todos los proveedores</option>
-        </select>
-        <select class="fi" id="hflt-estado" style="height:32px;font-size:12px;" onchange="renderHistorial()">
-          <option value="">Todos los estados</option>
-          <option value="pendiente">Pendientes</option>
-          <option value="recibido">Recibidos</option>
-          <option value="cancelado">Cancelados</option>
-        </select>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <input class="fi" type="date" id="hflt-desde" style="height:32px;font-size:12px;" onchange="renderHistorial()">
-        <input class="fi" type="date" id="hflt-hasta" style="height:32px;font-size:12px;" onchange="renderHistorial()">
-      </div>
-      <input class="fi" type="text" id="hflt-art" placeholder="🔍 Buscar artículo, tela o proveedor..." style="height:32px;font-size:12px;" oninput="renderHistorial()">
-      <div id="hist-resumen" style="font-size:11px;color:var(--t2);min-height:14px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <select class="fi" id="hflt-prov" style="height:32px;font-size:12px;" onchange="renderHistorial()">
+        <option value="">Todos los proveedores</option>
+      </select>
+      <select class="fi" id="hflt-estado" style="height:32px;font-size:12px;" onchange="renderHistorial()">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendientes</option>
+        <option value="recibido">Recibidos</option>
+        <option value="cancelado">Cancelados</option>
+      </select>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <input class="fi" type="date" id="hflt-desde" style="height:32px;font-size:12px;" onchange="renderHistorial()">
+      <input class="fi" type="date" id="hflt-hasta" style="height:32px;font-size:12px;" onchange="renderHistorial()">
+    </div>
+    <input class="fi" type="text" id="hflt-art" placeholder="🔍 Buscar artículo, tela o proveedor..." style="height:32px;font-size:12px;" oninput="renderHistorial()">
+    <div id="hist-resumen" style="font-size:11px;color:var(--t2);min-height:12px;"></div>
   </div>
   <div style="margin-top:8px;" id="hist-lista"></div>
 </div>
