@@ -835,7 +835,29 @@ select.fi{appearance:none;
 <!-- HISTORIAL -->
 <div id="s-historial" class="scr">
   <div class="tb"><button class="bk" onclick="ir('s-home')">Inicio</button><h1>Historial de notas</h1></div>
-  <div style="margin-top:16px;" id="hist-lista"></div>
+  <div class="sp" style="margin-top:12px;margin-bottom:8px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <select class="fi" id="hflt-prov" style="height:34px;font-size:12px;" onchange="renderHistorial()">
+        <option value="">Todos los proveedores</option>
+      </select>
+      <select class="fi" id="hflt-estado" style="height:34px;font-size:12px;" onchange="renderHistorial()">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendientes</option>
+        <option value="recibido">Recibidos</option>
+        <option value="cancelado">Cancelados</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <input class="fi" type="date" id="hflt-desde" style="height:34px;font-size:12px;" onchange="renderHistorial()" placeholder="Desde">
+      <input class="fi" type="date" id="hflt-hasta" style="height:34px;font-size:12px;" onchange="renderHistorial()" placeholder="Hasta">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input class="fi" type="text" id="hflt-art" placeholder="🔍 Artículo o tela..." style="flex:1;height:34px;font-size:12px;" oninput="renderHistorial()">
+      <button onclick="limpiarFiltrosHist()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">✕ Limpiar</button>
+    </div>
+  </div>
+  <div id="hist-resumen" style="padding:0 16px;margin-bottom:8px;font-size:12px;color:var(--t2);"></div>
+  <div style="margin-top:4px;" id="hist-lista"></div>
 </div>
 
 <!-- RECEPCIÓN DE MERCADERÍA -->
@@ -2527,16 +2549,81 @@ function borrarProd(id){
 // ════════════════════════════════════════════════════════════════
 // HISTORIAL
 // ════════════════════════════════════════════════════════════════
+function limpiarFiltrosHist() {
+  var ids = ['hflt-prov','hflt-estado','hflt-desde','hflt-hasta','hflt-art'];
+  ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  renderHistorial();
+}
+
 function renderHistorial(){
   var c=document.getElementById('hist-lista');if(!c)return;
   if(!st.historial.length){c.innerHTML='<div class="empty"><div class="ei">🗂</div>No hay pedidos aún</div>';return;}
 
-  // Separar pendientes de recibidas
-  var pendientes = st.historial.filter(function(h){ return !h.rec_confirmado && h.estado!=='cancelado'; });
-  var recibidas  = st.historial.filter(function(h){ return h.rec_confirmado; });
-  var canceladas = st.historial.filter(function(h){ return h.estado==='cancelado'; });
+  // Poblar selector de proveedores
+  var selProv = document.getElementById('hflt-prov');
+  if (selProv) {
+    var curProv = selProv.value;
+    var provs = [];
+    st.historial.forEach(function(h){ if(h.proveedor && provs.indexOf(h.proveedor)===-1) provs.push(h.proveedor); });
+    provs.sort();
+    selProv.innerHTML = '<option value="">Todos los proveedores</option>' +
+      provs.map(function(p){ return '<option value="'+esc(p)+'"'+(p===curProv?' selected':'')+'>'+esc(p)+'</option>'; }).join('');
+    selProv.value = curProv;
+  }
+
+  // Leer filtros
+  var fProv   = (document.getElementById('hflt-prov')||{value:''}).value;
+  var fEstado = (document.getElementById('hflt-estado')||{value:''}).value;
+  var fDesde  = (document.getElementById('hflt-desde')||{value:''}).value;
+  var fHasta  = (document.getElementById('hflt-hasta')||{value:''}).value;
+  var fArt    = ((document.getElementById('hflt-art')||{value:''}).value||'').toLowerCase().trim();
+
+  // Aplicar filtros
+  var lista = st.historial.filter(function(h, idx){
+    h._idx = idx; // guardar índice original
+    // Proveedor
+    if (fProv && (h.proveedor||'') !== fProv) return false;
+    // Estado
+    if (fEstado === 'pendiente' && (h.rec_confirmado || h.estado === 'cancelado')) return false;
+    if (fEstado === 'recibido'  && !h.rec_confirmado) return false;
+    if (fEstado === 'cancelado' && h.estado !== 'cancelado') return false;
+    // Fecha
+    if (fDesde && h.fecha && h.fecha < fDesde) return false;
+    if (fHasta && h.fecha && h.fecha > fHasta) return false;
+    // Artículo / tela: buscar en detalle, items
+    if (fArt) {
+      var hayMatch = (h.detalle||'').toLowerCase().indexOf(fArt) !== -1 ||
+                     (h.proveedor||'').toLowerCase().indexOf(fArt) !== -1;
+      if (!hayMatch && h.items_data) {
+        hayMatch = h.items_data.some(function(it){
+          return (it.nombre||'').toLowerCase().indexOf(fArt) !== -1 ||
+                 (it.color||'').toLowerCase().indexOf(fArt) !== -1;
+        });
+      }
+      if (!hayMatch) return false;
+    }
+    return true;
+  });
+
+  // Resumen
+  var resEl = document.getElementById('hist-resumen');
+  if (resEl) {
+    var hayFiltro = fProv || fEstado || fDesde || fHasta || fArt;
+    resEl.textContent = hayFiltro ? lista.length + ' resultado' + (lista.length !== 1 ? 's' : '') + ' de ' + st.historial.length + ' pedidos' : '';
+  }
+
+  if (!lista.length) {
+    c.innerHTML = '<div class="empty"><div class="ei">🔍</div>Sin resultados para ese filtro</div>';
+    return;
+  }
+
+  // Separar por estado usando la lista filtrada
+  var pendientes = lista.filter(function(h){ return !h.rec_confirmado && h.estado!=='cancelado'; });
+  var recibidas  = lista.filter(function(h){ return h.rec_confirmado; });
+  var canceladas = lista.filter(function(h){ return h.estado==='cancelado'; });
 
   function renderCard(h, idx) {
+    var realIdx = (h._idx !== undefined) ? h._idx : idx;
     var estadoHTML='';
     if(h.rec_confirmado){
       if(h.alertas){
@@ -2549,8 +2636,8 @@ function renderHistorial(){
       }
     }
     var recBtn=h.rec_confirmado?
-      '<button class="brec" onclick="abrirRecepcion('+idx+')">📋 Ver recepción</button>':
-      '<button class="brec" onclick="abrirRecepcion('+idx+')">📥 Registrar llegada</button>';
+      '<button class="brec" onclick="abrirRecepcion('+realIdx+')">📋 Ver recepción</button>':
+      '<button class="brec" onclick="abrirRecepcion('+realIdx+')">📥 Registrar llegada</button>';
     var cancelado=h.estado==='cancelado';
     return'<div class="hitem'+(cancelado?' cancelado':'')+'">'+
       (cancelado?'<div style="background:#8b2e22;padding:4px 14px;"><span style="font-size:10px;font-weight:700;color:#fff;letter-spacing:.08em;">PEDIDO CANCELADO</span></div>':'')+
@@ -2564,12 +2651,12 @@ function renderHistorial(){
       '<div style="margin-top:10px;">'+
       recBtn+
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;">'+
-        '<button class="hpdf" style="width:100%;" onclick="generarPDF(true,st.historial['+idx+'])">⬇ PDF</button>'+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#2a5a8a;" onclick="abrirEditNota('+idx+')">✏ Editar</button>':'<span></span>')+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#5a2a8a;" onclick="abrirEditItems('+idx+')">✎ Ítems</button>':'<span></span>')+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#b06020;" onclick="cancelarPedido('+idx+')">✕ Cancelar</button>':
+        '<button class="hpdf" style="width:100%;" onclick="generarPDF(true,st.historial['+realIdx+'])">⬇ PDF</button>'+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#2a5a8a;" onclick="abrirEditNota('+realIdx+')">✏ Editar</button>':'<span></span>')+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#5a2a8a;" onclick="abrirEditItems('+realIdx+')">✎ Ítems</button>':'<span></span>')+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#b06020;" onclick="cancelarPedido('+realIdx+')">✕ Cancelar</button>':
          '<span style="font-size:11px;font-weight:700;color:#b06020;padding:3px 8px;grid-column:1/3;">CANCELADO</span>')+
-        '<button class="hpdf" style="width:100%;color:#8b2e22;" onclick="eliminarPedido('+idx+')">🗑</button>'+
+        '<button class="hpdf" style="width:100%;color:#8b2e22;" onclick="eliminarPedido('+realIdx+')">🗑</button>'+
       '</div>'+
       '</div></div>'+
     '</div>';
