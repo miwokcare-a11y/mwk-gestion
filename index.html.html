@@ -461,14 +461,19 @@ select.fi{appearance:none;
     flex: 1;
     min-width: 0;
     overflow-y: auto;
-    min-height: 100vh;
+    height: 100vh;
   }
 
   /* Pantallas individuales */
   .scr {
     padding-bottom: 48px;
     max-width: 100%;
+    min-height: 100vh;
   }
+
+  /* Ocultar pantallas inactivas en desktop también */
+  .scr:not(.on) { display: none !important; }
+  .scr.on { display: flex !important; }
 
   /* Toolbar */
   .tb {
