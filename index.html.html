@@ -391,197 +391,10 @@ select.fi{appearance:none;
   font-size:11px;font-weight:600;color:var(--b2);cursor:pointer;padding:4px 12px;
   display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .exp-btn:hover{background:var(--s2);}
-/* ════════════════════════════════════════════════════════
-   LAYOUT DESKTOP — pantallas >= 900px
-   ════════════════════════════════════════════════════════ */
-@media (min-width: 900px) {
-
-  /* ── Wrapper general ── */
-  body { font-size: 14px; }
-
-  /* Sidebar fijo + contenido */
-  #app {
-    max-width: 100%;
-    flex-direction: row;
-    min-height: 100vh;
-    align-items: flex-start;
-  }
-
-  /* ── Sidebar ── */
-  #sidebar-desktop {
-    display: flex !important;
-    flex-direction: column;
-    width: 220px;
-    min-width: 220px;
-    min-height: 100vh;
-    background: var(--bk);
-    padding: 24px 0 32px;
-    position: sticky;
-    top: 0;
-    flex-shrink: 0;
-  }
-  .sidebar-logo {
-    padding: 0 20px 24px;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-    margin-bottom: 12px;
-  }
-  .sidebar-logo span {
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: .18em;
-    color: #fff;
-  }
-  .sidebar-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 20px;
-    color: rgba(255,255,255,.6);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    transition: all .15s;
-    user-select: none;
-  }
-  .sidebar-nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
-  .sidebar-nav-item.active { border-left-color: var(--ac); color: #fff; background: rgba(255,255,255,.08); }
-  .sidebar-nav-item .sni { font-size: 16px; width: 22px; text-align: center; }
-  .sidebar-nav-group {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: .15em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,.25);
-    padding: 14px 20px 6px;
-  }
-
-  /* ── Área de contenido ── */
-  #content-desktop {
-    flex: 1;
-    min-width: 0;
-    overflow-y: auto;
-    height: 100vh;
-  }
-
-  /* Pantallas individuales */
-  .scr {
-    padding-bottom: 48px;
-    max-width: 100%;
-    min-height: 100vh;
-  }
-
-  /* Ocultar pantallas inactivas en desktop también */
-  .scr:not(.on) { display: none !important; }
-  .scr.on { display: flex !important; }
-
-  /* Toolbar */
-  .tb {
-    padding: 16px 32px 14px;
-    background: var(--cr);
-  }
-
-  /* Padding lateral en pantallas */
-  .sp { padding: 0 32px; }
-  .grid { padding: 0 32px 22px; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-  .pgrid { padding: 0 32px 16px; }
-  .mwrap { padding: 0 32px; }
-  .swrap { padding: 0 32px; }
-  .awrap { padding: 0 32px; }
-  .dash-section { padding: 0 32px; }
-  .tabs { margin: 0 32px 16px; }
-
-  /* HOME — grid de 4 columnas */
-  #s-home .grid { grid-template-columns: repeat(4, 1fr); }
-  #s-home .card[style*="grid-column:1/-1"] { grid-column: span 2; }
-
-  /* KPIs más grandes */
-  .kpi-value { font-size: 28px; }
-  .dash-kpi-grid { grid-template-columns: repeat(4, 1fr); }
-
-  /* Stock — lista más compacta */
-  .stock-item { padding: 10px 14px; }
-
-  /* Historial — 2 columnas */
-  #hist-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 0 32px; }
-  #hist-lista .sl { grid-column: 1 / -1; }
-  #hist-lista .hitem { margin-bottom: 0; }
-
-  /* Hero home ocultar en desktop */
-  .hero { display: none; }
-  .ruled { display: none; }
-
-  /* Modal más centrado */
-  .modal-box { border-radius: 16px; margin: auto; max-width: 560px; max-height: 85vh; }
-  #stock-modal.open,
-  #dev-modal,
-  #desc-modal,
-  #ficha-modal,
-  #edit-items-modal,
-  #edit-nota-modal,
-  #cat-modal,
-  [id$="-modal"][style*="flex"] {
-    align-items: center !important;
-  }
-
-  /* Botón back ocultarlo en desktop (navegación por sidebar) */
-  .bk { display: none; }
-
-  /* Fichas — 2 columnas */
-  #fichas-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-
-  /* Dashboard tabla más espaciosa */
-  .dash-table { font-size: 13px; }
-  .dash-table th, .dash-table td { padding: 10px 10px 10px 0; }
-
-  /* Stock lista en 2 columnas */
-  #stock-lista { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  #stock-lista .stock-item { margin-bottom: 0; }
-
-  /* Plan fichas en 2 columnas */
-  #plan-fichas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-}
-
-/* Sidebar oculto en móvil */
-#sidebar-desktop { display: none; }
-
 </style>
 </head>
 <body>
 <div id="app">
-<div id="sidebar-desktop">
-  <div class="sidebar-logo"><span>MWK</span></div>
-  <div class="sidebar-nav-group">Principal</div>
-  <div class="sidebar-nav-item active" id="snav-home" onclick="ir('s-home');snav('home')">
-    <span class="sni">🏠</span> Inicio
-  </div>
-  <div class="sidebar-nav-item" id="snav-pedido" onclick="ir('s-pedido');snav('pedido')">
-    <span class="sni">📄</span> Nota de pedido
-  </div>
-  <div class="sidebar-nav-item" id="snav-historial" onclick="ir('s-historial');snav('historial')">
-    <span class="sni">🗂</span> Historial
-  </div>
-  <div class="sidebar-nav-group">Inventario</div>
-  <div class="sidebar-nav-item" id="snav-stock" onclick="ir('s-stock');snav('stock')">
-    <span class="sni">📦</span> Stock
-  </div>
-  <div class="sidebar-nav-item" id="snav-devoluciones" onclick="ir('s-devoluciones');snav('devoluciones')">
-    <span class="sni">↩</span> Devoluciones
-  </div>
-  <div class="sidebar-nav-group">Producción</div>
-
-  <div class="sidebar-nav-item" id="snav-produccion" onclick="ir('s-produccion');snav('produccion')">
-    <span class="sni">✂</span> Producción
-  </div>
-  <div class="sidebar-nav-group">Reportes</div>
-  <div class="sidebar-nav-item" id="snav-dashboard" onclick="ir('s-dashboard');snav('dashboard')">
-    <span class="sni">📊</span> Dashboard
-  </div>
-  <div class="sidebar-nav-item" id="snav-proveedores" onclick="ir('s-proveedores');snav('proveedores')">
-    <span class="sni">👥</span> Proveedores
-  </div>
-</div>
-<div id="content-desktop">
 
 <!-- HOME -->
 <div id="s-home" class="scr on">
@@ -625,14 +438,20 @@ select.fi{appearance:none;
       <div class="ct">Devoluciones</div>
       <div class="cs" id="dev-count">Sin registros</div>
     </div>
-    <div class="cs" id="fichas-count">Costos por modelo</div>
+    <div class="card" onclick="ir('s-fichas')">
+      <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></span>
+      <div class="ct">Consumos</div>
+      <div class="cs" id="fichas-count">Costos por modelo</div>
     </div>
     <div class="card" onclick="ir('s-produccion')">
       <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg></span>
       <div class="ct">Producción</div>
       <div class="cs" id="prod-count">Movimientos de stock</div>
     </div>
-    <div class="cs">Explosión de consumos y orden de compra</div>
+    <div class="card" onclick="ir('s-planificacion')" style="grid-column:1/-1;">
+      <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></span>
+      <div class="ct">Planificación</div>
+      <div class="cs">Explosión de consumos y orden de compra</div>
     </div>
     <div class="card" onclick="ir('s-dashboard')" style="grid-column:1/-1;">
       <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></span>
@@ -839,32 +658,8 @@ select.fi{appearance:none;
 
 <!-- HISTORIAL -->
 <div id="s-historial" class="scr">
-  <!-- Toolbar + filtros sticky unificado -->
-  <div class="tb" style="flex-direction:column;align-items:stretch;gap:6px;padding-bottom:10px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <button class="bk" onclick="ir('s-home')">Inicio</button>
-      <h1 style="flex:1;">Historial de notas</h1>
-      <button onclick="limpiarFiltrosHist()" style="background:none;border:1px solid rgba(26,36,51,.15);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--t2);white-space:nowrap;">✕ Limpiar</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-      <select class="fi" id="hflt-prov" style="height:32px;font-size:12px;" onchange="renderHistorial()">
-        <option value="">Todos los proveedores</option>
-      </select>
-      <select class="fi" id="hflt-estado" style="height:32px;font-size:12px;" onchange="renderHistorial()">
-        <option value="">Todos los estados</option>
-        <option value="pendiente">Pendientes</option>
-        <option value="recibido">Recibidos</option>
-        <option value="cancelado">Cancelados</option>
-      </select>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-      <input class="fi" type="date" id="hflt-desde" style="height:32px;font-size:12px;" onchange="renderHistorial()">
-      <input class="fi" type="date" id="hflt-hasta" style="height:32px;font-size:12px;" onchange="renderHistorial()">
-    </div>
-    <input class="fi" type="text" id="hflt-art" placeholder="🔍 Buscar artículo, tela o proveedor..." style="height:32px;font-size:12px;" oninput="renderHistorial()">
-    <div id="hist-resumen" style="font-size:11px;color:var(--t2);min-height:12px;"></div>
-  </div>
-  <div style="margin-top:8px;" id="hist-lista"></div>
+  <div class="tb"><button class="bk" onclick="ir('s-home')">Inicio</button><h1>Historial de notas</h1></div>
+  <div style="margin-top:16px;" id="hist-lista"></div>
 </div>
 
 <!-- RECEPCIÓN DE MERCADERÍA -->
@@ -1077,7 +872,128 @@ select.fi{appearance:none;
 </div>
 
 <!-- FICHAS DE PRENDAS -->
+<div id="s-fichas" class="scr">
+  <div class="tb">
+    <button class="bk" onclick="ir('s-home')">Inicio</button>
+    <h1>Consumos</h1>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="sp" style="margin-bottom:10px;" id="fichas-lista"></div>
+    <div class="sp">
+      <div class="sl" style="margin-bottom:9px;">Nueva ficha</div>
+      <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
 
+        <!-- Datos generales -->
+        <div class="frow">
+          <input class="fi" type="text" id="nf-nombre" placeholder="Nombre del modelo (ej: Buzo capucha)">
+          <select class="fi" id="nf-temp">
+            <option value="">Temporada...</option>
+            <option>Verano 2025</option><option>Invierno 2025</option>
+            <option>Verano 2026</option><option>Invierno 2026</option>
+            <option>Verano 2027</option><option>Invierno 2027</option>
+          </select>
+        </div>
+        <div class="frow">
+          <input class="fi" type="text" id="nf-ref" placeholder="Referencia / código (opcional)">
+          <input class="fi" type="number" id="nf-mo" placeholder="Mano de obra ($)" min="0" step="any">
+        </div>
+
+        <!-- TELAS -->
+        <div class="sl" style="margin:12px 0 6px;">🧵 Telas</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Consumo igual para todas las variantes</div>
+        <div id="nf-telas"></div>
+        <button class="addlink" onclick="addTelaFicha()">+ Agregar tela</button>
+
+        <!-- AVÍOS GLOBALES -->
+        <div class="sl" style="margin:14px 0 6px;">🔩 Avíos generales</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Avíos que no cambian entre variantes</div>
+        <div id="nf-mats"></div>
+        <button class="addlink" onclick="addMatFicha()">+ Agregar avío general</button>
+
+        <!-- Variantes de color -->
+        <div class="sl" style="margin:16px 0 6px;">🎨 Variantes de color</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:10px;">Cada color tiene su curva de talles y puede tener avíos específicos</div>
+        <div id="nf-colores"></div>
+        <button class="addlink" onclick="addColorFicha()">+ Agregar variante</button>
+
+        <button class="btn bmail" style="margin-top:14px;" onclick="guardarFicha()">Guardar ficha</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PLANIFICACIÓN -->
+<div id="s-planificacion" class="scr">
+  <div class="tb">
+    <button class="bk" onclick="ir('s-home')">Inicio</button>
+    <h1>Planificación</h1>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="sp" style="margin-bottom:10px;">
+      <div class="flbl" style="margin-bottom:6px;">Temporada a planificar</div>
+      <select class="fi" id="plan-temp" style="width:100%;" onchange="renderPlanFichas()">
+        <option value="">Todas</option>
+        <option>Verano 2025</option><option>Invierno 2025</option>
+        <option>Verano 2026</option><option>Invierno 2026</option>
+        <option>Verano 2027</option><option>Invierno 2027</option>
+      </select>
+    </div>
+    <div class="sp" style="margin-bottom:10px;">
+      <div class="sl" style="margin-bottom:8px;">Unidades a producir por modelo</div>
+      <div id="plan-fichas"></div>
+    </div>
+    <div class="sp" style="margin-bottom:10px;">
+      <button class="btn bmail" onclick="explotarConsumos()">📐 Calcular consumos y stock faltante</button>
+    </div>
+    <div class="sp" id="plan-resultado" style="display:none;">
+      <!-- Tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="plan-tab active" onclick="planTab('total')" id="ptab-total">📋 Por material</button>
+        <button class="plan-tab" onclick="planTab('prov')" id="ptab-prov">🏭 Por proveedor</button>
+        <button class="plan-tab" onclick="planTab('modelo')" id="ptab-modelo">👕 Por modelo</button>
+        <button class="plan-tab" onclick="planTab('cortes')" id="ptab-cortes">✂ Cortes por talle</button>
+        <button class="plan-tab" onclick="planTab('crono')" id="ptab-crono">📅 Cronograma de corte</button>
+      </div>
+
+      <div id="plan-view-total">
+        <div id="plan-tabla"></div>
+      </div>
+      <div id="plan-view-prov" style="display:none;">
+        <div id="plan-tabla-prov"></div>
+      </div>
+      <div id="plan-view-modelo" style="display:none;">
+        <div id="plan-tabla-modelo"></div>
+      </div>
+      <div id="plan-view-cortes" style="display:none;">
+        <div class="sl" style="margin-bottom:8px;">Tabla de cortes por talle</div>
+        <div id="plan-cortes" style="overflow-x:auto;"></div>
+        <div id="plan-kg-color" style="display:none;"></div>
+      </div>
+
+      <div id="plan-view-crono" style="display:none;">
+        <div id="plan-crono-content"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn bpdf" onclick="exportarPlanificacion()">⬇ CSV</button>
+        <button class="btn bcpy" onclick="generarPedidoDesdePlan()">✦ Nota de pedido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FICHA -->
+<div id="ficha-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(255,255,255,.5);align-items:flex-end;justify-content:center;">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">
+      <span id="ficha-modal-title">Ficha</span>
+      <button class="modal-close" onclick="cerrarFichaModal()">×</button>
+    </div>
+    <div id="ficha-modal-content"></div>
+  </div>
+</div>
+
+<!-- PRODUCCIÓN — historial de movimientos -->
 <div id="s-produccion" class="scr">
   <div class="tb">
     <button class="bk" onclick="ir('s-home')">Inicio</button>
@@ -1198,8 +1114,7 @@ create policy "allow all" on mwk_stock for all using (true) with check (true);</
   </div>
 </div>
 
-</div><!-- /content-desktop -->
-
+</div>
 <!-- MODAL EDICIÓN STOCK -->
 <div id="stock-modal">
   <div class="modal-box">
@@ -1380,13 +1295,6 @@ create policy "allow all" on mwk_stock for all using (true) with check (true);</
   </div>
 </div>
 <style>
-
-/* ── FICHA STEPS ──────────────────────────────────────────── */
-.ficha-step-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;}
-.ficha-step-num{width:28px;height:28px;border-radius:50%;background:var(--bk);color:#fff;
-  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.ficha-step-title{font-size:14px;font-weight:700;color:var(--bk);}
-.ficha-step-sub{font-size:12px;color:var(--t2);margin-top:2px;line-height:1.4;}
 @keyframes load{from{transform:translateX(-60%)}to{transform:translateX(200%)}}
 /* ── TABS PLANIFICACIÓN ────────────────────────────────────── */
 .plan-tab{background:var(--s2);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit;}
@@ -1611,21 +1519,7 @@ function inicializar() {
       if(Array.isArray(cat)) { st.catalogo=cat; renderCatCount(); populateCatDatalist(); }
     }).catch(function(){});
     SB.from('mwk_fichas').select('*').then(function(fichas){
-      if(Array.isArray(fichas)) {
-        st.fichas = fichas;
-        renderFichasCount();
-        // Migrar color desde colores[0].color al campo f.color
-        fichas.forEach(function(f){
-          if (!(f.color||'').trim()) {
-            var c0 = (f.colores||[])[0];
-            var colorMigrado = (c0 && (c0.color||'').trim()) ? c0.color.trim() : '';
-            if (colorMigrado && f.id) {
-              f.color = colorMigrado;
-              SB.from('mwk_fichas').update({color: colorMigrado}, {id: f.id}).catch(function(){});
-            }
-          }
-        });
-      }
+      if(Array.isArray(fichas)) { st.fichas = fichas; renderFichasCount(); }
     }).catch(function(){});
     var cfgRow = cfg && cfg[0];
     st.nextNro    = cfgRow ? (cfgRow.next_nro||1) : 1;
@@ -1690,7 +1584,7 @@ function recargarDatos() {
     if (activa) {
       var id = activa.id;
       if (id==='s-home')renderHome();
-      if (id==='s-historial'){renderHistorial();}
+      if (id==='s-historial')renderHistorial();
       if (id==='s-catalogo')renderCatLista();
       if (id==='s-proveedores')renderProvLista();
     }
@@ -1757,23 +1651,19 @@ function cargarConfigGuardada() {
 // ════════════════════════════════════════════════════════════════
 // NAVEGACIÓN
 // ════════════════════════════════════════════════════════════════
-function snav(key) {
-  document.querySelectorAll('.sidebar-nav-item').forEach(function(el){ el.classList.remove('active'); });
-  var el = document.getElementById('snav-'+key);
-  if (el) el.classList.add('active');
-}
-
 function ir(id){
   document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
   document.getElementById(id).classList.add('on');
-  window.scrollTo({top:0, behavior:'instant'});
+  window.scrollTo(0,0);
   if(id==='s-pedido'){renderGrid();renderRows();renderPsel();actualizarNro();actualizarCnt();loadCotiz();}
   if(id==='s-proveedores')renderProvLista();
-  if(id==='s-historial'){renderHistorial();}
+  if(id==='s-historial')renderHistorial();
   if(id==='s-home')renderHome();
   if(id==='s-dashboard')renderDashboard();
   if(id==='s-stock')renderStock();
   if(id==='s-devoluciones')renderDevoluciones();
+  if(id==='s-fichas'){renderFichasLista();nfMats=nfMats||[];nfColores=nfColores||[];renderNfMats();initFichaForm();}
+  if(id==='s-planificacion')renderPlanFichas();
   if(id==='s-produccion')renderProduccion();
 }
 
@@ -1929,10 +1819,10 @@ function actualizarStockDesdeRecepcion(items, recepcion) {
       };
       SB.from('mwk_stock').insert(nuevoItem).then(function(res){
         var row = Array.isArray(res)?res[0]:res;
-        if(row && row.id){ st.stock.push(row); renderStock(); }
-        else { st.stock.push(nuevoItem); }
-        toast('📦 '+nuevoItem.nombre+' agregado al stock');
-      }).catch(function(e){ toast('⚠ Error al agregar al stock: '+(e.message||e)); });
+        if(row) st.stock.push(row);
+        toast('📦 '+it.nombre+' agregado al stock');
+      }).catch(function(){});
+      noEncontrados = noEncontrados.filter(function(n){ return n !== (it.nombre+(it.color?' ('+it.color+')':'')); });
       return;
     }
     if (match) {
@@ -2556,81 +2446,19 @@ function borrarProd(id){
 // ════════════════════════════════════════════════════════════════
 // HISTORIAL
 // ════════════════════════════════════════════════════════════════
-function limpiarFiltrosHist() {
-  var ids = ['hflt-prov','hflt-estado','hflt-desde','hflt-hasta','hflt-art'];
-  ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  renderHistorial();
-}
-
 function renderHistorial(){
   var c=document.getElementById('hist-lista');if(!c)return;
   if(!st.historial.length){c.innerHTML='<div class="empty"><div class="ei">🗂</div>No hay pedidos aún</div>';return;}
 
-  // Poblar selector de proveedores
-  var selProv = document.getElementById('hflt-prov');
-  if (selProv) {
-    var curProv = selProv.value;
-    var provs = [];
-    st.historial.forEach(function(h){ if(h.proveedor && provs.indexOf(h.proveedor)===-1) provs.push(h.proveedor); });
-    provs.sort();
-    selProv.innerHTML = '<option value="">Todos los proveedores</option>' +
-      provs.map(function(p){ return '<option value="'+esc(p)+'"'+(p===curProv?' selected':'')+'>'+esc(p)+'</option>'; }).join('');
-    selProv.value = curProv;
-  }
-
-  // Leer filtros
-  var fProv   = (document.getElementById('hflt-prov')||{value:''}).value;
-  var fEstado = (document.getElementById('hflt-estado')||{value:''}).value;
-  var fDesde  = (document.getElementById('hflt-desde')||{value:''}).value;
-  var fHasta  = (document.getElementById('hflt-hasta')||{value:''}).value;
-  var fArt    = ((document.getElementById('hflt-art')||{value:''}).value||'').toLowerCase().trim();
-
-  // Aplicar filtros
-  var lista = st.historial.filter(function(h, idx){
-    h._idx = idx; // guardar índice original
-    // Proveedor
-    if (fProv && (h.proveedor||'') !== fProv) return false;
-    // Estado
-    if (fEstado === 'pendiente' && (h.rec_confirmado || h.estado === 'cancelado')) return false;
-    if (fEstado === 'recibido'  && !h.rec_confirmado) return false;
-    if (fEstado === 'cancelado' && h.estado !== 'cancelado') return false;
-    // Fecha
-    if (fDesde && h.fecha && h.fecha < fDesde) return false;
-    if (fHasta && h.fecha && h.fecha > fHasta) return false;
-    // Artículo / tela: buscar en detalle, items
-    if (fArt) {
-      var hayMatch = (h.detalle||'').toLowerCase().indexOf(fArt) !== -1 ||
-                     (h.proveedor||'').toLowerCase().indexOf(fArt) !== -1;
-      if (!hayMatch && h.items_data) {
-        hayMatch = h.items_data.some(function(it){
-          return (it.nombre||'').toLowerCase().indexOf(fArt) !== -1 ||
-                 (it.color||'').toLowerCase().indexOf(fArt) !== -1;
-        });
-      }
-      if (!hayMatch) return false;
-    }
-    return true;
-  });
-
-  // Resumen
-  var resEl = document.getElementById('hist-resumen');
-  if (resEl) {
-    var hayFiltro = fProv || fEstado || fDesde || fHasta || fArt;
-    resEl.textContent = hayFiltro ? lista.length + ' resultado' + (lista.length !== 1 ? 's' : '') + ' de ' + st.historial.length + ' pedidos' : '';
-  }
-
-  if (!lista.length) {
-    c.innerHTML = '<div class="empty"><div class="ei">🔍</div>Sin resultados para ese filtro</div>';
-    return;
-  }
-
-  // Separar por estado usando la lista filtrada
-  var pendientes = lista.filter(function(h){ return !h.rec_confirmado && h.estado!=='cancelado'; });
-  var recibidas  = lista.filter(function(h){ return h.rec_confirmado; });
-  var canceladas = lista.filter(function(h){ return h.estado==='cancelado'; });
+  // Separar y ordenar por número descendente (más reciente arriba)
+  var pendientes = st.historial.filter(function(h){ return !h.rec_confirmado && h.estado!=='cancelado'; })
+    .sort(function(a,b){ return (b.nro_num||0)-(a.nro_num||0); });
+  var recibidas  = st.historial.filter(function(h){ return h.rec_confirmado; })
+    .sort(function(a,b){ return (b.nro_num||0)-(a.nro_num||0); });
+  var canceladas = st.historial.filter(function(h){ return h.estado==='cancelado'; })
+    .sort(function(a,b){ return (b.nro_num||0)-(a.nro_num||0); });
 
   function renderCard(h, idx) {
-    var realIdx = (h._idx !== undefined) ? h._idx : idx;
     var estadoHTML='';
     if(h.rec_confirmado){
       if(h.alertas){
@@ -2643,8 +2471,8 @@ function renderHistorial(){
       }
     }
     var recBtn=h.rec_confirmado?
-      '<button class="brec" onclick="abrirRecepcion('+realIdx+')">📋 Ver recepción</button>':
-      '<button class="brec" onclick="abrirRecepcion('+realIdx+')">📥 Registrar llegada</button>';
+      '<button class="brec" onclick="abrirRecepcion('+idx+')">📋 Ver recepción</button>':
+      '<button class="brec" onclick="abrirRecepcion('+idx+')">📥 Registrar llegada</button>';
     var cancelado=h.estado==='cancelado';
     return'<div class="hitem'+(cancelado?' cancelado':'')+'">'+
       (cancelado?'<div style="background:#8b2e22;padding:4px 14px;"><span style="font-size:10px;font-weight:700;color:#fff;letter-spacing:.08em;">PEDIDO CANCELADO</span></div>':'')+
@@ -2658,12 +2486,12 @@ function renderHistorial(){
       '<div style="margin-top:10px;">'+
       recBtn+
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px;">'+
-        '<button class="hpdf" style="width:100%;" onclick="generarPDF(true,st.historial['+realIdx+'])">⬇ PDF</button>'+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#2a5a8a;" onclick="abrirEditNota('+realIdx+')">✏ Editar</button>':'<span></span>')+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#5a2a8a;" onclick="abrirEditItems('+realIdx+')">✎ Ítems</button>':'<span></span>')+
-        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#b06020;" onclick="cancelarPedido('+realIdx+')">✕ Cancelar</button>':
+        '<button class="hpdf" style="width:100%;" onclick="generarPDF(true,st.historial['+idx+'])">⬇ PDF</button>'+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#2a5a8a;" onclick="abrirEditNota('+idx+')">✏ Editar</button>':'<span></span>')+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#5a2a8a;" onclick="abrirEditItems('+idx+')">✎ Ítems</button>':'<span></span>')+
+        (h.estado!=='cancelado'?'<button class="hpdf" style="width:100%;color:#b06020;" onclick="cancelarPedido('+idx+')">✕ Cancelar</button>':
          '<span style="font-size:11px;font-weight:700;color:#b06020;padding:3px 8px;grid-column:1/3;">CANCELADO</span>')+
-        '<button class="hpdf" style="width:100%;color:#8b2e22;" onclick="eliminarPedido('+realIdx+')">🗑</button>'+
+        '<button class="hpdf" style="width:100%;color:#8b2e22;" onclick="eliminarPedido('+idx+')">🗑</button>'+
       '</div>'+
       '</div></div>'+
     '</div>';
@@ -3887,16 +3715,8 @@ function getStockFiltrado() {
     if (qHoja && String(s.hoja||'').toLowerCase().indexOf(qHoja) === -1) return false;
     if (qProv && (s.proveedor||'').toLowerCase().indexOf(qProv) === -1) return false;
     if (q) {
-      var txt = ((s.nombre||'')+' '+(s.color||'')+' '+(s.color_diseno||'')+' '+(s.proveedor||'')).toLowerCase();
-      // Primero intentar match exacto
-      if (txt.indexOf(q) !== -1) return true;
-      // Si no, buscar por palabras — ignorar texto entre paréntesis en la query
-      var qClean = q.replace(/\([^)]*\)/g, '').trim();
-      if (qClean && txt.indexOf(qClean) !== -1) return true;
-      // Buscar por palabras individuales de 3+ chars
-      var palabras = qClean.split(/\s+/).filter(function(p){ return p.length >= 3; });
-      if (palabras.length > 0 && palabras.every(function(p){ return txt.indexOf(p) !== -1; })) return true;
-      return false;
+      var txt = ((s.nombre||'')+(s.color||'')+(s.color_diseno||'')).toLowerCase();
+      if (txt.indexOf(q) === -1) return false;
     }
     return true;
   });
@@ -4129,10 +3949,8 @@ function renderStockLista() {
             var pARS=parseFloat(s.precio_ars)||0;
             var pUSD=parseFloat(s.precio_unit)||0;
             var rindeC=parseFloat(s.rinde)||0;
-            // Usar precio_ars guardado (ya calculado con cotiz real al editar)
-            // Solo recalcular si precio_ars parece ser el valor USD (guardado mal)
-            if(pARS>0 && pUSD>0 && Math.abs(pARS-pUSD)<0.5) {
-              // precio_ars es igual al USD — intentar recalcular
+            // Usar precio_ars guardado. Solo recalcular si parece ser el valor USD (mal guardado)
+            if(s.moneda==='USD' && pUSD>0 && pARS>0 && Math.abs(pARS-pUSD)<1) {
               var _c=getCotiz();
               if(_c<=1){try{_c=parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0;}catch(e){}}
               if(_c<=1)_c=st.cotizUSD||0;
@@ -4246,22 +4064,8 @@ function guardarEdicionStock() {
   var mts = parseFloat(document.getElementById('em-mts').value)||0;
   var moneda    = document.getElementById('em-moneda').value||'ARS';
   var precioU   = parseFloat(document.getElementById('em-precio').value)||0;
-  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||0;
-  if (!cotizU || cotizU<=1) { try{ cotizU=parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0; }catch(e){} }
-  if (!cotizU || cotizU<=1) cotizU = getCotiz();
-  if (!cotizU || cotizU<=1) cotizU = 1;
-  var precioARS = moneda==='USD' ? Math.round(precioU*cotizU*100)/100 : precioU;
-  var rindeVal  = parseFloat(document.getElementById('em-rinde').value)||0;
-  var ucVal     = document.getElementById('em-unidad-compra') ? document.getElementById('em-unidad-compra').value : 'kg';
-  // Calcular precio x metro SIEMPRE desde los valores del formulario (no depender del campo readonly)
-  var precioMetro = 0;
-  if (precioARS > 0) {
-    if (ucVal === 'kg' && rindeVal > 0) {
-      precioMetro = Math.round(precioARS / rindeVal * 100) / 100;
-    } else if (ucVal === 'm') {
-      precioMetro = precioARS;
-    }
-  }
+  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||1;
+  var precioARS = moneda==='USD' ? precioU*cotizU : precioU;
   var data = {
     nombre:       document.getElementById('em-nom').value.trim(),
     color:        document.getElementById('em-color').value.trim(),
@@ -4271,24 +4075,23 @@ function guardarEdicionStock() {
     stock_mts:    mts,
     kg:           parseFloat(document.getElementById('em-kg').value)||0,
     ancho:        parseFloat(document.getElementById('em-ancho').value)||0,
-    rinde:        rindeVal,
+    rinde:        parseFloat(document.getElementById('em-rinde').value)||0,
     stock_minimo: parseFloat(document.getElementById('em-min').value)||0,
     categoria:    document.getElementById('em-cat').value,
     observaciones:document.getElementById('em-obs').value.trim(),
-    cantidad:     (function(){ return ucVal==='u'?(parseFloat(document.getElementById('em-cant')?document.getElementById('em-cant').value:0)||0):mts; })(),
+    cantidad:     (function(){ var uc3=(document.getElementById('em-unidad-compra')||{}).value||'kg'; return uc3==='u'?(parseFloat(document.getElementById('em-cant')?document.getElementById('em-cant').value:0)||0):mts; })(),
     precio_unit:   precioU,
     moneda:        moneda,
     cotiz_usd:     cotizU,
     precio_ars:    precioARS,
-    unidad_compra: ucVal,
-    precio_metro:  precioMetro
+    unidad_compra: document.getElementById('em-unidad-compra')?document.getElementById('em-unidad-compra').value:'kg',
+    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||0
   };
   SB.from('mwk_stock').update(data, {id: s.id}).then(function(){
-    // precio_metro calculado desde formulario: ${data.precio_metro}
     Object.assign(s, data);
     cerrarModalStock();
     renderStock();
-    var infoMsg = '✅ Actualizado'+(data.precio_metro>0?' · $'+fmt(data.precio_metro)+'/m':''); toast(infoMsg);
+    toast('✅ Tela actualizada');
   }).catch(function(e){ toast('Error: '+(e.message||e)); });
 }
 
@@ -4673,179 +4476,6 @@ function pdfDevolucion(idx) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// REPORTE DE COSTOS PDF
-// ════════════════════════════════════════════════════════════════
-function pdfReporteCostos(fichaIdx) {
-  var fichas = fichaIdx !== undefined ? [(st.fichas||[])[fichaIdx]] : (st.fichas||[]);
-  fichas = fichas.filter(Boolean);
-  if (!fichas.length) { toast('Sin fichas'); return; }
-  generarPDFCostos(fichas);
-}
-
-function pdfReporteGeneral() {
-  var fichas = st.fichas||[];
-  if (!fichas.length) { toast('Sin fichas'); return; }
-  generarPDFCostos(fichas);
-}
-
-function generarPDFCostos(fichas) {
-  toast('Generando reporte...');
-  var MM = 150/25.4;
-  var PW = Math.round(210*MM); var PH = Math.round(297*MM);
-  var cv = document.createElement('canvas');
-  cv.width=PW; cv.height=PH;
-  cv.style.cssText='position:fixed;left:-9999px;top:-9999px;';
-  document.body.appendChild(cv);
-  var ctx = cv.getContext('2d');
-  function p(mm){ return Math.round(mm*MM); }
-  function rf(x,y,w,h,col){ ctx.fillStyle=col; ctx.fillRect(p(x),p(y),p(w),p(h)); }
-  function tx(str,x,y,sz,col,align,bold){
-    ctx.font=(bold?'700 ':'400 ')+p(sz)+'px Arial,sans-serif';
-    ctx.fillStyle=col||'#2C2416'; ctx.textAlign=align||'left';
-    ctx.fillText(String(str||''),p(x),p(y)); ctx.textAlign='left';
-  }
-  // Texto con truncado automático
-  function txClip(str,x,y,sz,col,maxW,bold){
-    ctx.font=(bold?'700 ':'400 ')+p(sz)+'px Arial,sans-serif';
-    ctx.fillStyle=col||'#2C2416';
-    var s=String(str||'');
-    while(s.length>4 && ctx.measureText(s).width > p(maxW)) s=s.slice(0,-1);
-    if(s!==String(str||'')) s=s.slice(0,-1)+'…';
-    ctx.fillText(s,p(x),p(y));
-  }
-  function ln(x1,y1,x2,y2,col){ ctx.strokeStyle=col||'#E8E0D4'; ctx.lineWidth=p(0.3); ctx.beginPath(); ctx.moveTo(p(x1),p(y1)); ctx.lineTo(p(x2),p(y2)); ctx.stroke(); }
-  var CY = 0; // declarado aquí para que filaInsumo lo pueda usar
-  // Fila de insumo con nombre truncado
-  function filaInsumo(nom,cant,unid,precio,tot,indent){
-    var ix = indent||18;
-    txClip(nom, ix, CY+4, 3.2, '#2C2416', 85);
-    tx(cant+' '+(unid||'u'), 106, CY+4, 3.2, '#6B6158');
-    tx('$'+fmt(precio)+'/'+unid, 132, CY+4, 3.2, '#6B6158');
-    tx('$'+fmt(tot), 194, CY+4, 3.2, '#2C2416', 'right', true);
-    CY += 8;
-  }
-
-  var pages = [];
-
-  fichas.forEach(function(f, fi) {
-    // Reset canvas
-    ctx.clearRect(0,0,PW,PH);
-    rf(0,0,210,297,'#FDFAF6');
-
-    // Header
-    rf(0,0,210,38,'#4D6478');
-    tx('MWK',16,16,10,'#fff',undefined,true);
-    tx('CONSUMOS Y COSTOS',210-16,16,4.5,'rgba(255,255,255,.7)','right');
-    tx(new Date().toLocaleDateString('es-AR'),210-16,26,3.5,'rgba(255,255,255,.5)','right');
-
-    CY = 48;
-    var fam = f.familia||f.referencia||'';
-    // Modelo
-    tx(esc(f.nombre),16,CY+8,7,'#2C2416',undefined,true);
-    var subtit = [f.temporada, fam, getColorFicha(f)].filter(Boolean).join(' · ');
-    if (subtit) tx(subtit,16,CY+18,3.5,'#A89E94');
-    CY += 30;
-    ln(16,CY,194,CY); CY += 8;
-
-    // Determinar estructura: nueva (f.telas/f.materiales) o vieja (colores[0].avios)
-    var tieneTelasNuevas = (f.telas||[]).length > 0;
-    var tieneMatsNuevas  = (f.materiales||[]).length > 0;
-    var telas, avios;
-    if (tieneTelasNuevas || tieneMatsNuevas) {
-      telas = f.telas||[];
-      avios = f.materiales||[];
-    } else {
-      var c0 = (f.colores||[])[0]||{};
-      telas = getColTelas(c0, fam);
-      avios = getColAvios(c0, fam);
-    }
-
-    // TELAS
-    if (telas.length) {
-      tx('TELAS',16,CY+4,3,'#6A8090',undefined,true);
-      CY += 8;
-      telas.forEach(function(m){
-        filaInsumo(esc(m.nombre||'—'), m.cantidad, m.unidad||'m', m.precio||0,
-          (parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0));
-      });
-      ln(16,CY,194,CY); CY += 6;
-    }
-
-    // AVIOS
-    if (avios.length) {
-      tx('AVIOS',16,CY+4,3,'#6A8090',undefined,true);
-      CY += 8;
-      avios.forEach(function(m){
-        filaInsumo(esc(m.nombre||'—'), m.cantidad, m.unidad||'u', m.precio||0,
-          (parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0));
-      });
-      ln(16,CY,194,CY); CY += 6;
-    }
-
-    // CURVA DE TALLES
-    var talles = (f.talles && Object.keys(f.talles).length) ? f.talles : ((f.colores||[])[0]||{}).talles||{};
-    var tallActivos = TALLES_TODOS.filter(function(t){ return (talles[t]||0) > 0; });
-    if (tallActivos.length) {
-      tx('CURVA DE TALLES',16,CY+4,3,'#6A8090',undefined,true);
-      CY += 9;
-      var colW = 15, cols = tallActivos.length, startX = 18;
-      tallActivos.forEach(function(t,ti){
-        var bx = startX + ti*colW;
-        rf(bx, CY, colW-1, 12, '#F2EDE4');
-        tx(t, bx+(colW-1)/2, CY+4.5, 2.8, '#6B6158', 'center');
-        tx(String(talles[t]), bx+(colW-1)/2, CY+10, 3.5, '#2C2416', 'center', true);
-      });
-      CY += 14;
-      tx('Total: '+totalTalles(talles)+' unidades', 18, CY+4, 3, '#6B6158');
-      CY += 8;
-      ln(16,CY,194,CY); CY += 6;
-    }
-
-    // RESUMEN
-    CY += 4;
-    var costTelas = telas.reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0); },0);
-    var costAvios = avios.reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0); },0);
-    var costoTotal = costoFicha(f);
-    rf(16,CY,178,30,'#F2EDE4');
-    tx('Telas', 20, CY+9, 3, '#6B6158');
-    tx('$'+fmt(costTelas), 55, CY+9, 4, '#2C2416', undefined, true);
-    tx('Avios', 95, CY+9, 3, '#6B6158');
-    tx('$'+fmt(costAvios), 120, CY+9, 4, '#2C2416', undefined, true);
-    tx('COSTO TOTAL', 20, CY+22, 3, '#A89E94');
-    tx('$'+fmt(costoTotal), 194, CY+22, 6, '#C4866A', 'right', true);
-
-    // Footer
-    ln(16,285,194,285,'#E8E0D4');
-    tx('MWK · miwok.com.ar',16,291,3,'#A89E94');
-    tx((fi+1)+'/'+fichas.length,194,291,3,'#A89E94','right');
-
-    // Capturar esta página como canvas clone
-    var pageCanvas = document.createElement('canvas');
-    pageCanvas.width=PW; pageCanvas.height=PH;
-    pageCanvas.style.cssText='position:fixed;left:-9999px;top:-9999px;';
-    document.body.appendChild(pageCanvas);
-    pageCanvas.getContext('2d').drawImage(cv,0,0);
-    pages.push(pageCanvas);
-    // Resetear para siguiente página
-    if (fi < fichas.length-1) {
-      ctx.clearRect(0,0,PW,PH);
-    }
-  });
-
-  // Build PDF
-  document.body.removeChild(cv);
-  var jpgPages = pages.map(function(pc){
-    var b64 = pc.toDataURL('image/jpeg',0.92).split(',')[1];
-    try{document.body.removeChild(pc);}catch(e){}
-    return b64;
-  });
-  var fname = fichas.length===1
-    ? 'costos-'+(fichas[0].nombre||'ficha').replace(/[^a-zA-Z0-9]/g,'-')+'.pdf'
-    : 'reporte-costos-mwk.pdf';
-  buildPDFMultipage(jpgPages, PW, PH, fname);
-}
-
-// ════════════════════════════════════════════════════════════════
 // EXPORTAR STOCK CSV
 // ════════════════════════════════════════════════════════════════
 
@@ -4919,107 +4549,20 @@ function exportarDevoluciones() {
 
 var nfMats = []; // materiales de la nueva ficha en construcción
 
-function matchNombre(a, b) {
-  // Exacto
-  if (a === b) return true;
-  // Uno contiene al otro
-  if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1) return true;
-  // Match por palabras clave: al menos 2 palabras de 3+ chars en común
-  var wa = a.split(/[\s\-_\/]+/).filter(function(w){ return w.length >= 3; });
-  var wb = b.split(/[\s\-_\/]+/).filter(function(w){ return w.length >= 3; });
-  var comunes = wa.filter(function(w){ return wb.indexOf(w) !== -1; });
-  return comunes.length >= 2;
-}
-
-function calcPrecioStock(si) {
-  var pm = parseFloat(si.precio_metro)||0;
-  if (pm > 0) return pm;
-  var pa  = parseFloat(si.precio_ars)||0;
-  var pu  = parseFloat(si.precio_unit)||0;
-  var rin = parseFloat(si.rinde)||0;
-  var uc  = (si.unidad_compra||'kg').toLowerCase();
-  var mon = (si.moneda||'ARS');
-  if (pa > 0 && pu > 0 && Math.abs(pa - pu) < 1 && mon === 'USD') {
-    var cotiz = getCotiz(); if (cotiz > 1) pa = Math.round(pu * cotiz * 100) / 100;
-  }
-  if (pa > 0 && rin > 0 && uc === 'kg') return Math.round(pa / rin * 100) / 100;
-  if (pa > 0 && uc === 'm') return pa;
-  if (pu > 0 && mon === 'ARS' && rin > 0 && uc === 'kg') return Math.round(pu / rin * 100) / 100;
-  if (pu > 0 && mon === 'ARS' && uc === 'm') return pu;
-  if (pa > 0) return pa;
-  return 0;
-}
-
 function getPrecioFromHistorial(nombre) {
   if (!nombre || !nombre.trim()) return 0;
   var query = nombre.trim().toLowerCase();
 
-  // 1. Buscar en stock — match exacto o parcial o por palabras clave
+  // 1. Buscar en stock primero — precio_metro es el más directo
   var stockItems = (st.stock||[]);
-  // Primero: match exacto o por contenido
   for (var s=0; s<stockItems.length; s++) {
     var si = stockItems[s];
     var sNom = (si.nombre||'').trim().toLowerCase();
     if (sNom === query || sNom.indexOf(query) !== -1 || query.indexOf(sNom) !== -1) {
-      var p = calcPrecioStock(si);
-      if (p > 0) return p;
-    }
-  }
-  // Segundo: match por palabras clave (nombre parcial)
-  for (var s2=0; s2<stockItems.length; s2++) {
-    var si2 = stockItems[s2];
-    var sNom2 = (si2.nombre||'').trim().toLowerCase();
-    if (matchNombre(query, sNom2)) {
-      var p2 = calcPrecioStock(si2);
-      if (p2 > 0) return p2;
-    }
-  }
-
-  // 1b. Buscar en stock — ignorar sufijo de color (últimos 6 chars tipo -LAV001)
-  var queryBase = query.replace(/-[a-z0-9]{3,8}$/i, '').trim();
-  if (queryBase !== query) {
-    for (var s3=0; s3<stockItems.length; s3++) {
-      var si3 = stockItems[s3];
-      var sNom3 = (si3.nombre||'').trim().toLowerCase().replace(/-[a-z0-9]{3,8}$/i, '').trim();
-      if (sNom3 === queryBase || sNom3.indexOf(queryBase) !== -1 || queryBase.indexOf(sNom3) !== -1) {
-        var p3 = calcPrecioStock(si3);
-        if (p3 > 0) return p3;
-      }
-    }
-  }
-
-  // 1c. Catálogo
-  var catItems = (st.catalogo||[]);
-  for (var c=0; c<catItems.length; c++) {
-    var ci = catItems[c];
-    var cNom = (ci.nombre||'').trim().toLowerCase();
-    if (matchNombre(query, cNom) || cNom.indexOf(query) !== -1 || query.indexOf(cNom) !== -1) {
-      var cpm = parseFloat(ci.precio_metro)||0;
-      if (cpm > 0) return cpm;
-      var cpa = parseFloat(ci.precio_ars)||0;
-      var crin = parseFloat(ci.rinde)||0;
-      var cuc  = (ci.unidad_compra||'kg').toLowerCase();
-      if (cpa > 0 && crin > 0 && cuc === 'kg') return Math.round(cpa / crin * 100) / 100;
-      if (cpa > 0 && cuc === 'm') return cpa;
-      if (cpa > 0) return cpa;
-    }
-  }
-
-
-  // 2. Buscar en historial de pedidos
-  var catItems = (st.catalogo||[]);
-  for (var c=0; c<catItems.length; c++) {
-    var ci = catItems[c];
-    var cNom = (ci.nombre||'').trim().toLowerCase();
-    if (cNom === query || cNom.indexOf(query) !== -1 || query.indexOf(cNom) !== -1) {
-      var cpm = parseFloat(ci.precio_metro)||0;
-      if (cpm > 0) return cpm;
-      var cpa = parseFloat(ci.precio_ars)||0;
-      var crin = parseFloat(ci.rinde)||0;
-      var cuc  = (ci.unidad_compra||'kg').toLowerCase();
-      if (cpa > 0 && crin > 0 && cuc === 'kg') return Math.round(cpa / crin * 100) / 100;
-      if (cpa > 0 && cuc === 'm') return cpa;
-      if (cpa > 0) return cpa;
+      var pm = parseFloat(si.precio_metro)||0;
+      if (pm > 0) return pm;
+      var pa = parseFloat(si.precio_ars)||0;
+      if (pa > 0) return pa;
     }
   }
 
@@ -5242,53 +4785,36 @@ function guardarFicha() {
   // Validar que haya al menos una tela O un material
   var hayTelas = nfTelas.some(function(m){return (m.nombre||'').trim();});
   var hayMats  = nfMats.some(function(m){return (m.nombre||'').trim();});
-  var hayColoresViejos = nfColores.some(function(c){ return (c.avios||[]).length > 0; });
-  if (!hayTelas && !hayMats && !hayColoresViejos) {
+  if (!hayTelas && !hayMats) {
     toast('Agregá al menos una tela o avío'); return;
   }
-  // Auto-completar precios desde stock antes de guardar
   var telasData = nfTelas.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
-    var p = parseFloat(m.precio)||0;
-    if (!p) p = getPrecioFromHistorial(m.nombre);
-    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'m', precio:p};
+    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad||'m', precio:m.precio};
   });
   var matsData = nfMats.filter(function(m){return (m.nombre||'').trim();}).map(function(m){
-    var p = parseFloat(m.precio)||0;
-    if (!p) p = getPrecioFromHistorial(m.nombre);
-    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad, precio:p};
+    return {nombre:m.nombre.trim(), cantidad:m.cantidad, unidad:m.unidad, precio:m.precio};
   });
   var coloresData = nfColores.filter(function(c){return (c.color||'').trim();}).map(function(c){
     var avios=(c.avios||[]).filter(function(a){return (a.nombre||'').trim();}).map(function(a){
-      var p=parseFloat(a.precio)||0; if(!p) p=getPrecioFromHistorial(a.nombre);
-      return {nombre:a.nombre.trim(), cantidad:a.cantidad, unidad:a.unidad||'u', precio:p};
+      return {nombre:a.nombre.trim(), cantidad:a.cantidad, unidad:a.unidad||'u', precio:a.precio};
     });
-    var telas=(c.telas||[]).filter(function(t){return (t.nombre||'').trim();}).map(function(t){
-      var p=parseFloat(t.precio)||0; if(!p) p=getPrecioFromHistorial(t.nombre);
-      return {nombre:t.nombre.trim(), cantidad:t.cantidad, unidad:t.unidad||'m', precio:p};
-    });
-    return {color:c.color.trim(), talles:c.talles, total:totalTalles(c.talles), avios:avios, telas:telas};
+    return {color:c.color.trim(), talles:c.talles, total:totalTalles(c.talles), avios:avios};
   });
-  // Curva de talles directa (sin variantes)
-  var tallesDirecto = window.nfTallesDirecto || {};
-  var totalDirecto  = totalTalles(tallesDirecto);
-  var totalUnd = totalDirecto || coloresData.reduce(function(s,c){return s+c.total;},0);
+  var totalUnd = coloresData.reduce(function(s,c){return s+c.total;},0);
   var data = {
-    nombre:    nombre,
-    color:     (document.getElementById('nf-color')||{value:''}).value.trim(),
+    nombre: nombre,
     temporada: document.getElementById('nf-temp').value||'',
-    referencia:'',
-    familia:   (document.getElementById('nf-familia')||{value:''}).value.trim(),
-    mo:        0,
-    telas:     telasData,
-    materiales:matsData,
-    colores:   coloresData,
-    talles:    tallesDirecto,
+    referencia: (document.getElementById('nf-ref').value||'').trim(),
+    mo: parseFloat(document.getElementById('nf-mo').value)||0,
+    telas: telasData,
+    materiales: matsData,
+    colores: coloresData,
+    talles: coloresData.length ? coloresData[0].talles : {},
     total_unidades: totalUnd
   };
 
   function resetForm() {
     document.getElementById('nf-nombre').value='';
-    var nfCEl = document.getElementById('nf-color'); if(nfCEl) nfCEl.value='';
     document.getElementById('nf-temp').value='';
     document.getElementById('nf-ref').value='';
     document.getElementById('nf-mo').value='';
@@ -5296,26 +4822,20 @@ function guardarFicha() {
     renderNfMats(); renderNfTelas(); renderNfColores();
     window._editingFichaIdx = null;
     window._editingFichaId  = null;
-    var wrap = document.getElementById('ficha-form-wrap');
-    var btnN = document.getElementById('btn-nueva-ficha');
-    var btnG = document.getElementById('btn-guardar-ficha');
-    if (wrap) wrap.style.display = 'none';
-    if (btnN) btnN.textContent = '+ Nueva ficha de costos';
-    if (btnG) btnG.textContent = '💾 Guardar ficha';
+    var btn = document.querySelector('#s-fichas .btn.bmail');
+    if (btn) btn.textContent = 'Guardar ficha';
   }
 
   // EDICIÓN
   if (window._editingFichaId) {
-    console.log('Guardando ficha id:', window._editingFichaId, 'data:', JSON.stringify(data).slice(0,200));
-    SB.from('mwk_fichas').update(data, {id: window._editingFichaId}).then(function(res){
-      console.log('Respuesta update:', res);
+    SB.from('mwk_fichas').update(data, {id: window._editingFichaId}).then(function(){
       var idx = window._editingFichaIdx;
       if (idx !== null && idx !== undefined) Object.assign(st.fichas[idx], data);
       resetForm();
       renderFichasLista();
       renderFichasCount();
       toast('✅ Ficha actualizada');
-    }).catch(function(e){ console.error('Error update:', e); toast('Error: '+(e.message||e)); });
+    }).catch(function(e){toast('Error: '+(e.message||e));});
     return;
   }
 
@@ -5330,208 +4850,44 @@ function guardarFicha() {
   }).catch(function(e){toast('Error: '+(e.message||e));});
 }
 
-function esTelaItem(item, familia) {
-  var nombre = (item.nombre||'').toLowerCase();
-  var fam = (familia||'').toLowerCase();
-  if (fam) {
-    var palabras = fam.split(/[\s\/,\-]+/).filter(function(p){ return p.length >= 3; });
-    if (palabras.some(function(p){ return nombre.indexOf(p) !== -1; })) return true;
-  }
-  if ((item.unidad||'u') !== 'm') return false;
-  var avioKeywords = ['cierre','elast','bies','cinta','hilo','boton','broche','etiqueta','bolsa','tira','velcro','cordon','aguja','gancho','mosq','cremall'];
-  return !avioKeywords.some(function(k){ return nombre.indexOf(k) !== -1; });
-}
-function getColTelas(col, familia) {
-  if ((col.telas||[]).length > 0) return col.telas;
-  return (col.avios||[]).filter(function(a){ return esTelaItem(a, familia); });
-}
-function getColAvios(col, familia) {
-  if ((col.telas||[]).length > 0) return col.avios||[];
-  return (col.avios||[]).filter(function(a){ return !esTelaItem(a, familia); });
-}
-
-function getColorFicha(f) {
-  // Campo nuevo
-  if ((f.color||'').trim()) return f.color.trim();
-  // Fallback: primer color de variantes (estructura vieja)
-  var c0 = (f.colores||[])[0];
-  if (c0 && (c0.color||'').trim()) return c0.color.trim();
-  return '';
-}
-
-function precioMat(m) {
-  var p = parseFloat(m.precio)||0;
-  if (p > 0) return p;
-  return getPrecioFromHistorial(m.nombre||'');
-}
-
 function costoFicha(f) {
-  var fam = f.familia||f.referencia||'';
-  var tieneTelasNuevas = (f.telas||[]).length > 0;
-  var tieneMatsNuevas  = (f.materiales||[]).length > 0;
-
-  if (tieneTelasNuevas || tieneMatsNuevas) {
-    // Estructura nueva: usar f.telas y f.materiales, ignorar colores
-    var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
-    var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0);
-    return costTelas + costMats + (parseFloat(f.mo)||0);
-  } else {
-    // Estructura vieja: todo está en colores[0].avios
-    var c0 = (f.colores||[])[0] || {};
-    var avios = c0.avios || [];
-    return avios.reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0) + (parseFloat(f.mo)||0);
+  var costTelas = (f.telas||[]).reduce(function(s,m){ return s+(m.cantidad||0)*(m.precio||0); },0);
+  var costMats  = (f.materiales||[]).reduce(function(s,m){ return s+(m.cantidad||0)*(m.precio||0); },0);
+  var totalUnd  = (f.colores||[]).reduce(function(s,c){ return s+(c.total||0); },0);
+  var costAviosVar = 0;
+  if (totalUnd > 0) {
+    (f.colores||[]).forEach(function(c){
+      var peso=(c.total||0)/totalUnd;
+      var cc=(c.avios||[]).reduce(function(s,a){ return s+(a.cantidad||0)*(a.precio||0); },0);
+      costAviosVar += cc*peso;
+    });
   }
-}
-
-function costoFichaPorColor(f) {
-  // Devuelve {color: costo} para mostrar desglose
-  var colores = f.colores||[];
-  var result = {};
-  var costComun = (f.telas||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0)
-                + (f.materiales||[]).reduce(function(s,m){ return s+(parseFloat(m.cantidad)||0)*precioMat(m); },0)
-                + (parseFloat(f.mo)||0);
-  colores.forEach(function(c){
-    var ct=getColTelas(c,f.familia||f.referencia).reduce(function(s,t){ return s+(parseFloat(t.cantidad)||0)*precioMat(t); },0);
-    var ca=getColAvios(c,f.familia||f.referencia).reduce(function(s,a){ return s+(parseFloat(a.cantidad)||0)*precioMat(a); },0);
-    result[c.color||'—'] = costComun + ct + ca;
-  });
-  if (!colores.length) result['—'] = costComun;
-  return result;
-}
-
-function diagFicha(i) {
-  var f = (st.fichas||[])[i];
-  if (!f) return;
-  var msg = 'DIAGNOSTICO: ' + f.nombre + ' | ';
-  var allMats = (f.telas||[]).concat(f.materiales||[]);
-  allMats.forEach(function(m) {
-    var p = getPrecioFromHistorial(m.nombre||'');
-    var pG = parseFloat(m.precio)||0;
-    var q = (m.nombre||'').toLowerCase().trim();
-    var enStock = (st.stock||[]).filter(function(s){ return (s.nombre||'').toLowerCase().indexOf(q)!==-1; });
-    msg += '[' + m.nombre + '] guardado=$' + pG + ' calculado=$' + p;
-    if (enStock.length) {
-      var s0 = enStock[0];
-      msg += ' stock: pm=' + s0.precio_metro + ' pa=' + s0.precio_ars + ' pu=' + s0.precio_unit + ' rinde=' + s0.rinde + ' uc=' + s0.unidad_compra + ' mon=' + s0.moneda;
-    } else {
-      msg += ' NO ENCONTRADO EN STOCK';
-    }
-    msg += ' || ';
-  });
-  alert(msg);
-}
-
-function actualizarPreciosFichas() {
-  // Recorre todas las fichas y completa precios desde stock/catalogo
-  var fichas = st.fichas || [];
-  var actualizadas = 0;
-  fichas.forEach(function(f) {
-    var cambio = false;
-    // Telas
-    (f.telas||[]).forEach(function(m) {
-      if (!(parseFloat(m.precio) > 0)) {
-        var p = getPrecioFromHistorial(m.nombre||'');
-        if (p > 0) { m.precio = p; cambio = true; }
-      }
-    });
-    // Avios generales
-    (f.materiales||[]).forEach(function(m) {
-      if (!(parseFloat(m.precio) > 0)) {
-        var p = getPrecioFromHistorial(m.nombre||'');
-        if (p > 0) { m.precio = p; cambio = true; }
-      }
-    });
-    // Avios por variante
-    (f.colores||[]).forEach(function(c) {
-      (c.avios||[]).forEach(function(a) {
-        if (!(parseFloat(a.precio) > 0)) {
-          var p = getPrecioFromHistorial(a.nombre||'');
-          if (p > 0) { a.precio = p; cambio = true; }
-        }
-      });
-    });
-    // Guardar en Supabase si hubo cambios
-    if (cambio && f.id) {
-      actualizadas++;
-      SB.from('mwk_fichas').update({
-        telas: f.telas,
-        materiales: f.materiales,
-        colores: f.colores
-      }, {id: f.id}).catch(function(){});
-    }
-  });
-  if (actualizadas > 0) {
-    setTimeout(function(){ renderFichasLista(); }, 300);
-    toast('💰 Precios actualizados en ' + actualizadas + ' ficha' + (actualizadas !== 1 ? 's' : ''));
-  }
+  return costTelas + costMats + costAviosVar + (f.mo||0);
 }
 
 function renderFichasLista() {
   var el = document.getElementById('fichas-lista');
   if (!el) return;
   var lista = st.fichas||[];
-
-  // Poblar selects de filtro
-  var selTemp = document.getElementById('flt-temp');
-  var selFam  = document.getElementById('flt-familia');
-  if (selTemp && selFam) {
-    var curTemp = selTemp.value, curFam = selFam.value;
-    var temps = [], fams = [];
-    lista.forEach(function(f){
-      if (f.temporada && temps.indexOf(f.temporada)===-1) temps.push(f.temporada);
-      if (f.familia   && fams.indexOf(f.familia)===-1)   fams.push(f.familia);
-    });
-    temps.sort(); fams.sort();
-    selTemp.innerHTML = '<option value="">Todas las temporadas</option>' +
-      temps.map(function(t){ return '<option value="'+esc(t)+'"'+(t===curTemp?' selected':'')+'>'+esc(t)+'</option>'; }).join('');
-    selFam.innerHTML  = '<option value="">Todos los grupos</option>' +
-      fams.map(function(f){ return '<option value="'+esc(f)+'"'+(f===curFam?' selected':'')+'>'+esc(f)+'</option>'; }).join('');
-    selTemp.value = curTemp; selFam.value = curFam;
-  }
-
-  // Aplicar filtros
-  var fTemp = (selTemp ? selTemp.value : '');
-  var fFam  = (selFam  ? selFam.value  : '');
-  var fArt  = ((document.getElementById('flt-art')||{}).value||'').toLowerCase().trim();
-  var filtrada = lista.filter(function(f){
-    if (fTemp && (f.temporada||'').trim() !== fTemp.trim()) return false;
-    if (fFam  && (f.familia||'').trim()   !== fFam.trim())  return false;
-    if (fArt  && (f.nombre||'').toLowerCase().indexOf(fArt)===-1 &&
-                 (f.referencia||'').toLowerCase().indexOf(fArt)===-1 &&
-                 (f.familia||'').toLowerCase().indexOf(fArt)===-1) return false;
-    return true;
-  });
-
-  if (!filtrada.length) {
-    el.innerHTML = lista.length
-      ? '<div class="empty"><div class="ei">🔍</div>Sin resultados para ese filtro.</div>'
-      : '<div class="empty"><div class="ei">📋</div>Sin fichas creadas.<br>Creá tu primera ficha abajo.</div>';
+  if (!lista.length) {
+    el.innerHTML='<div class="empty"><div class="ei">📋</div>Sin fichas creadas.<br>Creá tu primera ficha abajo.</div>';
     return;
   }
-  el.innerHTML = filtrada.map(function(f){
-    var i = lista.indexOf(f);
+  el.innerHTML = lista.map(function(f,i){
     var costo = costoFicha(f);
-    var nColores = (f.colores||[]).filter(function(c){return c.color;}).length;
-    var colorChips = '';
-    var nInsumos = (f.telas||[]).length + (f.materiales||[]).length +
-      (f.colores||[]).reduce(function(s,c){ return s+(c.telas||[]).length+(c.avios||[]).length; },0);
     return '<div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:13px 14px;margin-bottom:9px;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
-        '<div style="flex:1;min-width:0;">'+
-          '<div style="font-size:15px;font-weight:700;">'+esc(f.nombre)+(getColorFicha(f)?' <span style="font-size:12px;font-weight:400;color:var(--t2);">— '+esc(getColorFicha(f))+'</span>':'')+'</div>'+
-          '<div style="font-size:11px;color:var(--t2);margin-top:2px;">'+esc(f.temporada||'—')+(f.familia?' · '+esc(f.familia):'')+'</div>'+
-          '<div style="font-size:11px;color:var(--t2);margin-top:3px;">'+nInsumos+' insumo'+(nInsumos!==1?'s':'')+' · '+nColores+' color'+(nColores!==1?'es':'')+'</div>'+
-          (colorChips?'<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:2px;">'+colorChips+'</div>':'')+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'+
+        '<div>'+
+          '<div style="font-size:15px;font-weight:700;">'+esc(f.nombre)+'</div>'+
+          '<div style="font-size:11px;color:var(--t2);margin-top:2px;">'+(f.referencia?esc(f.referencia)+' · ':'')+esc(f.temporada||'—')+'</div>'+
+          '<div style="margin-top:6px;font-size:12px;color:var(--t2);">'+(f.materiales||[]).length+' material'+(((f.materiales||[]).length!==1)?'es':'')+'</div>'+
         '</div>'+
-        '<div style="text-align:right;flex-shrink:0;">'+
-          (costo>0?'<div style="font-size:20px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div>'+
-          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">costo</div>':'<div style="font-size:12px;color:#c0622a;font-weight:600;">Sin precios</div>')+
-          '<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">'+
+        '<div style="text-align:right;">'+
+          '<div style="font-size:20px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div>'+
+          '<div style="font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">costo total</div>'+
+          '<div style="display:flex;gap:6px;margin-top:8px;">'+
             '<button class="adj-btn" onclick="verFicha('+i+')" title="Ver detalle">👁</button>'+
             '<button class="adj-btn" onclick="editarFicha('+i+')" title="Editar">✎</button>'+
-            '<button class="adj-btn" style="color:#5a7a3a;" onclick="duplicarFicha('+i+')" title="Duplicar ficha">⧉</button>'+
-            '<button class="adj-btn" style="color:var(--cobalt,#6A8090);" onclick="pdfReporteCostos('+i+')" title="Reporte PDF">⬇</button>'+
-            '<button class="adj-btn" style="color:#2a6a3a;" onclick="diagFicha('+i+')" title="Diagnóstico precios">🔍</button>'+
             '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarFicha('+i+')" title="Eliminar">×</button>'+
           '</div>'+
         '</div>'+
@@ -5551,76 +4907,47 @@ function renderFichasCount() {
 function verFicha(i) {
   var f = (st.fichas||[])[i];
   if (!f) return;
-  var fam = f.familia||f.referencia||'';
   var costo = costoFicha(f);
-  // Determinar qué telas y avíos mostrar (nueva o vieja estructura)
-  var tieneTelasNuevas = (f.telas||[]).length > 0;
-  var tieneMatsNuevas  = (f.materiales||[]).length > 0;
-  var telas, avios;
-  if (tieneTelasNuevas || tieneMatsNuevas) {
-    telas = f.telas||[];
-    avios = f.materiales||[];
-  } else {
-    var c0 = (f.colores||[])[0]||{};
-    telas = getColTelas(c0, fam);
-    avios = getColAvios(c0, fam);
-  }
-  var allInsumos = telas.concat(avios);
-
-  function filaInsumo(m) {
-    return '<tr><td>'+esc(m.nombre)+'</td><td>'+m.cantidad+'</td><td>'+esc(m.unidad)+'</td><td>$'+fmt(m.precio)+'</td><td style="font-weight:600;">$'+fmt((parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0))+'</td></tr>';
-  }
-
+  var mats = f.materiales||[];
   var el = document.getElementById('ficha-modal-content');
   var tit = document.getElementById('ficha-modal-title');
-  if (tit) tit.textContent = f.nombre + (getColorFicha(f) ? ' — '+getColorFicha(f) : '');
+  if (tit) tit.textContent = f.nombre;
   if (el) el.innerHTML =
-    '<div style="font-size:12px;color:var(--t2);margin-bottom:14px;">'+esc(f.temporada||'—')+(fam?' · '+esc(fam):'')+'</div>'+
-    (telas.length ? '<div style="font-size:11px;font-weight:700;color:#6A8090;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">🧵 Telas</div>'+
-    '<table class="dash-table" style="margin-bottom:12px;"><thead><tr><th>Material</th><th>Cant.</th><th>Unid.</th><th>$ unit.</th><th>$ total</th></tr></thead><tbody>'+
-    telas.map(filaInsumo).join('')+'</tbody></table>' : '')+
-    (avios.length ? '<div style="font-size:11px;font-weight:700;color:#6A8090;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">🔩 Avíos</div>'+
+    '<div style="font-size:12px;color:var(--t2);margin-bottom:14px;">'+(f.referencia?f.referencia+' · ':'')+esc(f.temporada||'—')+'</div>'+
     '<table class="dash-table" style="margin-bottom:14px;"><thead><tr><th>Material</th><th>Cant.</th><th>Unid.</th><th>$ unit.</th><th>$ total</th></tr></thead><tbody>'+
-    avios.map(filaInsumo).join('')+'</tbody></table>' : '')+
+    mats.map(function(m){
+      return '<tr><td>'+esc(m.nombre)+'</td><td>'+m.cantidad+'</td><td>'+esc(m.unidad)+'</td><td>$'+fmt(m.precio)+'</td><td style="font-weight:600;">$'+fmt((m.cantidad||0)*(m.precio||0))+'</td></tr>';
+    }).join('')+
+    '</tbody></table>'+
     '<div style="display:flex;gap:16px;padding:12px;background:var(--sa);border-radius:var(--r);margin-bottom:14px;">'+
-      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Telas</div><div style="font-size:16px;font-weight:700;">$'+fmt(telas.reduce(function(s,m){return s+(parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0);},0))+'</div></div>'+
-      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Avíos</div><div style="font-size:16px;font-weight:700;">$'+fmt(avios.reduce(function(s,m){return s+(parseFloat(m.cantidad)||0)*(parseFloat(m.precio)||0);},0))+'</div></div>'+
+      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Materiales</div><div style="font-size:16px;font-weight:700;">$'+fmt(costo-(f.mo||0))+'</div></div>'+
+      '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Mano de obra</div><div style="font-size:16px;font-weight:700;">$'+fmt(f.mo||0)+'</div></div>'+
       '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Costo total</div><div style="font-size:18px;font-weight:700;color:var(--bk);">$'+fmt(costo)+'</div></div>'+
     '</div>'+
-    (function(){
-      var talles = (f.talles && Object.keys(f.talles).length) ? f.talles : ((f.colores||[])[0]||{}).talles||{};
-      var activos = TALLES_TODOS.filter(function(t){ return (talles[t]||0) > 0; });
-      if (!activos.length) return '';
-      return '<div class="sl" style="margin-bottom:8px;">Curva de talles</div>'+
-        '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">'+
-        activos.map(function(t){
-          return '<div style="background:var(--sa);border-radius:var(--r);padding:5px 10px;text-align:center;min-width:44px;">'+
-            '<div style="font-size:10px;color:var(--t3);">'+t+'</div>'+
-            '<div style="font-size:15px;font-weight:700;">'+talles[t]+'</div></div>';
-        }).join('')+
-        '</div><div style="font-size:11px;color:var(--t2);">Total: '+totalTalles(talles)+' u</div>';
-    }());
+    ((f.colores && f.colores.length) ?
+      '<div class="sl" style="margin-bottom:8px;">Curva de talles por color</div>'+
+      f.colores.map(function(col){
+        var activos = TALLES_TODOS.filter(function(t){return (col.talles||{})[t]>0;});
+        if (!activos.length) return '';
+        return '<div style="margin-bottom:12px;">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;">'+esc(col.color||'—')+'</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+
+          activos.map(function(t){
+            return '<div style="background:var(--sa);border-radius:var(--r);padding:5px 10px;text-align:center;min-width:44px;">'+
+              '<div style="font-size:10px;color:var(--t3);">'+t+'</div>'+
+              '<div style="font-size:15px;font-weight:700;">'+(col.talles[t]||0)+'</div>'+
+            '</div>';
+          }).join('')+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--t2);margin-top:4px;">Total: '+totalTalles(col.talles||{})+' u</div>'+
+        '</div>';
+      }).join('')
+    : '');
   document.getElementById('ficha-modal').style.display = 'flex';
 }
 
 function cerrarFichaModal() {
   document.getElementById('ficha-modal').style.display = 'none';
-}
-
-function duplicarFicha(i) {
-  var f = (st.fichas||[])[i];
-  if (!f) return;
-  // Deep copy
-  var copia = JSON.parse(JSON.stringify(f));
-  delete copia.id;
-  copia.nombre = copia.nombre + ' (copia)';
-  copia.created_at = undefined;
-  SB.from('mwk_fichas').insert(copia).then(function(res) {
-    var nueva = res && res[0] ? res[0] : Object.assign({}, copia, {id: Date.now()});
-    st.fichas.push(nueva);
-    renderFichasLista();
-    toast('✅ Ficha duplicada: '+nueva.nombre);
-  }).catch(function(e) { toast('Error al duplicar: '+(e.message||e)); });
 }
 
 function eliminarFicha(i) {
@@ -5639,93 +4966,32 @@ function editarFicha(i) {
   if (!f) return;
   // Cargar datos en el formulario de nueva ficha
   document.getElementById('nf-nombre').value = f.nombre||'';
-  var nfColorEl = document.getElementById('nf-color'); if(nfColorEl) nfColorEl.value = f.color||'';
   document.getElementById('nf-temp').value   = f.temporada||'';
-  var nfFamEl = document.getElementById('nf-familia');
-  if(nfFamEl) nfFamEl.value = f.familia || f.referencia || '';
-  var nfRefEl = document.getElementById('nf-ref');
-  if(nfRefEl) nfRefEl.value = '';
-  // Cargar curva de talles directa
-  window.nfTallesDirecto = Object.assign({}, f.talles||{});
+  document.getElementById('nf-ref').value    = f.referencia||'';
   document.getElementById('nf-mo').value     = f.mo||'';
-  // ── Migración estructura vieja → nueva ──────────────────────
-  // En la estructura vieja todo estaba en colores[0].avios mezclado
-  var c0avios = ((f.colores||[])[0] || {}).avios || [];
-  function esTela2(item) {
-    // Si tiene grupo de tela, usarlo como referencia
-    var familia = (f.familia||f.referencia||'').toLowerCase();
-    var nombre  = (item.nombre||'').toLowerCase();
-    if (familia) {
-      // Dividir grupo en palabras y ver si alguna aparece en el nombre del item
-      var palabras = familia.split(/[\s\/,\-]+/).filter(function(p){ return p.length >= 3; });
-      if (palabras.some(function(p){ return nombre.indexOf(p) !== -1; })) return true;
-    }
-    // Fallback: unidad m Y no parece avío típico
-    if ((item.unidad||'u') !== 'm') return false;
-    var avioKeywords = ['cierre','elast','bies','cinta','hilo','boton','broche','etiqueta','bolsa','tira','velcro','cordon','aguja','gancho','mosq','cremall'];
-    return !avioKeywords.some(function(k){ return nombre.indexOf(k) !== -1; });
-  }
-
-  // Telas: primero f.telas, luego migrar desde colores[0].avios
-  if ((f.telas||[]).length > 0) {
-    nfTelas = f.telas.map(function(m){ return Object.assign({},m); });
-  } else if (c0avios.length > 0) {
-    nfTelas = c0avios.filter(esTela2).map(function(m){ return Object.assign({},m); });
-  } else {
-    nfTelas = [];
-  }
-
-  // Avíos: primero f.materiales, luego migrar desde colores[0].avios
-  if ((f.materiales||[]).length > 0) {
-    nfMats = f.materiales.map(function(m){ return Object.assign({},m); });
-  } else if (c0avios.length > 0) {
-    nfMats = c0avios.filter(function(a){ return !esTela2(a); }).map(function(m){ return Object.assign({},m); });
-  } else {
-    nfMats = [];
-  }
-  // Palabras clave que identifican telas
-  function esTela(item) {
-    return esTelaItem(item, f.familia||f.referencia||'');
-  }
-
+  // Cargar materiales
+  nfMats = (f.materiales||[]).map(function(m){
+    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
+  });
+  // Cargar colores
+  nfTelas = (f.telas||[]).map(function(m){
+    return {nombre:m.nombre||'', cantidad:m.cantidad||0, unidad:m.unidad||'m', precio:m.precio||0};
+  });
   nfColores = (f.colores||[]).map(function(c){
-    var aviosViejos = (c.avios||[]);
-    var telasGuardadas = (c.telas||[]);
-    // Si ya tiene telas separadas, usarlas; si no, migrar desde avios
-    var telas, avios;
-    if (telasGuardadas.length > 0) {
-      telas = telasGuardadas.map(function(t){ return Object.assign({},t); });
-      avios = aviosViejos.map(function(a){ return Object.assign({},a); });
-    } else {
-      // Migrar: separar telas de avíos automáticamente
-      telas = aviosViejos.filter(esTela).map(function(t){ return Object.assign({},t); });
-      avios = aviosViejos.filter(function(a){ return !esTela(a); }).map(function(a){ return Object.assign({},a); });
-    }
-    return {
-      color:  c.color||'',
-      talles: Object.assign({}, c.talles||{}),
-      total:  c.total||0,
-      telas:  telas,
-      avios:  avios
-    };
+    return {color:c.color||'', talles:Object.assign({},c.talles||{}),
+      avios:(c.avios||[]).map(function(a){return Object.assign({},a);})};
   });
   renderNfTelas();
   renderNfMats();
   renderNfColores();
-  renderTallesDirecto();
   // Marcar que estamos editando
   window._editingFichaIdx = i;
   window._editingFichaId  = f.id;
-  // Abrir formulario
-  var wrap = document.getElementById('ficha-form-wrap');
-  var btnN = document.getElementById('btn-nueva-ficha');
-  if (wrap) wrap.style.display = 'block';
-  if (btnN) btnN.textContent = '✕ Cancelar';
   // Cambiar botón guardar
-  var btn = document.getElementById('btn-guardar-ficha');
+  var btn = document.querySelector('#s-fichas .btn.bmail');
   if (btn) btn.textContent = '💾 Guardar cambios';
   // Scroll al formulario
-  setTimeout(function(){ if(wrap) wrap.scrollIntoView({behavior:'smooth'}); }, 100);
+  document.querySelector('#s-fichas .sp:last-child').scrollIntoView({behavior:'smooth'});
   toast('Editando "'+f.nombre+'" — modificá y guardá');
 }
 
@@ -6250,51 +5516,9 @@ var _origAddMatFicha = null;
 var nfTelas   = []; // [{nombre, cantidad, unidad, precio}]
 var nfColores = []; // [{color, talles:{}, avios:[]}]
 
-function toggleNuevaFicha() {
-  var wrap = document.getElementById('ficha-form-wrap');
-  var btn  = document.getElementById('btn-nueva-ficha');
-  var open = wrap.style.display === 'none';
-  wrap.style.display = open ? 'block' : 'none';
-  btn.textContent = open ? '✕ Cancelar' : '+ Nueva ficha de costos';
-  if (open) {
-    initFichaForm();
-    setTimeout(function(){ wrap.scrollIntoView({behavior:'smooth'}); }, 100);
-  }
-}
-
-function cancelarFicha() {
-  document.getElementById('ficha-form-wrap').style.display = 'none';
-  document.getElementById('btn-nueva-ficha').textContent = '+ Nueva ficha de costos';
-  window._editingFichaIdx = null;
-  window._editingFichaId  = null;
-  nfMats=[]; nfTelas=[]; nfTalles={}; nfColores=[];
-}
-
-function toggleAviosGlobales() {
-  var wrap = document.getElementById('nf-mats-wrap');
-  var icon = document.getElementById('avios-glob-icon');
-  var open = wrap.style.display === 'none';
-  wrap.style.display = open ? 'block' : 'none';
-  icon.textContent = open ? '▼' : '▶';
-}
-
-function renderTallesDirecto() {
-  var el = document.getElementById('nf-talles-directo');
-  var totEl = document.getElementById('nf-total-directo');
-  if (!el) return;
-  if (!window.nfTallesDirecto) window.nfTallesDirecto = {};
-  renderTallesGrid(el, window.nfTallesDirecto, function(){
-    var tot = totalTalles(window.nfTallesDirecto);
-    if (totEl) totEl.textContent = tot > 0 ? '✓ Total: '+tot+' unidades' : '';
-  });
-  var tot = totalTalles(window.nfTallesDirecto);
-  if (totEl) totEl.textContent = tot > 0 ? '✓ Total: '+tot+' unidades' : '';
-}
-
 function initFichaForm() {
-  nfTalles = {}; nfTelas = []; nfColores = []; nfMats = [];
-  window.nfTallesDirecto = {};
-  renderNfTelas(); renderNfMats(); renderNfColores(); renderTallesDirecto();
+  nfTalles = {}; nfTelas = []; nfColores = [];
+  renderNfTelas(); renderNfColores();
 }
 
 function addColorFicha() {
@@ -6316,344 +5540,59 @@ function renderNfTelas() {
   }
   el.innerHTML = '';
   nfTelas.forEach(function(m, i) {
-    // Auto-buscar precio si tiene nombre pero no tiene precio
-    if ((m.nombre||'').trim() && !(parseFloat(m.precio) > 0)) {
-      var p = getPrecioFromHistorial(m.nombre);
-      if (p > 0) { m.precio = p; }
-    }
-
-    var subtotal = (parseFloat(m.cantidad)||0) * (parseFloat(m.precio)||0);
     var div = document.createElement('div');
     div.style.cssText = 'background:rgba(42,90,160,.06);border:1px solid rgba(42,90,160,.15);border-radius:var(--r);padding:10px;margin-bottom:8px;';
-
-    // Fila 1: nombre + delete
     var row1 = document.createElement('div'); row1.style.cssText='display:flex;gap:8px;margin-bottom:8px;';
     var inp = document.createElement('input'); inp.className='fi'; inp.type='text'; inp.placeholder='Nombre de la tela'; inp.value=m.nombre||''; inp.style.flex='1';
     var del = document.createElement('button'); del.className='delbtn'; del.textContent='×';
     row1.appendChild(inp); row1.appendChild(del); div.appendChild(row1);
-
-    // Dropdown sugerencias
-    var sug=document.createElement('div');
-    sug.style.cssText='display:none;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:var(--r);margin-bottom:8px;max-height:150px;overflow-y:auto;z-index:10;';
-    div.appendChild(sug);
-
-    // Fila 2: consumo + unidad + precio
-    var row2 = document.createElement('div'); row2.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;';
+    var row2 = document.createElement('div'); row2.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;';
     var cInp=document.createElement('input'); cInp.className='fi'; cInp.type='text'; cInp.inputMode='decimal'; cInp.placeholder='Consumo (m)'; cInp.value=m.cantidad||'';
     var uSel=document.createElement('select'); uSel.className='fi';
     ['m','kg','u'].forEach(function(v){ var o=document.createElement('option'); o.value=v; o.textContent=v; if((m.unidad||'m')===v) o.selected=true; uSel.appendChild(o); });
-    var pInp=document.createElement('input'); pInp.className='fi'; pInp.type='text'; pInp.inputMode='decimal'; pInp.placeholder='$ /m';
-    pInp.value = (parseFloat(m.precio) > 0) ? m.precio : '';
+    var pInp=document.createElement('input'); pInp.className='fi'; pInp.type='text'; pInp.inputMode='decimal'; pInp.placeholder='$ /m'; pInp.value=m.precio||'';
     row2.appendChild(cInp); row2.appendChild(uSel); row2.appendChild(pInp); div.appendChild(row2);
-
-    // Subtotal (si hay precio y cantidad)
-    if (subtotal > 0) {
-      var subDiv = document.createElement('div');
-      subDiv.style.cssText='background:rgba(42,90,160,.1);border-radius:8px;padding:5px 10px;display:flex;justify-content:space-between;margin-bottom:6px;';
-      subDiv.innerHTML='<span style="font-size:11px;color:#2a4a8a;">'+(m.cantidad)+' '+(m.unidad||'m')+' × $'+fmt(m.precio)+'</span>'+
-        '<span style="font-size:13px;font-weight:700;color:#2a4a8a;">$'+fmt(subtotal)+'</span>';
-      div.appendChild(subDiv);
-    }
-
-    // Botón buscar precio
-    var buscarBtn = document.createElement('button');
-    buscarBtn.className='exp-btn';
-    buscarBtn.style.cssText='width:100%;justify-content:center;font-size:11px;';
-    buscarBtn.textContent = (parseFloat(m.precio) > 0) ? '✓ Precio: $'+fmt(m.precio)+'/m  (actualizar)' : '🔍 Buscar precio en stock';
-    div.appendChild(buscarBtn);
-
-    el.appendChild(div);
-
-    // ── Eventos ──────────────────────────────────────────────────
-    (function(idx, mat) {
-
-      function updateSug() {
-        var q = (inp.value||'').toLowerCase().trim();
-        if (q.length < 2) { sug.style.display='none'; sug.innerHTML=''; return; }
-        var src = (st.catalogo&&st.catalogo.length) ? st.catalogo : (st.stock||[]);
-        var matches = src.filter(function(s){ return (s.nombre||'').toLowerCase().indexOf(q)!==-1; }).slice(0,6);
-        if (!matches.length) { sug.style.display='none'; return; }
-        sug.innerHTML='';
-        matches.forEach(function(s){
-          var opt=document.createElement('div');
-          opt.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(26,36,51,.06);font-size:13px;';
-          var pm=parseFloat(s.precio_metro)||0;
-          var pa=parseFloat(s.precio_ars)||0;
-          opt.innerHTML='<b>'+esc(s.nombre)+'</b>'+
-            (s.color_diseno?' <span style="font-size:11px;color:var(--t3);">'+esc(s.color_diseno)+'</span>':'')+
-            (pm>0?' <span style="color:#2a4a8a;font-weight:600;font-size:11px;">$'+fmt(pm)+'/m</span>':
-             pa>0?' <span style="color:#2a4a8a;font-size:11px;">$'+fmt(pa)+'</span>':'');
-          opt.onmousedown=function(e){
-            e.preventDefault();
-            mat.nombre=s.nombre;
-            var p=pm||pa;
-            if(p>0) mat.precio=p;
-            mat.unidad=s.unidad||'m';
-            sug.style.display='none';
-            renderNfTelas();
-          };
-          sug.appendChild(opt);
-        });
-        sug.style.display='block';
-      }
-
-      inp.oninput=function(){ mat.nombre=this.value; updateSug(); };
-      inp.onfocus=function(){ if(this.value.length>=2) updateSug(); };
-      inp.onblur=function(){ setTimeout(function(){ sug.style.display='none'; },200); };
-      cInp.oninput=function(){ mat.cantidad=parseFloat(this.value)||0; };
-      uSel.onchange=function(){ mat.unidad=this.value; };
-      pInp.oninput=function(){ mat.precio=parseFloat(this.value)||0; renderNfTelas(); };
-      del.onclick=function(){ nfTelas.splice(idx,1); renderNfTelas(); };
-
-      buscarBtn.onclick=function(){
-        var p=getPrecioFromHistorial(mat.nombre);
-        if(p>0){
-          mat.precio=p;
-          renderNfTelas();
-          toast('✅ $'+fmt(p)+'/m cargado');
-        } else {
-          // Debug: mostrar qué hay en stock para este nombre
-          var q=(mat.nombre||'').toLowerCase().trim();
-          var found=(st.stock||[]).filter(function(s){return (s.nombre||'').toLowerCase().indexOf(q)!==-1;});
-          if(found.length){
-            var s0=found[0]; alert('pm='+s0.precio_metro+' pa='+s0.precio_ars+' pu='+s0.precio_unit+' rinde='+s0.rinde+' uc='+s0.unidad_compra+' mon='+s0.moneda+' cotiz='+getCotiz());
-          } else {
-            toast('No se encontró "'+mat.nombre+'" en stock');
-          }
-        }
-      };
-
+    var sug=document.createElement('div'); sug.className='sug'; div.appendChild(sug); el.appendChild(div);
+    (function(idx, mat){
+      function updateSug(){ var q=(inp.value||'').toLowerCase().trim(); if(q.length<2){sug.style.display='none';return;} var matches=(st.catalogo&&st.catalogo.length?st.catalogo:st.stock||[]).filter(function(s){return (s.nombre||'').toLowerCase().indexOf(q)!==-1;}).slice(0,5); if(!matches.length){sug.style.display='none';return;} sug.innerHTML=''; sug.style.display='block'; matches.forEach(function(s){ var opt=document.createElement('div'); opt.style.cssText='padding:7px 12px;cursor:pointer;border-bottom:1px solid rgba(26,36,51,.06);font-size:13px;'; var pm=parseFloat(s.precio_metro)||0; opt.innerHTML='<b>'+esc(s.nombre)+'</b> <span style="color:#2a4a8a;font-size:11px;">'+(pm>0?'$'+fmt(pm)+'/m':'')+'</span>'; opt.onmousedown=function(e){ e.preventDefault(); mat.nombre=s.nombre; if(pm>0) mat.precio=pm; mat.unidad=s.unidad||'m'; sug.style.display='none'; renderNfTelas(); }; sug.appendChild(opt); }); }
+      inp.oninput=function(){mat.nombre=this.value; updateSug();}; inp.onblur=function(){setTimeout(function(){sug.style.display='none';},200);};
+      cInp.oninput=function(){mat.cantidad=parseFloat(this.value)||0;}; uSel.onchange=function(){mat.unidad=this.value;}; pInp.oninput=function(){mat.precio=parseFloat(this.value)||0;}; del.onclick=function(){nfTelas.splice(idx,1); renderNfTelas();};
     })(i, m);
   });
-}
-
-function renderInsumoRow(insumo, onDelete) {
-  // Buscar precio automáticamente si no tiene
-  if (!(parseFloat(insumo.precio) > 0) && (insumo.nombre||'').trim()) {
-    var p = getPrecioFromHistorial(insumo.nombre);
-    if (p > 0) insumo.precio = p;
-  }
-  var subtotal = (parseFloat(insumo.cantidad)||0) * (parseFloat(insumo.precio)||0);
-  var row = document.createElement('div');
-  row.style.cssText = 'background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:10px;padding:10px;margin-bottom:7px;';
-
-  // Fila nombre + delete
-  var r1 = document.createElement('div'); r1.style.cssText='display:flex;gap:6px;margin-bottom:6px;align-items:center;';
-  var nomInp = document.createElement('input'); nomInp.className='fi'; nomInp.type='text';
-  nomInp.placeholder='Nombre del insumo'; nomInp.value=insumo.nombre||''; nomInp.style.cssText='flex:1;height:34px;font-size:13px;';
-  var sug = document.createElement('div');
-  sug.style.cssText='display:none;position:absolute;background:var(--cr);border:1px solid rgba(26,36,51,.15);border-radius:var(--r);z-index:50;max-height:160px;overflow-y:auto;min-width:260px;';
-  var nomWrap = document.createElement('div'); nomWrap.style.cssText='position:relative;flex:1;';
-  nomWrap.appendChild(nomInp); nomWrap.appendChild(sug);
-  var delBtn = document.createElement('button'); delBtn.className='delbtn'; delBtn.textContent='×';
-  r1.appendChild(nomWrap); r1.appendChild(delBtn); row.appendChild(r1);
-
-  // Fila cant + unidad + precio
-  var r2 = document.createElement('div'); r2.style.cssText='display:grid;grid-template-columns:80px 64px 1fr;gap:6px;margin-bottom:4px;';
-  var cInp = document.createElement('input'); cInp.className='fi'; cInp.type='text'; cInp.inputMode='decimal';
-  cInp.placeholder='Consumo'; cInp.value=insumo.cantidad||''; cInp.style.cssText='height:32px;font-size:12px;text-align:center;';
-  var uSel = document.createElement('select'); uSel.className='fi'; uSel.style.cssText='height:32px;font-size:12px;';
-  ['m','kg','u'].forEach(function(v){ var o=document.createElement('option'); o.value=v; o.textContent=v; if((insumo.unidad||'m')===v) o.selected=true; uSel.appendChild(o); });
-  var pInp = document.createElement('input'); pInp.className='fi'; pInp.type='text'; pInp.inputMode='decimal';
-  pInp.placeholder='$ /unidad'; pInp.style.cssText='height:32px;font-size:12px;';
-  pInp.value = parseFloat(insumo.precio) > 0 ? fmt(insumo.precio) : '';
-  r2.appendChild(cInp); r2.appendChild(uSel); r2.appendChild(pInp); row.appendChild(r2);
-
-  // Subtotal
-  if (subtotal > 0) {
-    var sub = document.createElement('div');
-    sub.style.cssText='font-size:11px;color:#2a4a8a;font-weight:600;text-align:right;';
-    sub.textContent = (insumo.cantidad||0)+' '+(insumo.unidad||'m')+' × $'+fmt(insumo.precio)+' = $'+fmt(subtotal);
-    row.appendChild(sub);
-  } else if ((insumo.nombre||'').trim() && !(parseFloat(insumo.precio)>0)) {
-    var noP = document.createElement('div');
-    noP.style.cssText='font-size:11px;color:#c0622a;';
-    noP.textContent='⚠ Sin precio — escribí el nombre completo o ingresalo manualmente';
-    row.appendChild(noP);
-  }
-
-  // Eventos
-  function updateSug() {
-    var q=(nomInp.value||'').toLowerCase().trim();
-    if(q.length<2){sug.style.display='none';sug.innerHTML='';return;}
-    var src=(st.catalogo&&st.catalogo.length)?st.catalogo:(st.stock||[]);
-    var matches=src.filter(function(s){return (s.nombre||'').toLowerCase().indexOf(q)!==-1;}).slice(0,6);
-    if(!matches.length){sug.style.display='none';return;}
-    sug.innerHTML='';
-    matches.forEach(function(s){
-      var opt=document.createElement('div');
-      opt.style.cssText='padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(26,36,51,.06);font-size:13px;';
-      var pm=parseFloat(s.precio_metro)||0, pa=parseFloat(s.precio_ars)||0;
-      var precio=pm||pa;
-      opt.innerHTML='<b>'+esc(s.nombre)+'</b>'+(precio>0?' <span style="color:#2a4a8a;font-weight:600;">$'+fmt(precio)+'</span>':'');
-      opt.onmousedown=function(e){
-        e.preventDefault();
-        insumo.nombre=s.nombre; insumo.unidad=s.unidad||'m';
-        var p2=pm||pa; if(p2>0) insumo.precio=p2;
-        sug.style.display='none';
-        // Re-render el padre
-        if(row.parentNode) { var clone=row.cloneNode(false); row.parentNode.replaceChild(clone,row); }
-        if(typeof onDelete==='function') onDelete('refresh');
-      };
-      sug.appendChild(opt);
-    });
-    sug.style.display='block';
-  }
-
-  nomInp.oninput=function(){ insumo.nombre=this.value; updateSug(); };
-  nomInp.onfocus=function(){ if(this.value.length>=2) updateSug(); };
-  nomInp.onblur=function(){ setTimeout(function(){ sug.style.display='none'; },200); };
-  cInp.oninput=function(){ insumo.cantidad=parseFloat(this.value)||0; };
-  uSel.onchange=function(){ insumo.unidad=this.value; };
-  pInp.oninput=function(){ insumo.precio=parseFloat(this.value.replace(/[^0-9.,]/g,'').replace(',','.'))||0; };
-  delBtn.onclick=function(){ if(typeof onDelete==='function') onDelete('delete'); };
-
-  return row;
 }
 
 function renderNfColores() {
   var el = document.getElementById('nf-colores');
   if (!el) return;
-  if (!nfColores.length) {
-    el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:8px 0;">Agregá al menos una variante con su color</div>';
-    return;
-  }
+  if (!nfColores.length) { el.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:8px;">Agregá al menos una variante</div>'; return; }
   el.innerHTML = '';
   nfColores.forEach(function(col, i) {
-    if (!col.avios)  col.avios  = [];
-    if (!col.telas)  col.telas  = [];  // telas propias de este color
+    if (!col.avios) col.avios = [];
+    var div=document.createElement('div'); div.style.cssText='background:var(--sa);border-radius:var(--r);padding:12px;margin-bottom:10px;';
+    var hdr=document.createElement('div'); hdr.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:10px;';
+    var cinp=document.createElement('input'); cinp.className='fi'; cinp.type='text'; cinp.placeholder='Color (ej: Negro)'; cinp.value=col.color||''; cinp.style.flex='1'; cinp.id='nfcol-inp-'+i;
+    var cdel=document.createElement('button'); cdel.className='delbtn'; cdel.textContent='×'; cdel.id='nfcol-del-'+i;
+    hdr.appendChild(cinp); hdr.appendChild(cdel); div.appendChild(hdr);
     if (!col.talles || typeof col.talles !== 'object') col.talles = {};
-
-    var card = document.createElement('div');
-    card.style.cssText='border:2px solid rgba(196,134,106,.3);border-radius:var(--rl);overflow:hidden;margin-bottom:14px;';
-
-    // Header del color
-    var hdr = document.createElement('div');
-    hdr.style.cssText='background:var(--bk);padding:10px 14px;display:flex;align-items:center;gap:10px;';
-    var colorDot = document.createElement('div');
-    colorDot.style.cssText='width:14px;height:14px;border-radius:50%;background:var(--ac);flex-shrink:0;';
-    var cinp = document.createElement('input'); cinp.className='fi';
-    cinp.type='text'; cinp.placeholder='Nombre del color (ej: Negro, Lavanda...)';
-    cinp.value=col.color||'';
-    cinp.style.cssText='flex:1;height:34px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;font-size:14px;font-weight:600;';
-    cinp.id='nfcol-inp-'+i;
-    var cdel = document.createElement('button'); cdel.className='delbtn';
-    cdel.style.cssText='color:rgba(255,255,255,.6);font-size:18px;';
-    cdel.textContent='×'; cdel.id='nfcol-del-'+i;
-    hdr.appendChild(colorDot); hdr.appendChild(cinp); hdr.appendChild(cdel);
-    card.appendChild(hdr);
-
-    var body = document.createElement('div');
-    body.style.cssText='padding:14px;background:var(--cr);';
-
-    // ── SECCIÓN: Telas de este color ──────────────────────────
-    var telLbl = document.createElement('div');
-    telLbl.style.cssText='font-size:11px;font-weight:700;color:var(--cobalt,#6A8090);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;';
-    telLbl.innerHTML='<span>🧵 Telas de este color</span>';
-    var addTelBtn = document.createElement('button'); addTelBtn.className='exp-btn';
-    addTelBtn.textContent='+ Agregar tela'; addTelBtn.id='nfcol-addtela-'+i;
-    telLbl.appendChild(addTelBtn);
-    body.appendChild(telLbl);
-    var telWrap = document.createElement('div'); telWrap.id='nfcol-telas-'+i; body.appendChild(telWrap);
-
-    // Separador
-    var sep = document.createElement('div');
-    sep.style.cssText='height:1px;background:rgba(26,36,51,.08);margin:12px 0;';
-    body.appendChild(sep);
-
-    // ── SECCIÓN: Avíos de este color ──────────────────────────
-    var avLbl = document.createElement('div');
-    avLbl.style.cssText='font-size:11px;font-weight:700;color:#5a3a8a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;';
-    avLbl.innerHTML='<span>🔩 Avíos de este color</span>';
-    var addAvBtn = document.createElement('button'); addAvBtn.className='exp-btn';
-    addAvBtn.textContent='+ Agregar avío'; addAvBtn.id='nfcol-addavio-'+i;
-    avLbl.appendChild(addAvBtn);
-    body.appendChild(avLbl);
-    var avWrap = document.createElement('div'); avWrap.id='nfcol-avios-'+i; body.appendChild(avWrap);
-
-    // Separador
-    var sep2 = document.createElement('div');
-    sep2.style.cssText='height:1px;background:rgba(26,36,51,.08);margin:12px 0;';
-    body.appendChild(sep2);
-
-    // ── SECCIÓN: Curva de talles ──────────────────────────────
-    var tallLbl = document.createElement('div');
-    tallLbl.style.cssText='font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;';
-    tallLbl.textContent='📐 Curva de talles';
-    body.appendChild(tallLbl);
-    var tw = document.createElement('div'); tw.id='nfcol-talles-'+i; body.appendChild(tw);
-    var totDiv = document.createElement('div');
-    totDiv.style.cssText='font-size:12px;font-weight:600;color:var(--t2);margin-top:6px;';
-    body.appendChild(totDiv);
-
-    card.appendChild(body);
-    el.appendChild(card);
-
-    // Render talles
+    var tw=document.createElement('div'); tw.id='nfcol-talles-'+i; div.appendChild(tw);
+    var totDiv=document.createElement('div'); totDiv.style.cssText='font-size:11px;color:var(--t2);margin-top:4px;margin-bottom:6px;'; div.appendChild(totDiv);
+    var sepDiv=document.createElement('div'); sepDiv.style.cssText='font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 5px;display:flex;align-items:center;gap:8px;';
+    sepDiv.innerHTML='<span>🔩 Avíos de esta variante</span><button class="addlink" style="font-size:11px;padding:0;" id="nfcol-addavio-'+i+'">+ Agregar</button>';
+    div.appendChild(sepDiv);
+    var aw=document.createElement('div'); aw.id='nfcol-avios-'+i; div.appendChild(aw);
+    el.appendChild(div);
+    // Render talles AFTER div is in DOM — pass element directly
     renderTallesGrid(tw, col.talles, function(){
       var tot=totalTalles(col.talles);
-      totDiv.textContent=tot>0?'✓ Total: '+tot+' unidades':'Sin unidades cargadas';
-      totDiv.style.color=tot>0?'#3a6a2a':'var(--t3)';
+      totDiv.textContent=tot>0?'Total: '+tot+' unidades':'Sin unidades cargadas';
+      totDiv.style.color=tot>0?'var(--t2)':'var(--t3)';
     });
     var tot0=totalTalles(col.talles);
-    totDiv.textContent=tot0>0?'✓ Total: '+tot0+' unidades':'Sin unidades cargadas';
-    totDiv.style.color=tot0>0?'#3a6a2a':'var(--t3)';
-
-    // ── Render telas del color ────────────────────────────────
-    (function(ci, colObj) {
-      function renderTelasColor() {
-        var tw2 = document.getElementById('nfcol-telas-'+ci);
-        if (!tw2) return;
-        tw2.innerHTML='';
-        if (!colObj.telas.length) {
-          tw2.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Sin telas — agregá la tela principal de este color</div>';
-        }
-        colObj.telas.forEach(function(t, ti) {
-          var r = renderInsumoRow(t, function(action){
-            if(action==='delete'){ colObj.telas.splice(ti,1); renderTelasColor(); }
-            else renderTelasColor();
-          });
-          tw2.appendChild(r);
-        });
-      }
-      renderTelasColor();
-      var ab2 = document.getElementById('nfcol-addtela-'+ci);
-      if (ab2) ab2.onclick=function(e){
-        e.preventDefault();
-        colObj.telas.push({nombre:'',cantidad:0,unidad:'m',precio:0});
-        renderTelasColor();
-      };
-
-      // ── Render avíos del color ──────────────────────────────
-      function renderAviosColor() {
-        var aw2 = document.getElementById('nfcol-avios-'+ci);
-        if (!aw2) return;
-        aw2.innerHTML='';
-        if (!colObj.avios.length) {
-          aw2.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Sin avíos — ej: cierre, hilo, etiqueta</div>';
-        }
-        colObj.avios.forEach(function(a, ai) {
-          var r = renderInsumoRow(a, function(action){
-            if(action==='delete'){ colObj.avios.splice(ai,1); renderAviosColor(); }
-            else renderAviosColor();
-          });
-          aw2.appendChild(r);
-        });
-      }
-      renderAviosColor();
-      var ab3 = document.getElementById('nfcol-addavio-'+ci);
-      if (ab3) ab3.onclick=function(e){
-        e.preventDefault();
-        colObj.avios.push({nombre:'',cantidad:0,unidad:'u',precio:0});
-        renderAviosColor();
-      };
-
-      // Input color
-      var ci2 = document.getElementById('nfcol-inp-'+ci);
-      if (ci2) ci2.oninput=function(){ colObj.color=this.value; };
-      var cd2 = document.getElementById('nfcol-del-'+ci);
-      if (cd2) cd2.onclick=function(){ nfColores.splice(ci,1); renderNfColores(); };
-    })(i, col);
+    totDiv.textContent=tot0>0?'Total: '+tot0+' unidades':'Sin unidades cargadas';
+    totDiv.style.color=tot0>0?'var(--t2)':'var(--t3)';
+    function renderAviosVar(ci,colObj){ var awEl=document.getElementById('nfcol-avios-'+ci); if(!awEl)return; awEl.innerHTML=''; if(!colObj.avios.length){awEl.innerHTML='<div style="font-size:11px;color:var(--t3);margin-bottom:4px;">Sin avíos específicos</div>';return;} colObj.avios.forEach(function(av,ai){ var ar=document.createElement('div'); ar.style.cssText='display:grid;grid-template-columns:1fr 52px 52px 28px;gap:5px;margin-bottom:5px;align-items:center;'; var an=document.createElement('input'); an.className='fi'; an.type='text'; an.placeholder='Avío'; an.value=av.nombre||''; an.style.cssText='height:28px;font-size:11px;'; var ac=document.createElement('input'); ac.className='fi'; ac.type='text'; ac.inputMode='decimal'; ac.placeholder='Cant.'; ac.value=av.cantidad||''; ac.style.cssText='height:28px;font-size:11px;text-align:center;'; var ap=document.createElement('input'); ap.className='fi'; ap.type='text'; ap.inputMode='decimal'; ap.placeholder='$'; ap.value=av.precio||''; ap.style.cssText='height:28px;font-size:11px;text-align:right;'; var ad=document.createElement('button'); ad.className='delbtn'; ad.textContent='×'; ad.style.cssText='height:28px;font-size:14px;'; ar.appendChild(an); ar.appendChild(ac); ar.appendChild(ap); ar.appendChild(ad); awEl.appendChild(ar); (function(aidx,avObj){an.oninput=function(){avObj.nombre=this.value;};ac.oninput=function(){avObj.cantidad=parseFloat(this.value)||0;};ap.oninput=function(){avObj.precio=parseFloat(this.value)||0;};ad.onclick=function(){colObj.avios.splice(aidx,1);renderAviosVar(ci,colObj);};})(ai,av); }); }
+    renderAviosVar(i,col);
+    (function(idx,colObj){ var i2=document.getElementById('nfcol-inp-'+idx); if(i2)i2.oninput=function(){colObj.color=this.value;}; var d2=document.getElementById('nfcol-del-'+idx); if(d2)d2.onclick=function(){nfColores.splice(idx,1);renderNfColores();}; var ab=document.getElementById('nfcol-addavio-'+idx); if(ab)ab.onclick=function(e){e.preventDefault();colObj.avios.push({nombre:'',cantidad:0,unidad:'u',precio:0});renderAviosVar(idx,colObj);}; })(i,col);
   });
 }
 
@@ -7829,24 +6768,6 @@ function buildPDFAndDownload(jpgB64,imgW,imgH,fname){
 // ════════════════════════════════════════════════════════════════
 // PDF MULTIPÁGINA — ensambla N imágenes JPEG en un PDF válido
 // ════════════════════════════════════════════════════════════════
-function buildPDFMultipageRaw(jpgB64Array, imgW, imgH, fname) {
-  try {
-    // Reusar buildPDFMultipage pero convirtiendo b64 a canvas
-    var canvases = jpgB64Array.map(function(b64) {
-      var cv2 = document.createElement('canvas');
-      cv2.width=imgW; cv2.height=imgH;
-      // Store b64 directly — override toDataURL
-      cv2._b64 = b64;
-      cv2.toDataURL = function(){ return 'data:image/jpeg;base64,'+this._b64; };
-      return cv2;
-    });
-    buildPDFMultipage(canvases, imgW, imgH, fname);
-  } catch(e) {
-    // Fallback: descargar solo la primera página
-    buildPDFAndDownload(jpgB64Array[0], imgW, imgH, fname);
-  }
-}
-
 function buildPDFMultipage(canvases,imgW,imgH,fname){
   try{
     var pw=595.28, ph=841.89;
@@ -7876,9 +6797,9 @@ function buildPDFMultipage(canvases,imgW,imgH,fname){
       return b64;
     }
 
-    // Convertir cada canvas o base64 a Uint8Array JPEG
+    // Convertir cada canvas a Uint8Array JPEG
     var jpgArrays=canvases.map(function(cv){
-      var b64 = (typeof cv === 'string') ? cv : cv.toDataURL('image/jpeg',0.92).split(',')[1];
+      var b64=cv.toDataURL('image/jpeg',0.92).split(',')[1];
       var raw=atob(b64);
       var arr=new Uint8Array(raw.length);
       for(var i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
@@ -8038,87 +6959,6 @@ function buildPDFMultipage(canvases,imgW,imgH,fname){
   }
 }
 
-
-// ════════════════════════════════════════════════════
-// EXPORT EXCEL FICHAS
-// ════════════════════════════════════════════════════
-function abrirExportExcel() {
-  var modal = document.getElementById('excel-fichas-modal');
-  var selT  = document.getElementById('excel-flt-temp');
-  var selF  = document.getElementById('excel-flt-familia');
-  var fichas = st.fichas||[];
-  var temps = [], fams = [];
-  fichas.forEach(function(f){
-    if (f.temporada && temps.indexOf(f.temporada)===-1) temps.push(f.temporada);
-    if (f.familia   && fams.indexOf(f.familia)===-1)   fams.push(f.familia);
-  });
-  temps.sort(); fams.sort();
-  selT.innerHTML = '<option value="">Todas</option>' + temps.map(function(t){ return '<option>'+esc(t)+'</option>'; }).join('');
-  selF.innerHTML = '<option value="">Todos</option>'  + fams.map(function(f){  return '<option>'+esc(f)+'</option>'; }).join('');
-  modal.style.display = 'flex';
-}
-
-function cerrarExcelModal() {
-  document.getElementById('excel-fichas-modal').style.display = 'none';
-}
-
-function exportarExcelFichas() {
-  var fTemp = document.getElementById('excel-flt-temp').value;
-  var fFam  = document.getElementById('excel-flt-familia').value;
-  var fichas = (st.fichas||[]).filter(function(f){
-    if (fTemp && (f.temporada||'') !== fTemp) return false;
-    if (fFam  && (f.familia||'')   !== fFam)  return false;
-    return true;
-  });
-
-  if (!fichas.length) { toast('Sin fichas para exportar con esos filtros'); return; }
-
-  // Construir CSV
-  var ORDEN_TALLES = ['XS','S','M','L','XL','XXL','XXXL','00','0','1','2','3','4','5','6','7','8','9','10','11','12','13','14'];
-  var rows = [['Artículo','Color','Temporada','Grupo de tela','Rango de talles','Costo x prenda ($)']];
-  fichas.forEach(function(f){
-    var costo = costoFicha(f);
-    var talles = f.talles || {};
-    var claves = Object.keys(talles).filter(function(t){ return (talles[t]||0) > 0; });
-    // Ordenar por orden conocido, luego alfabético
-    claves.sort(function(a,b){
-      var ia = ORDEN_TALLES.indexOf(a.toUpperCase());
-      var ib = ORDEN_TALLES.indexOf(b.toUpperCase());
-      if (ia === -1 && ib === -1) return a.localeCompare(b);
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
-      return ia - ib;
-    });
-    var rango = claves.length > 1 ? claves[0]+'-'+claves[claves.length-1] : (claves[0]||'—');
-    rows.push([
-      f.nombre||'',
-      getColorFicha(f),
-      f.temporada||'',
-      f.familia||'',
-      rango,
-      costo.toFixed(2).replace('.',',')
-    ]);
-  });
-
-  // Generar CSV con BOM para que Excel lo abra bien
-  var csv = '﻿' + rows.map(function(r){
-    return r.map(function(c){
-      var s = String(c||'');
-      if (s.indexOf(',')!==-1 || s.indexOf('"')!==-1) s = '"'+s.replace(/"/g,'""')+'"';
-      return s;
-    }).join(';');  // punto y coma para Excel en español
-  }).join('\r\n')  // Descargar
-  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  var fecha = new Date().toISOString().slice(0,10);
-  var nombre = 'costos'+(fTemp?'-'+fTemp:'')+(fFam?'-'+fFam:'')+'-'+fecha+'.csv';
-  a.href = url; a.download = nombre; a.click();
-  URL.revokeObjectURL(url);
-  cerrarExcelModal();
-  toast('✅ Excel descargado — '+fichas.length+' fichas');
-}
-
 // ════════════════════════════════════════════════════════════════
 // ARRANQUE
 // ════════════════════════════════════════════════════════════════
@@ -8126,26 +6966,5 @@ function exportarExcelFichas() {
 SB.headers = buildHeaders(SUPABASE_KEY);
 inicializar();
 </script>
-
-<!-- MODAL EXPORT EXCEL FICHAS -->
-<div id="excel-fichas-modal" style="display:none;position:fixed;inset:0;background:rgba(26,36,51,.55);z-index:200;align-items:center;justify-content:center;">
-  <div style="background:var(--cr);border-radius:var(--rl);padding:24px;width:90%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.18);">
-    <div style="font-size:16px;font-weight:700;margin-bottom:16px;">📊 Exportar costos a Excel</div>
-    <div style="margin-bottom:12px;">
-      <div class="flbl" style="margin-bottom:4px;">Temporada</div>
-      <select class="fi" id="excel-flt-temp" style="width:100%;">
-        <option value="">Todas</option>
-      </select>
-    </div>
-    <div style="margin-bottom:20px;">
-      <div class="flbl" style="margin-bottom:4px;">Grupo de tela</div>
-      <select class="fi" id="excel-flt-familia" style="width:100%;">
-        <option value="">Todos</option>
-      </select>
-    </div>
-    <button class="btn bmail" onclick="exportarExcelFichas()" style="width:100%;margin-bottom:8px;">⬇ Descargar Excel</button>
-    <button class="btn bcpy" onclick="cerrarExcelModal()" style="width:100%;">Cancelar</button>
-  </div>
-</div>
 </body>
 </html>
