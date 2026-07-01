@@ -369,9 +369,6 @@ select.fi{appearance:none;
 .rec-estado.pend  {background:rgba(74,90,106,.14);color:var(--b2);}
 /* Punto de alerta en badge historial */
 
-/* ── MODAL EDICIÓN STOCK ───────────────────────────────────── */
-#stock-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(255,255,255,.5);align-items:flex-end;justify-content:center;}
-#stock-modal.open{display:flex;}
 .modal-box{background:var(--cr);border-radius:20px 20px 0 0;padding:20px 18px 32px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
 .modal-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
 .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--t2);padding:0 4px;}
@@ -427,11 +424,6 @@ select.fi{appearance:none;
       <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m4 0v2a2 2 0 002 2h4a2 2 0 002-2v-2"/></svg></span>
       <div class="ct">Recepción de notas</div>
       <div class="cs" id="rec-alert-count">Sin alertas</div>
-    </div>
-    <div class="card" onclick="ir('s-stock')">
-      <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg></span>
-      <div class="ct">Stock</div>
-      <div class="cs" id="stock-resumen">Telas y avíos</div>
     </div>
     <div class="card" onclick="ir('s-devoluciones')">
       <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg></span>
@@ -683,160 +675,6 @@ select.fi{appearance:none;
 </div>
 
 
-<!-- STOCK -->
-<div id="s-stock" class="scr">
-  <div class="tb">
-    <button class="bk" onclick="ir('s-home')">Inicio</button>
-    <h1>Stock</h1>
-    <span class="nbadge" id="stock-alerta-cnt" style="display:none;background:#c0622a;color:#fff;"></span>
-  </div>
-  <div style="margin-top:12px;">
-
-    <!-- AGREGAR NUEVO — arriba y visible -->
-    <div class="sp" style="margin-bottom:4px;">
-      <button class="btn bmail" style="width:100%;" onclick="toggleFormStock()">+ Agregar tela o avío</button>
-      <div id="stock-form-wrap" style="display:none;margin-top:10px;background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-        <div class="frow">
-          <input class="fi" type="text" id="snp-nom" placeholder="Artículo (ej: Jersey 3346)">
-          <input class="fi" type="text" id="snp-color" placeholder="Color Factura">
-        </div>
-        <div class="frow">
-          <input class="fi" type="text" id="snp-color-dis" placeholder="Color Diseño">
-          <input class="fi" type="text" id="snp-prov" placeholder="Proveedor">
-        </div>
-        <div class="frow">
-          <input class="fi" type="text" id="snp-hoja" placeholder="Hoja / Grupo (ej: 3)">
-          <input class="fi" type="text" inputmode="decimal" id="snp-mts" placeholder="Stock MTS">
-        </div>
-        <div class="frow">
-          <input class="fi" type="text" inputmode="decimal" id="snp-kg" placeholder="KG">
-          <input class="fi" type="text" inputmode="decimal" id="snp-ancho" placeholder="Ancho (m)">
-        </div>
-        <div class="frow">
-          <input class="fi" type="text" inputmode="decimal" id="snp-rinde" placeholder="Rinde">
-          <input class="fi" type="text" inputmode="decimal" id="snp-min" placeholder="Stock mínimo (alerta)">
-        </div>
-        <div class="frow">
-          <select class="fi" id="snp-cat">
-            <option value="Tela">Tela</option>
-            <option value="Avío">Avío</option>
-            <option value="Otro">Otro</option>
-          </select>
-          <select class="fi" id="snp-unidad">
-            <option value="m">m (metros)</option>
-            <option value="kg">kg (kilos)</option>
-            <option value="u">u (unidades)</option>
-            <option value="rollo">rollo</option>
-            <option value="par">par</option>
-          </select>
-        </div>
-        <!-- PRECIO -->
-        <div style="background:rgba(74,90,106,.06);border-radius:var(--r);padding:12px;margin-bottom:8px;">
-          <div class="flbl" style="margin-bottom:8px;">💲 PRECIO DE COMPRA</div>
-          <div class="frow" style="margin-bottom:8px;">
-            <div>
-              <div class="flbl">Moneda</div>
-              <select class="fi" id="snp-moneda" onchange="snpActualizarPrecio()">
-                <option value="ARS">ARS</option>
-                <option value="USD">USD</option>
-              </select>
-            </div>
-            <div>
-              <div class="flbl">Precio por unidad</div>
-              <input class="fi" type="text" inputmode="decimal" id="snp-precio" placeholder="0" oninput="snpActualizarPrecio()">
-            </div>
-          </div>
-          <div class="frow" style="margin-bottom:8px;" id="snp-cotiz-row">
-            <div>
-              <div class="flbl">Cotización USD → ARS</div>
-              <input class="fi" type="text" inputmode="decimal" id="snp-cotiz" placeholder="1400" oninput="snpActualizarPrecio()">
-            </div>
-            <div>
-              <div class="flbl">$ ARS / unidad compra</div>
-              <input class="fi" id="snp-ars" placeholder="calculado" readonly style="background:var(--s2);color:var(--t2);">
-            </div>
-          </div>
-          <div class="frow">
-            <div>
-              <div class="flbl">$ ARS / metro (calculado)</div>
-              <input class="fi" id="snp-metro" placeholder="calculado" readonly style="background:var(--s2);color:var(--t2);">
-            </div>
-            <div></div>
-          </div>
-        </div>
-        <textarea class="fi" id="snp-obs" placeholder="Observaciones" style="width:100%;height:55px;margin-bottom:8px;"></textarea>
-        <button class="btn bmail" onclick="agregarStock()">Guardar</button>
-      </div>
-    </div>
-
-    <!-- BUSCADOR -->
-    <div class="sp" style="margin-bottom:4px;">
-      <!-- Chips de categoría -->
-      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-        <button class="plan-tab active" id="scat-todas" onclick="stockCatTab('todas')">Todas</button>
-        <button class="plan-tab" id="scat-tela" onclick="stockCatTab('Tela')">🧵 Telas</button>
-        <button class="plan-tab" id="scat-avio" onclick="stockCatTab('Avío')">🔩 Avíos</button>
-        <button class="plan-tab" id="scat-otro" onclick="stockCatTab('Otro')">📦 Otros</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <input class="fi" type="text" id="stock-fil-hoja" placeholder="🗂 Hoja..." oninput="renderStockLista()" style="width:100%;" list="stock-hojas-list">
-        <datalist id="stock-hojas-list"></datalist>
-        <input class="fi" type="text" id="stock-fil-prov" placeholder="🏭 Proveedor..." oninput="renderStockLista()" style="width:100%;" list="stock-prov-list">
-        <datalist id="stock-prov-list"></datalist>
-      </div>
-      <input class="fi" type="text" id="stock-buscar" placeholder="🔍 Artículo, color, diseño..." oninput="renderStockLista()" style="width:100%;">
-    </div>
-
-    <!-- LISTA — solo cuando hay filtro -->
-    <div class="sp">
-      <div id="stock-lista"></div>
-    </div>
-
-    <!-- KPIs -->
-    <div class="sp" style="margin-top:14px;">
-      <div class="sl" style="margin-bottom:8px;">Resumen</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;" id="stock-kpis"></div>
-    </div>
-
-    <!-- Exportar stock -->
-    <div class="sp" style="margin-top:4px;margin-bottom:4px;">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="exp-btn" onclick="exportarStockCompleto()">⬇ Stock completo</button>
-        <button class="exp-btn" onclick="exportarStockAlertas()">⬇ Solo alertas</button>
-        <button class="exp-btn" onclick="exportarStockPorProveedor()">⬇ Por proveedor</button>
-        <button class="exp-btn" onclick="exportarDevoluciones()">⬇ Devoluciones</button>
-      </div>
-    </div>
-
-    <!-- Dashboard de stock -->
-    <div class="sp" style="margin-bottom:4px;">
-      <div class="sl" style="margin-bottom:8px;">Dashboard</div>
-      <div class="dash-filter" style="margin-bottom:10px;" id="stock-dash-tabs">
-        <div class="fchip on" onclick="stockDashTab('mts',this)">Top por MTS</div>
-        <div class="fchip" onclick="stockDashTab('kg',this)">Top por KG</div>
-        <div class="fchip" onclick="stockDashTab('prov',this)">Por proveedor</div>
-      </div>
-      <div id="stock-dash-content"></div>
-    </div>
-
-    <!-- Importar CSV -->
-    <div class="sp" style="margin-top:8px;">
-      <div class="sl" style="margin-bottom:9px;">Importar desde Excel / CSV</div>
-      <div style="background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:14px;">
-        <p style="font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.6;">
-          Guardá tu planilla como <b>CSV UTF-8</b> desde Excel.<br>
-          Columnas reconocidas: <b>HOJA, PROVEEDOR, ARTICULO, COLOR FACTURA, COLOR DISEÑO, ANCHO, RINDE, KG, STOCK MTS, OBSERVACIONES</b>
-        </p>
-        <input type="file" id="stock-file" accept=".csv" style="display:none;" onchange="importarStockCSV(this)">
-        <button class="btn bpdf" onclick="document.getElementById('stock-file').click()">📂 Importar CSV</button>
-      </div>
-    </div>
-
-
-
-  </div>
-</div>
-
 <!-- DEVOLUCIONES -->
 <div id="s-devoluciones" class="scr">
   <div class="tb">
@@ -846,6 +684,9 @@ select.fi{appearance:none;
   <div style="margin-top:14px;">
     <div class="sp" style="margin-bottom:14px;" id="dev-lista">
       <div class="empty"><div class="ei">↩</div>Sin devoluciones registradas</div>
+    </div>
+    <div class="sp" style="margin-bottom:14px;">
+      <button class="exp-btn" onclick="exportarDevoluciones()">⬇ Exportar devoluciones</button>
     </div>
   </div>
 </div>
@@ -1045,18 +886,6 @@ select.fi{appearance:none;
   </div>
 </div>
 
-<!-- MODAL ALERTAS STOCK -->
-<div id="alertas-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(255,255,255,.5);align-items:flex-end;justify-content:center;">
-  <div class="modal-box">
-    <div class="modal-title">
-      <span>⚠ Artículos bajo mínimo</span>
-      <button class="modal-close" onclick="cerrarAlertasModal()">×</button>
-    </div>
-    <div id="alertas-lista"></div>
-    <button class="btn bcpy" style="margin-top:8px;" onclick="exportarStockAlertas();cerrarAlertasModal()">⬇ Exportar lista de alertas</button>
-  </div>
-</div>
-
 <!-- CONFIGURACIÓN SUPABASE -->
 <div id="s-config" class="scr" style="display:none;">
   <div class="cfg-wrap">
@@ -1114,91 +943,6 @@ create policy "allow all" on mwk_stock for all using (true) with check (true);</
   </div>
 </div>
 
-</div>
-<!-- MODAL EDICIÓN STOCK -->
-<div id="stock-modal">
-  <div class="modal-box">
-    <div class="modal-title">
-      <span id="em-modal-title">Editar artículo</span>
-      <button class="modal-close" onclick="cerrarModalStock()">×</button>
-    </div>
-    <div class="frow">
-      <input class="fi" type="text" id="em-nom" placeholder="Artículo">
-      <input class="fi" type="text" id="em-color" placeholder="Color Factura (proveedor)">
-    </div>
-    <div class="frow">
-      <input class="fi" type="text" id="em-color-dis" placeholder="Color Diseño (interno)">
-      <div></div>
-    </div>
-    <div class="frow">
-      <input class="fi" type="text" id="em-prov" placeholder="Proveedor">
-      <input class="fi" type="text" id="em-hoja" placeholder="Hoja / Grupo">
-    </div>
-    <div class="frow">
-      <div><div class="flbl" id="em-mts-lbl">Stock MTS</div><input class="fi" type="number" id="em-mts" placeholder="0" min="0" step="any"></div>
-      <div><div class="flbl" id="em-kg-lbl">KG</div><input class="fi" type="number" id="em-kg" placeholder="0" min="0" step="any"></div>
-    </div>
-    <div class="frow" id="em-cant-row" style="display:none;">
-      <div style="width:100%;"><div class="flbl">Cantidad en stock (u)</div><input class="fi" type="number" id="em-cant" placeholder="0" min="0" step="1"></div>
-    </div>
-    <div class="frow">
-      <div><div class="flbl">Ancho (m)</div><input class="fi" type="number" id="em-ancho" placeholder="0" min="0" step="any"></div>
-      <div><div class="flbl">Rinde</div><input class="fi" type="number" id="em-rinde" placeholder="0" min="0" step="any"></div>
-    </div>
-    <div class="frow">
-      <div><div class="flbl">Stock mínimo (alerta)</div><input class="fi" type="number" id="em-min" placeholder="0" min="0" step="any"></div>
-      <div><div class="flbl">Categoría</div>
-        <select class="fi" id="em-cat">
-          <option value="Tela">Tela</option>
-          <option value="Avío">Avío</option>
-          <option value="Otro">Otro</option>
-        </select>
-      </div>
-    </div>
-    <div style="background:rgba(42,90,160,.05);border:1px dashed rgba(42,90,160,.2);border-radius:var(--r);padding:10px 12px;margin-bottom:10px;">
-      <div style="font-size:10px;color:#2a4a8a;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">💵 Precio de compra</div>
-      <div class="frow" style="margin-bottom:6px;">
-        <div>
-          <div class="flbl">Unidad de compra</div>
-          <select class="fi" id="em-unidad-compra" onchange="actualizarPrecioARS()">
-            <option value="kg">KG</option>
-            <option value="m">Metro</option>
-            <option value="u">Unidad</option>
-          </select>
-        </div>
-        <div>
-          <div class="flbl">Moneda</div>
-          <select class="fi" id="em-moneda" onchange="actualizarPrecioARS()">
-            <option value="ARS">ARS</option>
-            <option value="USD">USD</option>
-          </select>
-        </div>
-      </div>
-      <div class="frow" style="margin-bottom:6px;">
-        <div>
-          <div class="flbl">Precio por unidad</div>
-          <input class="fi" type="number" id="em-precio" placeholder="0" min="0" step="any" oninput="actualizarPrecioARS()">
-        </div>
-        <div>
-          <div class="flbl">Cotización USD</div>
-          <input class="fi" type="number" id="em-cotiz" placeholder="0" min="0" step="any" oninput="actualizarPrecioARS()">
-        </div>
-      </div>
-      <div class="frow" style="margin-bottom:4px;">
-        <div>
-          <div class="flbl">$ ARS por unidad compra</div>
-          <input class="fi" type="number" id="em-precio-ars" placeholder="calculado" readonly style="background:var(--sa);">
-        </div>
-        <div>
-          <div class="flbl">$ ARS por metro</div>
-          <input class="fi" type="number" id="em-precio-metro" placeholder="calculado" readonly style="background:rgba(42,90,160,.06);font-weight:700;">
-        </div>
-      </div>
-      <div style="font-size:10px;color:var(--t3);margin-top:4px;" id="em-precio-info"></div>
-    </div>
-    <textarea class="fi" id="em-obs" placeholder="Observaciones" style="width:100%;height:60px;margin-bottom:12px;"></textarea>
-    <button class="btn bmail" onclick="guardarEdicionStock()">Guardar cambios</button>
-  </div>
 </div>
 
 <!-- MODAL TOPE DE CORTE -->
@@ -1315,21 +1059,6 @@ create policy "allow all" on mwk_stock for all using (true) with check (true);</
 .corte-edit:hover{color:#fff;}
 .corte-vencido{background:rgba(176,64,32,.08);border:1px solid rgba(176,64,32,.2);border-radius:var(--r);padding:10px 14px;text-align:center;font-size:13px;font-weight:600;color:#8b2010;}
 
-/* ── STOCK ──────────────────────────────────────────────────── */
-.stock-item{background:var(--cr);border:1px solid rgba(26,36,51,.1);border-radius:var(--r);padding:13px 14px;margin-bottom:9px;display:flex;align-items:center;gap:12px;}
-.stock-item.alerta-stock{border-color:#c0622a;background:rgba(192,98,42,.04);}
-.stock-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;}
-.stock-icon.tela{background:rgba(42,90,160,.1);color:#2a4a8a;}
-.stock-icon.avio{background:rgba(90,60,160,.1);color:#4a2a8a;}
-.stock-icon.otro{background:rgba(74,90,106,.1);color:var(--b2);}
-.stock-info{flex:1;min-width:0;}
-.stock-nombre{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.stock-meta{font-size:11px;color:var(--t2);margin-top:2px;}
-.stock-qty{text-align:right;flex-shrink:0;}
-.stock-num{font-size:20px;font-weight:700;color:var(--bk);line-height:1;}
-.stock-und{font-size:10px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;}
-.stock-min{font-size:10px;color:#c0622a;font-weight:600;margin-top:2px;}
-.stock-adj{display:flex;gap:4px;margin-left:8px;}
 .adj-btn{width:30px;height:30px;border-radius:50%;border:1px solid rgba(26,36,51,.15);background:var(--sa);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0;}
 .adj-btn:active{background:var(--s2);}
 
@@ -1660,7 +1389,6 @@ function ir(id){
   if(id==='s-historial')renderHistorial();
   if(id==='s-home')renderHome();
   if(id==='s-dashboard')renderDashboard();
-  if(id==='s-stock')renderStock();
   if(id==='s-devoluciones')renderDevoluciones();
   if(id==='s-fichas'){renderFichasLista();nfMats=nfMats||[];nfColores=nfColores||[];renderNfMats();initFichaForm();}
   if(id==='s-planificacion')renderPlanFichas();
@@ -1959,7 +1687,6 @@ function renderHome(){
     else if(pendRec>0)rac.textContent=pendRec+' pendiente'+(pendRec!==1?'s':'');
     else rac.textContent='Sin alertas';
   }
-  renderStockResumenHome();
   renderDevResumenHome();
   renderEntregaAlertas();
   var c=document.getElementById('home-rec');if(!c)return;
@@ -1990,12 +1717,6 @@ function renderHome(){
 // ════════════════════════════════════════════════════════════════
 // PEDIDO — tabs y formulario
 // ════════════════════════════════════════════════════════════════
-function renderStockResumenHome(){
-  if(!st.stock) return;
-  var alertas=st.stock.filter(function(s){return s.stock_minimo>0&&s.cantidad<=s.stock_minimo;}).length;
-  var sr=document.getElementById('stock-resumen');
-  if(sr){var total=st.stock.length;sr.textContent=total>0?total+' material'+(total!==1?'es':'')+(alertas>0?' · ⚠ '+alertas+' bajo mínimo':''):'Telas y avíos';}
-}
 function cambiarTab(tab){
   // cat section always hidden
   var catSec=document.getElementById('tab-cat');
@@ -2921,57 +2642,6 @@ function generarPedidoDesdeProveedor(provIdx) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// REPOSICIÓN DESDE STOCK
-// ════════════════════════════════════════════════════════════════
-function reponerStock(idx) {
-  var s = (st.stock||[])[idx];
-  if (!s) return;
-
-  // Navegar a nueva nota de pedido
-  ir('s-pedido');
-
-  // Pre-llenar proveedor si lo tiene
-  if (s.proveedor) {
-    var pnomEl = document.getElementById('pnom');
-    if (pnomEl) pnomEl.value = s.proveedor;
-  }
-
-  // Agregar ítem usando el mecanismo de rows
-  setTimeout(function() {
-    var nombre = [s.nombre, s.color].filter(Boolean).join(' - ');
-    var precio = parseFloat(s.precio_unit)||0;
-    var moneda = s.moneda||'ARS';
-    var unidad = s.unidad_compra||'m';
-    var color  = s.color||'';
-    var colorD = s.color_diseno||'';
-
-    // Agregar nueva fila
-    rows.push({
-      id: Date.now(),
-      nombre: nombre,
-      cantidad: '',
-      unidad: unidad,
-      color: color,
-      color_diseno: colorD,
-      precio: precio||'',
-      moneda: moneda,
-      categoria: s.categoria||'Tela',
-      tipo_avio: '',
-      ancho: s.ancho||'',
-      rinde: s.rinde||''
-    });
-    renderRows();
-    toast('✅ "'+nombre+'" agregado — completá la cantidad');
-
-    // Scroll al final para ver el ítem
-    setTimeout(function(){
-      var el = document.querySelector('#s-pedido');
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 100);
-  }, 400);
-}
-
-// ════════════════════════════════════════════════════════════════
 // EDICIÓN DE ÍTEMS DEL PEDIDO (protegida con contraseña)
 // ════════════════════════════════════════════════════════════════
 var _eimIdx = null;
@@ -3612,232 +3282,6 @@ function filtrarHistDash() {
   });
 }
 
-// ════════════════════════════════════════════════════════════════
-// STOCK DE TELAS — estructura basada en planilla real
-// Columnas: HOJA, PROVEEDOR, ARTICULO, COLOR, ANCHO, RINDE, KG, STOCK MTS, OBS
-// ════════════════════════════════════════════════════════════════
-
-var stockHojaFiltro = 'Todas';
-var stockProvFiltro = 'Todos';
-
-function stockSetHoja(hoja, el) {
-  stockHojaFiltro = hoja;
-  document.querySelectorAll('#stock-hojas .fchip').forEach(function(e){e.classList.remove('on');});
-  el.classList.add('on');
-  renderStockFiltrosProv();
-  renderStockLista();
-}
-
-function stockSetProv(prov, el) {
-  stockProvFiltro = prov;
-  document.querySelectorAll('#stock-provfiltros .fchip').forEach(function(e){e.classList.remove('on');});
-  el.classList.add('on');
-  renderStockLista();
-}
-
-var _stockCatFil = 'todas';
-
-function stockCatTab(cat) {
-  _stockCatFil = cat;
-  ['todas','Tela','Avío','Otro'].forEach(function(c){
-    var btn = document.getElementById('scat-'+(c==='todas'?'todas':c==='Tela'?'tela':c==='Avío'?'avio':'otro'));
-    if (btn) btn.classList.toggle('active', c===cat);
-  });
-  renderStockLista();
-}
-
-function snpActualizarPrecio() {
-  var moneda = (document.getElementById('snp-moneda')||{}).value||'ARS';
-  var precio  = parseFloat(document.getElementById('snp-precio').value)||0;
-  var cotiz   = parseFloat(document.getElementById('snp-cotiz').value)||getCotiz();
-  var rinde   = parseFloat(document.getElementById('snp-rinde').value)||0;
-
-  // Mostrar/ocultar fila cotización
-  var cotizRow = document.getElementById('snp-cotiz-row');
-  if (cotizRow) cotizRow.style.display = moneda==='USD' ? 'grid' : 'none';
-
-  var precioARS = moneda==='USD' ? precio*cotiz : precio;
-  var metro     = (precioARS>0 && rinde>0) ? precioARS/rinde : 0;
-
-  var arsEl = document.getElementById('snp-ars');
-  var metroEl = document.getElementById('snp-metro');
-  if (arsEl)   arsEl.value   = precioARS>0 ? fmt(precioARS) : '';
-  if (metroEl) metroEl.value = metro>0     ? fmt(metro)     : '';
-}
-
-function toggleFormStock() {
-  var w = document.getElementById('stock-form-wrap');
-  if (w) {
-    var show = w.style.display === 'none';
-    w.style.display = show ? 'block' : 'none';
-    if (show) {
-      // Init cotiz field with current rate
-      var cEl = document.getElementById('snp-cotiz');
-      if (cEl && !cEl.value) cEl.value = getCotiz();
-      snpActualizarPrecio();
-    }
-  }
-}
-
-function renderStock() {
-  if (!st.stock) st.stock = [];
-  renderStockFiltrosHoja();
-  renderStockFiltrosProv();
-  renderStockLista();
-  renderStockKPIs();
-  // Home badge
-  var alertas = st.stock.filter(function(s){ return s.stock_minimo>0 && (s.cantidad||s.stock_mts||0)<=s.stock_minimo; }).length;
-  var cnt = document.getElementById('stock-alerta-cnt');
-  if (cnt) { cnt.style.display = alertas>0?'inline-block':'none'; cnt.textContent = alertas+' alerta'+(alertas!==1?'s':''); }
-  renderStockResumenHome();
-}
-
-function renderStockResumenHome() {
-  if (!st.stock) return;
-  var alertas = st.stock.filter(function(s){ return s.stock_minimo>0 && (s.stock_mts||s.cantidad||0)<=s.stock_minimo; }).length;
-  var sr = document.getElementById('stock-resumen');
-  if (sr) {
-    var total = st.stock.length;
-    sr.textContent = total>0 ? total+' tela'+(total!==1?'s':'')+(alertas>0?' · ⚠ '+alertas+' bajo mínimo':'') : 'Telas y avíos';
-  }
-}
-
-function getStockFiltrado() {
-  var q     = (document.getElementById('stock-buscar')||{value:''}).value.toLowerCase().trim();
-  var qHoja = (document.getElementById('stock-fil-hoja')||{value:''}).value.toLowerCase().trim();
-  var qProv = (document.getElementById('stock-fil-prov')||{value:''}).value.toLowerCase().trim();
-  var fCat  = (typeof _stockCatFil !== 'undefined') ? _stockCatFil : 'todas';
-  return (st.stock||[]).filter(function(s) {
-    // Filtro por categoría
-    if (fCat && fCat !== 'todas') {
-      if ((s.categoria||'Tela') !== fCat) return false;
-    }
-    if (qHoja && String(s.hoja||'').toLowerCase().indexOf(qHoja) === -1) return false;
-    if (qProv && (s.proveedor||'').toLowerCase().indexOf(qProv) === -1) return false;
-    if (q) {
-      var txt = ((s.nombre||'')+(s.color||'')+(s.color_diseno||'')).toLowerCase();
-      if (txt.indexOf(q) === -1) return false;
-    }
-    return true;
-  });
-}
-
-function renderStockFiltrosHoja() {
-  var hojas = ['Todas'];
-  (st.stock||[]).forEach(function(s){ if (s.hoja && hojas.indexOf(String(s.hoja)) === -1) hojas.push(String(s.hoja)); });
-  hojas.sort(function(a,b){ if(a==='Todas')return -1; if(b==='Todas')return 1; return parseFloat(a)-parseFloat(b); });
-  var el = document.getElementById('stock-hojas');
-  if (!el) return;
-  el.innerHTML = '';
-  hojas.forEach(function(h) {
-    var d = document.createElement('div');
-    d.className = 'fchip' + (stockHojaFiltro === h ? ' on' : '');
-    d.textContent = h === 'Todas' ? 'Todas' : 'Hoja '+h;
-    d.onclick = (function(hh){ return function(){ stockSetHoja(hh, this); }; })(h);
-    el.appendChild(d);
-  });
-}
-
-function renderStockFiltrosProv() {
-  var lista = getStockFiltrado();
-  if (stockHojaFiltro !== 'Todas') {
-    lista = (st.stock||[]).filter(function(s){ return String(s.hoja||'') === stockHojaFiltro; });
-  } else {
-    lista = st.stock||[];
-  }
-  var provs = ['Todos'];
-  lista.forEach(function(s){ if (s.proveedor && provs.indexOf(s.proveedor) === -1) provs.push(s.proveedor); });
-  var el = document.getElementById('stock-provfiltros');
-  if (!el) return;
-  el.innerHTML = '';
-  provs.forEach(function(p) {
-    var d = document.createElement('div');
-    d.className = 'fchip' + (stockProvFiltro === p ? ' on' : '');
-    d.textContent = p;
-    d.onclick = (function(pp){ return function(){ stockSetProv(pp, this); }; })(p);
-    el.appendChild(d);
-  });
-}
-
-function renderStockKPIs() {
-  var lista = st.stock||[];
-  var totalMts = lista.reduce(function(s,x){ return s+(parseFloat(x.stock_mts)||0); }, 0);
-  var totalKg  = lista.reduce(function(s,x){ return s+(parseFloat(x.kg)||0); }, 0);
-  var alertas  = lista.filter(function(s){ return s.stock_minimo>0 && (parseFloat(s.stock_mts)||0)<=s.stock_minimo; }).length;
-  var el = document.getElementById('stock-kpis');
-  if (!el) return;
-  el.innerHTML =
-    kpiSmall(lista.length, 'Artículos') +
-    kpiSmall(fmt(totalMts)+' m', 'Total MTS') +
-    kpiSmall(alertas>0?'⚠ '+alertas:'✓ OK', alertas>0?'Alertas':'Stock OK', alertas>0?'#c0622a':'#3a6a2a');
-  renderStockDash('mts');
-}
-
-var _stockDashMode = 'mts';
-function stockDashTab(mode, el) {
-  _stockDashMode = mode;
-  document.querySelectorAll('#stock-dash-tabs .fchip').forEach(function(e){e.classList.remove('on');});
-  el.classList.add('on');
-  renderStockDash(mode);
-}
-
-function renderStockDash(mode) {
-  var el = document.getElementById('stock-dash-content');
-  if (!el) return;
-  var lista = getStockFiltrado();
-  if (!lista.length) { el.innerHTML = ''; return; }
-
-  if (mode === 'mts' || mode === 'kg') {
-    // Top 15 artículos por MTS o KG
-    var field = mode === 'mts' ? 'stock_mts' : 'kg';
-    var label = mode === 'mts' ? 'MTS' : 'KG';
-    var sorted = lista.slice().sort(function(a,b){
-      return (parseFloat(b[field])||0) - (parseFloat(a[field])||0);
-    }).slice(0, 15);
-    var maxVal = sorted.length ? (parseFloat(sorted[0][field])||0) : 1;
-
-    el.innerHTML = '<div class="bar-title" style="margin-bottom:10px;">Top artículos por '+label+'</div>' +
-      sorted.map(function(s) {
-        var val = parseFloat(s[field])||0;
-        var pct = maxVal > 0 ? Math.round(val/maxVal*100) : 0;
-        var color = mode === 'mts' ? '#2a4a8a' : '#4a2a8a';
-        var nombre = esc(s.nombre||'—') + (s.color_diseno?' <span style="font-size:10px;color:var(--t3);">'+esc(s.color_diseno)+'</span>':'');
-        return '<div class="bar-row" style="margin-bottom:10px;">' +
-          '<div class="bar-label" style="max-width:120px;font-size:12px;" title="'+esc(s.nombre)+'">'+nombre+'</div>' +
-          '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+color+';"></div></div>' +
-          '<div class="bar-val">'+fmt(val)+' '+label+'</div>' +
-        '</div>';
-      }).join('');
-
-  } else if (mode === 'prov') {
-    // Agrupado por proveedor
-    var porProv = {};
-    lista.forEach(function(s) {
-      var p = s.proveedor||'Sin proveedor';
-      if (!porProv[p]) porProv[p] = {mts:0, kg:0, items:0};
-      porProv[p].mts  += parseFloat(s.stock_mts)||0;
-      porProv[p].kg   += parseFloat(s.kg)||0;
-      porProv[p].items++;
-    });
-    var provArr = Object.keys(porProv).map(function(k){
-      return {label:k, mts:porProv[k].mts, kg:porProv[k].kg, items:porProv[k].items};
-    }).sort(function(a,b){ return b.mts-a.mts; });
-    var maxMts = provArr.length ? provArr[0].mts : 1;
-
-    el.innerHTML = '<div class="bar-title" style="margin-bottom:10px;">MTS por proveedor</div>' +
-      provArr.map(function(r) {
-        var pct = maxMts > 0 ? Math.round(r.mts/maxMts*100) : 0;
-        return '<div style="margin-bottom:12px;">' +
-          '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">' +
-            '<span style="font-weight:600;">'+esc(r.label)+'</span>' +
-            '<span style="color:var(--t2);">'+r.items+' art. · '+fmt(r.mts)+' m · '+fmt(r.kg)+' kg</span>' +
-          '</div>' +
-          '<div class="bar-track" style="height:14px;"><div class="bar-fill" style="width:'+pct+'%;background:#1a2433;height:14px;"></div></div>' +
-        '</div>';
-      }).join('');
-  }
-}
-
 function kpiSmall(val, lbl, color, onclick) {
   var clickStyle = onclick ? 'cursor:pointer;border-color:rgba(26,36,51,.25);' : '';
   var clickAttr  = onclick ? ' onclick="'+onclick+'"' : '';
@@ -3846,410 +3290,6 @@ function kpiSmall(val, lbl, color, onclick) {
     '<div style="font-size:18px;font-weight:700;color:'+(color||'var(--bk)')+';">'+val+'</div>'+
   '</div>';
 }
-
-function renderStockKPIs() {
-  var lista = st.stock||[];
-  var totalMts = lista.reduce(function(s,x){ return s+(parseFloat(x.stock_mts)||0); }, 0);
-  var alertas  = lista.filter(function(s){ return s.stock_minimo>0 && (parseFloat(s.stock_mts)||0)<=s.stock_minimo; }).length;
-  var el = document.getElementById('stock-kpis');
-  if (!el) return;
-  el.innerHTML =
-    kpiSmall(lista.length, 'Artículos') +
-    kpiSmall(fmt(totalMts)+' m', 'Total MTS') +
-    kpiSmall(
-      alertas>0 ? '⚠ '+alertas : '✓ OK',
-      alertas>0 ? 'Alertas — ver' : 'Stock OK',
-      alertas>0 ? '#c0622a' : '#3a6a2a',
-      alertas>0 ? 'verAlertasStock()' : null
-    );
-  renderStockDash(_stockDashMode||'mts');
-}
-
-function cerrarAlertasModal() {
-  var m = document.getElementById('alertas-modal');
-  if (m) m.style.display = 'none';
-}
-
-function verAlertasStock() {
-  var alertas = (st.stock||[]).filter(function(s){
-    return s.stock_minimo > 0 && (parseFloat(s.stock_mts)||0) <= s.stock_minimo;
-  });
-  if (!alertas.length) { toast('No hay alertas de stock'); return; }
-
-  var el = document.getElementById('alertas-lista');
-  if (!el) return;
-
-  el.innerHTML = alertas.map(function(s) {
-    var falta = (parseFloat(s.stock_minimo)||0) - (parseFloat(s.stock_mts)||0);
-    return '<div style="background:rgba(192,98,42,.06);border:1px solid rgba(192,98,42,.2);border-radius:var(--r);padding:12px;margin-bottom:8px;">'+
-      '<div style="font-weight:600;font-size:14px;">'+esc(s.nombre)+(s.color_diseno?' <span style="font-weight:400;color:var(--t2);">'+esc(s.color_diseno)+'</span>':'')+'</div>'+
-      '<div style="font-size:12px;color:var(--t2);margin-top:3px;">'+esc(s.proveedor||'—')+(s.hoja?' · Hoja '+s.hoja:'')+'</div>'+
-      '<div style="display:flex;gap:14px;margin-top:8px;">'+
-        '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Stock actual</div>'+
-        '<div style="font-size:16px;font-weight:700;color:#c0622a;">'+fmt(s.stock_mts||0)+' m</div></div>'+
-        '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Mínimo</div>'+
-        '<div style="font-size:16px;font-weight:700;color:var(--b2);">'+fmt(s.stock_minimo||0)+' m</div></div>'+
-        '<div><div style="font-size:10px;color:var(--t3);text-transform:uppercase;">Faltan</div>'+
-        '<div style="font-size:16px;font-weight:700;color:#8b2e22;">'+fmt(falta)+' m</div></div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-
-  document.getElementById('alertas-modal').style.display = 'flex';
-}
-
-
-function renderStockLista() {
-  var el = document.getElementById('stock-lista');
-  if (!el) return;
-  // Sin filtro → no mostrar todo el listado
-  var q = (document.getElementById('stock-buscar')||{}).value||'';
-  var fHoja = (document.getElementById('stock-fil-hoja')||{}).value||'';
-  var fProv = (document.getElementById('stock-fil-prov')||{}).value||'';
-  var fCat = (typeof _stockCatFil !== 'undefined') ? _stockCatFil : 'todas';
-  var fCatActive = fCat !== 'todas';
-  if (!q.trim() && !fHoja.trim() && !fProv.trim() && !fCatActive) {
-    el.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--t3);font-size:13px;">Seleccioná una categoría o buscá por artículo, hoja o proveedor</div>';
-    return;
-  }
-  var lista = getStockFiltrado();
-  if (!lista.length) {
-    el.innerHTML = '<div class="empty"><div class="ei">📦</div>Sin resultados.<br>Importá tu planilla CSV o agregá manualmente.</div>';
-    return;
-  }
-  // Ordenar: alertas primero, luego hoja, luego proveedor, luego nombre
-  lista.sort(function(a,b){
-    var aA = a.stock_minimo>0 && (parseFloat(a.stock_mts)||0)<=a.stock_minimo;
-    var bA = b.stock_minimo>0 && (parseFloat(b.stock_mts)||0)<=b.stock_minimo;
-    if(aA&&!bA)return -1; if(!aA&&bA)return 1;
-    return (parseFloat(a.hoja)||0)-(parseFloat(b.hoja)||0) || (a.proveedor||'').localeCompare(b.proveedor||'') || (a.nombre||'').localeCompare(b.nombre||'');
-  });
-
-  el.innerHTML = lista.map(function(s) {
-    var idx = st.stock.indexOf(s);
-    var mts = parseFloat(s.stock_mts)||0;
-    var kg  = parseFloat(s.kg)||0;
-    var rinde = parseFloat(s.rinde)||0;
-    // Si es tela con KG y rinde, calcular MTS equivalentes
-    if (kg>0 && rinde>0 && mts===0) mts = Math.round(kg*rinde*100)/100;
-    var esAlerta = s.stock_minimo>0 && mts<=s.stock_minimo;
-    var ini = (s.nombre||'??').substring(0,2).toUpperCase();
-    return '<div class="stock-item'+(esAlerta?' alerta-stock':'')+'" style="flex-wrap:wrap;gap:8px;">'+
-      '<div class="stock-icon tela">'+ini+'</div>'+
-      '<div class="stock-info" style="min-width:120px;">'+
-        '<div class="stock-nombre">'+esc(s.nombre||'—')+'</div>'+
-        '<div class="stock-meta">'+
-          (s.color?'<span style="font-size:11px;background:rgba(255,255,255,.08);padding:1px 7px;border-radius:10px;margin-right:4px;">📋 '+esc(s.color)+'</span>':'')+
-          (s.color_diseno?'<span style="font-size:11px;background:rgba(42,90,160,.1);color:#2a4a8a;padding:1px 7px;border-radius:10px;">🎨 '+esc(s.color_diseno)+'</span>':'')+
-          '<br>'+esc(s.proveedor||'')+(s.hoja?' · Hoja '+s.hoja:'')+'<br>'+
-          (s.ancho?'Ancho: '+s.ancho+'m · ':'')+(s.rinde?'Rinde: '+s.rinde:'')+
-          '<br>'+
-          (function(){
-            var out='';
-            var pARS=parseFloat(s.precio_ars)||0;
-            var pUSD=parseFloat(s.precio_unit)||0;
-            var rindeC=parseFloat(s.rinde)||0;
-            // Usar precio_ars guardado. Solo recalcular si parece ser el valor USD (mal guardado)
-            if(s.moneda==='USD' && pUSD>0 && pARS>0 && Math.abs(pARS-pUSD)<1) {
-              var _c=getCotiz();
-              if(_c<=1){try{_c=parseFloat(localStorage.getItem('mwk_cotiz_usd'))||0;}catch(e){}}
-              if(_c<=1)_c=st.cotizUSD||0;
-              if(_c>1) pARS=Math.round(pUSD*_c*100)/100;
-            }
-            var pm = parseFloat(s.precio_metro)||0;
-            if(!pm && pARS>0 && rindeC>0) pm=Math.round(pARS/rindeC*100)/100;
-            // Costo por unidad de compra
-            if(pARS>0) out+='<span style="font-size:11px;color:var(--t2);">$'+fmt(pARS)+' ARS/'+(s.unidad_compra||'kg')+(s.moneda==="USD"&&pUSD>0?' · U$'+fmt(pUSD):'')+' </span> ';
-            // Costo por metro
-            if(pm>0){
-              out+='<span style="font-size:12px;color:var(--cobalt,#6A8090);font-weight:700;">$'+fmt(pm)+'/m</span>';
-            } else if(pARS>0&&rindeC>0){
-              var calc=Math.round(pARS/rindeC*100)/100;
-              out+='<span style="font-size:11px;color:var(--cobalt,#6A8090);">≈ $'+fmt(calc)+'/m</span>';
-            }
-            return out;
-          })()+ 
-        '</div>'+
-        (esAlerta?'<div class="stock-min">⚠ Bajo mínimo ('+s.stock_minimo+' m)</div>':'')+
-        (s.observaciones?'<div style="font-size:10px;color:var(--t3);margin-top:2px;">'+esc(s.observaciones)+'</div>':'')+
-      '</div>'+
-      '<div style="display:flex;gap:8px;margin-left:auto;align-items:center;">'+
-        // Mostrar MTS si tiene
-        (mts>0?'<div class="stock-qty"><div class="stock-num" style="color:#2a4a8a;">'+fmt(mts)+'</div><div class="stock-und">MTS</div></div>':'')+
-        // Mostrar KG si tiene
-        (kg>0?'<div class="stock-qty"><div class="stock-num" style="color:var(--b2);">'+fmt(kg)+'</div><div class="stock-und">KG</div></div>':'')+
-        // Mostrar Unidades si tiene
-        (parseFloat(s.cantidad)>0&&(s.unidad_compra==='u'||s.unidad_compra==='unidad'||s.unidad_compra==='par'||s.unidad_compra==='rollo')?'<div class="stock-qty"><div class="stock-num" style="color:#5a3a8a;">'+fmt(s.cantidad)+'</div><div class="stock-und">'+(s.unidad_compra||'U').toUpperCase()+'</div></div>':'')+
-        // Si nada tiene valor, mostrar 0 MTS
-        (!mts&&!kg&&!(parseFloat(s.cantidad)>0&&s.unidad_compra&&s.unidad_compra!=='m'&&s.unidad_compra!=='kg')?'<div class="stock-qty"><div class="stock-num" style="color:var(--t3);">0</div><div class="stock-und">MTS</div></div>':'')+
-                '<div style="display:flex;flex-direction:column;gap:6px;margin-left:auto;">'+
-          '<div style="display:flex;gap:6px;">'+
-            '<button class="adj-btn" onclick="editarStockItem('+idx+')" title="Editar">✎</button>'+
-            '<button class="adj-btn" style="color:#3a6a2a;" onclick="abrirDescuentoModal('+idx+')" title="Descontar">✂</button>'+
-            '<button class="adj-btn" style="color:#b06020;" onclick="abrirDevModal('+idx+')" title="Devolución">↩</button>'+
-            '<button class="adj-btn" style="color:#8b2e22;" onclick="eliminarStock('+idx+')" title="Eliminar">×</button>'+
-          '</div>'+
-          '<button onclick="reponerStock('+idx+')" style="background:var(--ac,#C4866A);color:#fff;border:none;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;">+ Reponer</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-}
-
-function editarStockItem(idx) {
-  var s = st.stock[idx];
-  if (!s) return;
-  window._editingStockIdx = idx;
-  document.getElementById('em-nom').value   = s.nombre||'';
-  document.getElementById('em-color').value     = s.color||'';
-  document.getElementById('em-color-dis').value = s.color_diseno||'';
-  document.getElementById('em-prov').value  = s.proveedor||'';
-  document.getElementById('em-hoja').value  = s.hoja||'';
-  document.getElementById('em-mts').value   = s.stock_mts||0;
-  document.getElementById('em-kg').value    = s.kg||0;
-  document.getElementById('em-ancho').value = s.ancho||0;
-  document.getElementById('em-rinde').value = s.rinde||0;
-  document.getElementById('em-min').value   = s.stock_minimo||0;
-  document.getElementById('em-cat').value   = s.categoria||'Tela';
-  document.getElementById('em-obs').value   = s.observaciones||'';
-  document.getElementById('em-precio').value       = s.precio_unit||'';
-  document.getElementById('em-moneda').value       = s.moneda||'ARS';
-  document.getElementById('em-cotiz').value        = s.cotiz_usd||getCotiz()||'';
-  document.getElementById('em-precio-ars').value   = s.precio_ars||'';
-  document.getElementById('em-precio-metro').value = s.precio_metro||'';
-  var ucEl = document.getElementById('em-unidad-compra');
-  if (ucEl) ucEl.value = s.unidad_compra||'kg';
-  var titleEl = document.getElementById('em-modal-title');
-  if (titleEl) titleEl.textContent = 'Editar ' + (s.categoria||'artículo').toLowerCase();
-  var cantEl = document.getElementById('em-cant');
-  if (cantEl) cantEl.value = s.cantidad||0;
-  actualizarPrecioARS();
-  // Cargar cotización del día automáticamente
-  var cotizEl = document.getElementById('em-cotiz');
-  if (cotizEl) {
-    // Usar la del pedido si existe, sino buscar la actual
-    var cotizGuardada = s.cotiz_usd || getCotiz() || 0;
-    cotizEl.value = cotizGuardada || '';
-    if (!cotizGuardada || cotizGuardada <= 1) {
-      // Buscar cotización actualizada
-      fetch('https://api.bluelytics.com.ar/v2/latest')
-        .then(function(r){ return r.json(); })
-        .then(function(data){
-          var venta = data && data.oficial && data.oficial.value_sell;
-          if (venta && cotizEl) { cotizEl.value = venta; actualizarPrecioARS(); }
-        })
-        .catch(function(){
-          fetch('https://dolarapi.com/v1/dolares/oficial')
-            .then(function(r){ return r.json(); })
-            .then(function(data){
-              if (data && data.venta && cotizEl) { cotizEl.value = data.venta; actualizarPrecioARS(); }
-            }).catch(function(){});
-        });
-    }
-  }
-  actualizarPrecioARS();
-  document.getElementById('stock-modal').classList.add('open');
-}
-
-function cerrarModalStock() {
-  document.getElementById('stock-modal').classList.remove('open');
-  window._editingStockIdx = null;
-}
-
-function guardarEdicionStock() {
-  var idx = window._editingStockIdx;
-  if (idx === null || idx === undefined) return;
-  var s = st.stock[idx];
-  if (!s) return;
-  var mts = parseFloat(document.getElementById('em-mts').value)||0;
-  var moneda    = document.getElementById('em-moneda').value||'ARS';
-  var precioU   = parseFloat(document.getElementById('em-precio').value)||0;
-  var cotizU    = parseFloat(document.getElementById('em-cotiz').value)||1;
-  var precioARS = moneda==='USD' ? precioU*cotizU : precioU;
-  var data = {
-    nombre:       document.getElementById('em-nom').value.trim(),
-    color:        document.getElementById('em-color').value.trim(),
-    color_diseno: document.getElementById('em-color-dis').value.trim(),
-    proveedor:    document.getElementById('em-prov').value.trim(),
-    hoja:         document.getElementById('em-hoja').value.trim(),
-    stock_mts:    mts,
-    kg:           parseFloat(document.getElementById('em-kg').value)||0,
-    ancho:        parseFloat(document.getElementById('em-ancho').value)||0,
-    rinde:        parseFloat(document.getElementById('em-rinde').value)||0,
-    stock_minimo: parseFloat(document.getElementById('em-min').value)||0,
-    categoria:    document.getElementById('em-cat').value,
-    observaciones:document.getElementById('em-obs').value.trim(),
-    cantidad:     (function(){ var uc3=(document.getElementById('em-unidad-compra')||{}).value||'kg'; return uc3==='u'?(parseFloat(document.getElementById('em-cant')?document.getElementById('em-cant').value:0)||0):mts; })(),
-    precio_unit:   precioU,
-    moneda:        moneda,
-    cotiz_usd:     cotizU,
-    precio_ars:    precioARS,
-    unidad_compra: document.getElementById('em-unidad-compra')?document.getElementById('em-unidad-compra').value:'kg',
-    precio_metro:  parseFloat(document.getElementById('em-precio-metro')?document.getElementById('em-precio-metro').value:0)||0
-  };
-  SB.from('mwk_stock').update(data, {id: s.id}).then(function(){
-    Object.assign(s, data);
-    cerrarModalStock();
-    renderStock();
-    toast('✅ Tela actualizada');
-  }).catch(function(e){ toast('Error: '+(e.message||e)); });
-}
-
-function ajustarStock(idx, delta) {
-  var s = st.stock[idx];
-  if (!s) return;
-  var nueva = Math.max(0, (parseFloat(s.stock_mts)||0) + delta);
-  s.stock_mts = nueva; s.cantidad = nueva;
-  SB.from('mwk_stock').update({stock_mts:nueva,cantidad:nueva},{id:s.id}).then(function(){ renderStock(); });
-}
-
-function eliminarStock(idx) {
-  var s = st.stock[idx];
-  if (!s||!confirm('¿Eliminar "'+s.nombre+(s.color?' '+s.color:'')+'"?')) return;
-  SB.from('mwk_stock').delete({id:s.id}).then(function(){
-    st.stock.splice(idx,1); renderStock(); toast('Eliminado');
-  });
-}
-
-function agregarStock() {
-  var nom = (document.getElementById('snp-nom').value||'').trim();
-  if (!nom) { toast('Ingresá el artículo'); return; }
-  var mts = parseFloat(document.getElementById('snp-mts').value)||0;
-  var data = {
-    nombre: nom,
-    color: (document.getElementById('snp-color').value||'').trim(),
-    proveedor: (document.getElementById('snp-prov').value||'').trim(),
-    hoja: document.getElementById('snp-hoja').value||'',
-    stock_mts: mts,
-    kg: parseFloat(document.getElementById('snp-kg').value)||0,
-    ancho: parseFloat(document.getElementById('snp-ancho').value)||0,
-    unidad_compra: (document.getElementById('snp-unidad')?document.getElementById('snp-unidad').value:'m')||'m',
-    moneda:       (document.getElementById('snp-moneda')||{value:'ARS'}).value||'ARS',
-    precio_unit:  parseFloat((document.getElementById('snp-precio')||{value:'0'}).value)||0,
-    precio_ars:   parseFloat(((document.getElementById('snp-ars')||{value:'0'}).value||'0').replace(/[^0-9,.]/g,'').replace(',','.'))||0,
-    precio_metro: parseFloat(((document.getElementById('snp-metro')||{value:'0'}).value||'0').replace(/[^0-9,.]/g,'').replace(',','.'))||0,
-    rinde: parseFloat(document.getElementById('snp-rinde').value)||0,
-    stock_minimo: parseFloat(document.getElementById('snp-min').value)||0,
-    categoria: document.getElementById('snp-cat').value||'Tela',
-    observaciones: (document.getElementById('snp-obs').value||'').trim(),
-    cantidad: mts,
-    unidad: 'm'
-  };
-  SB.from('mwk_stock').insert(data).then(function(res){
-    var row = Array.isArray(res)?res[0]:res;
-    if (row&&row.id){ if(!st.stock)st.stock=[]; st.stock.push(row); }
-    ['snp-nom','snp-color','snp-prov','snp-hoja','snp-mts','snp-kg','snp-ancho','snp-rinde','snp-min','snp-obs'].forEach(function(id){
-      var el=document.getElementById(id); if(el)el.value='';
-    });
-    renderStock(); toast('✅ Tela agregada al stock');
-  }).catch(function(e){ toast('Error: '+(e.message||e)); });
-}
-
-// ── Importar CSV con columnas de la planilla real ─────────────
-function importarStockCSV(input) {
-  var file = input.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var text = e.target.result;
-    var sep = text.indexOf(';') !== -1 ? ';' : ',';
-    var lines = text.split('\n').filter(function(l){return l.trim();});
-    if (lines.length < 2) { toast('Archivo sin datos'); return; }
-
-    // Buscar fila de encabezados (puede haber fila título antes)
-    var headerIdx = -1;
-    for (var h=0; h<Math.min(5,lines.length); h++) {
-      var low = lines[h].toLowerCase();
-      if (low.indexOf('articulo') !== -1 || low.indexOf('artículo') !== -1 || low.indexOf('nombre') !== -1) {
-        headerIdx = h; break;
-      }
-    }
-    if (headerIdx === -1) { toast('No se encontró columna ARTICULO en el archivo'); return; }
-
-    // Normalizar encabezados: minúsculas, sin tildes, sin caracteres especiales
-    var rawHdrs = lines[headerIdx].split(sep);
-    function norm(s){ 
-      var t=s.trim().toLowerCase();
-      var map={'á':'a','à':'a','ä':'a','é':'e','è':'e','ë':'e','í':'i','ì':'i','ï':'i','ó':'o','ò':'o','ö':'o','ú':'u','ù':'u','ü':'u','ñ':'n'};
-      var r='';
-      for(var i=0;i<t.length;i++){
-        var ch=t[i];
-        r+=map[ch]||(ch>='a'&&ch<='z'?ch:ch>='0'&&ch<='9'?ch:'');
-      }
-      return r;
-    }
-    var hdrs = rawHdrs.map(norm);
-
-    // Buscar columna por nombre exacto o parcial (primera ocurrencia)
-    function col() {
-      var names = Array.prototype.slice.call(arguments);
-      for (var i=0; i<hdrs.length; i++) {
-        for (var j=0; j<names.length; j++) {
-          if (hdrs[i] === names[j] || hdrs[i].indexOf(names[j]) !== -1) return i;
-        }
-      }
-      return -1;
-    }
-
-    var cHoja       = col('hoja');
-    var cProv       = col('proveedor');
-    var cArt        = col('articulo','article','nombre','material');
-    var cColorFact  = col('colorfactura','colordefactura','colorf');
-    var cColorDis   = col('colordiseno','colordediseno','colordiseno','colord','colordesign');
-    // fallback: si no encuentra los nombres específicos, toma la primera columna 'color'
-    if (cColorFact === -1 && cColorDis === -1) { cColorFact = col('color'); }
-    var cAncho      = col('ancho','width');
-    var cRinde      = col('rinde','rendimiento','rend');
-    var cKg         = col('kg','kilo','kilos','peso');
-    var cMts        = col('stockmts','mts','metros','stockm');
-    var cObs        = col('observaciones','obs','nota');
-
-    if (cArt === -1) { toast('No se encontró columna ARTICULO'); return; }
-
-    function num(idx) {
-      if (idx === -1 || !cols[idx]) return 0;
-      return parseFloat((cols[idx]||'').replace(/^"|"$/g,'').replace(',','.')) || 0;
-    }
-    function txt(idx) {
-      if (idx === -1 || !cols[idx]) return '';
-      return (cols[idx]||'').trim().replace(/^"|"$/g,'');
-    }
-
-    var registros = [], cols;
-    for (var i = headerIdx+1; i < lines.length; i++) {
-      cols = lines[i].split(sep);
-      var nom = txt(cArt);
-      if (!nom) continue;
-      var mts = num(cMts);
-      registros.push({
-        nombre: nom, hoja: txt(cHoja), proveedor: txt(cProv),
-        color: txt(cColorFact),
-        color_diseno: txt(cColorDis),
-        ancho: num(cAncho), rinde: num(cRinde),
-        kg: num(cKg), stock_mts: mts, cantidad: mts,
-        observaciones: txt(cObs), categoria: 'Tela', unidad: 'm', stock_minimo: 0
-      });
-    }
-
-    if (!registros.length) { toast('No se encontraron filas válidas'); return; }
-    toast('Importando ' + registros.length + ' artículos...');
-    if (!st.stock) st.stock = [];
-    var count = 0;
-    function nextInsert() {
-      if (count >= registros.length) {
-        renderStock(); toast('✅ ' + count + ' artículos importados'); input.value = ''; return;
-      }
-      SB.from('mwk_stock').insert(registros[count]).then(function(res){
-        var row = Array.isArray(res) ? res[0] : res;
-        if (row && row.id) st.stock.push(row);
-        count++; nextInsert();
-      }).catch(function(){ count++; nextInsert(); });
-    }
-    nextInsert();
-  };
-  reader.readAsText(file, 'UTF-8');
-}
-
 
 // ════════════════════════════════════════════════════════════════
 // DEVOLUCIONES AL PROVEEDOR
@@ -4320,7 +3360,6 @@ function confirmarDevolucion(descontarStock) {
       s.stock_mts = nuevaMts; s.kg = nuevaKg; s.cantidad = nuevaMts;
       SB.from('mwk_stock').update({stock_mts:nuevaMts, kg:nuevaKg, cantidad:nuevaMts}, {id:s.id}).then(function(){
         cerrarDevModal();
-        renderStock();
         renderDevResumenHome();
         toast('↩ Devolución registrada y stock actualizado');
       });
@@ -4473,59 +3512,6 @@ function pdfDevolucion(idx) {
   // Generar PDF
   var jpg = cv.toDataURL('image/jpeg',0.94).split(',')[1];
   buildPDFAndDownload(jpg, PW, PH, 'mwk-devolucion-'+esc(d.nombre||'').substring(0,20).replace(/\s/g,'-')+'.pdf');
-}
-
-// ════════════════════════════════════════════════════════════════
-// EXPORTAR STOCK CSV
-// ════════════════════════════════════════════════════════════════
-
-function exportarStockCompleto() {
-  var lista = getStockFiltrado();
-  var rows = [['Hoja','Proveedor','Artículo','Color Factura','Color Diseño','Ancho','Rinde','KG','Stock MTS','Stock Mínimo','Categoría','Observaciones']];
-  lista.forEach(function(s) {
-    rows.push([
-      s.hoja||'', s.proveedor||'', s.nombre||'',
-      s.color||'', s.color_diseno||'',
-      s.ancho||0, s.rinde||0, s.kg||0, s.stock_mts||0,
-      s.stock_minimo||0, s.categoria||'Tela', s.observaciones||''
-    ]);
-  });
-  descargarCSV('MWK_stock_completo.csv', rows);
-}
-
-function exportarStockAlertas() {
-  var lista = (st.stock||[]).filter(function(s){
-    return s.stock_minimo > 0 && (parseFloat(s.stock_mts)||0) <= s.stock_minimo;
-  });
-  if (!lista.length) { toast('No hay artículos con alerta de stock'); return; }
-  var rows = [['Hoja','Proveedor','Artículo','Color Diseño','Stock MTS','Stock Mínimo','Diferencia']];
-  lista.forEach(function(s) {
-    rows.push([
-      s.hoja||'', s.proveedor||'', s.nombre||'', s.color_diseno||'',
-      s.stock_mts||0, s.stock_minimo||0,
-      (parseFloat(s.stock_minimo)||0) - (parseFloat(s.stock_mts)||0)
-    ]);
-  });
-  descargarCSV('MWK_stock_alertas.csv', rows);
-}
-
-function exportarStockPorProveedor() {
-  var lista = st.stock||[];
-  var porProv = {};
-  lista.forEach(function(s) {
-    var p = s.proveedor||'Sin proveedor';
-    if (!porProv[p]) porProv[p] = [];
-    porProv[p].push(s);
-  });
-  var rows = [['Proveedor','Artículos','Total MTS','Total KG','Alertas']];
-  Object.keys(porProv).sort().forEach(function(p) {
-    var arts = porProv[p];
-    var totalMts = arts.reduce(function(s,x){ return s+(parseFloat(x.stock_mts)||0); },0);
-    var totalKg  = arts.reduce(function(s,x){ return s+(parseFloat(x.kg)||0); },0);
-    var alertas  = arts.filter(function(x){ return x.stock_minimo>0&&(parseFloat(x.stock_mts)||0)<=x.stock_minimo; }).length;
-    rows.push([p, arts.length, totalMts, totalKg, alertas]);
-  });
-  descargarCSV('MWK_stock_por_proveedor.csv', rows);
 }
 
 function exportarDevoluciones() {
@@ -5799,7 +4785,6 @@ function confirmarDescuento() {
       if (row&&row.id){ if(!st.devoluciones)st.devoluciones=[]; st.devoluciones.unshift(row); }
     }).catch(function(){});
     cerrarDescModal();
-    renderStock();
     toast('✂ Stock descontado por producción');
   }).catch(function(e){ toast('Error: '+(e.message||e)); });
 }
